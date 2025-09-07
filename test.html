@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Module Test</title>
+</head>
+<body>
+    <h1>Testing Modular System</h1>
+    <div id="test-output"></div>
+
+    <!-- Load modules -->
+    <script src="src/EventBus.js"></script>
+    <script src="src/GameState.js"></script>
+    <script src="src/ProbeManager.js"></script>
+    <script src="src/BuildingSystem.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const output = document.getElementById('test-output');
+            
+            try {
+                // Test EventBus
+                const eventBus = new EventBus();
+                output.innerHTML += '<p>✅ EventBus loaded successfully</p>';
+                
+                // Test GameState
+                const gameState = new GameState();
+                output.innerHTML += '<p>✅ GameState loaded successfully</p>';
+                
+                // Test ProbeManager
+                const probeManager = new ProbeManager(gameState, eventBus);
+                output.innerHTML += '<p>✅ ProbeManager loaded successfully</p>';
+                
+                // Test BuildingSystem
+                const buildingSystem = new BuildingSystem(gameState, eventBus);
+                output.innerHTML += '<p>✅ BuildingSystem loaded successfully</p>';
+                
+                output.innerHTML += '<p><strong>All modules loaded successfully!</strong></p>';
+                
+            } catch (error) {
+                output.innerHTML += `<p>❌ Error: ${error.message}</p>`;
+                console.error(error);
+            }
+        });
+    </script>
+</body>
+</html>

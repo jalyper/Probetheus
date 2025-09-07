@@ -1,0 +1,329 @@
+# Probetheus
+**Version 0.4.0-pre-alpha**
+
+A space exploration idle game where you deploy probes from Recon Hubs to discover signals, explore planets, and collect resources across an infinite procedural galaxy. Features advanced probe management, cargo delivery systems, research trees, and automated collection mechanics.
+
+## Current Features
+
+### Recon Hub System
+- **Hub-Based Deployment**: All probes must be deployed from Recon Hubs
+- **Limited Range**: Probes can only travel 1/3 of sector width from their hub
+- **Hub Management**: Each hub stores up to 5 probes independently
+- **Strategic Placement**: Build new hubs (100 Minerals) to expand exploration range
+- **Visual Design**: Hexagonal green icons with animated pulses
+
+### Advanced Probe Management
+- **Hub-Specific Deployment**: Select a hub, then deploy probes within its range
+- **Multi-waypoint Navigation**: Deploy probes with up to 3 waypoints for zig-zag exploration patterns
+- **Variable Speed**: Probe speed automatically adjusts based on journey distance
+- **Probe Construction**: Build new probes for 25 Minerals when destroyed or needed
+- **Real-Time Status Tracking**: Probe list automatically updates status (Ready/Exploring/Returning)
+- **Detailed Probe Panel**: Click any probe to view detailed information with equipment slots
+- **Camera Tracking**: Lock camera to follow selected probes with continuous position updates
+- **Patrol Mode**: Set probes to automatically loop their routes for continuous exploration
+- **Visual Feedback**: 
+  - Dashed deployment line from hub to mouse cursor
+  - Range circles show hub coverage
+  - Pulsing probe animation with radar rings
+  - Real-time distance validation
+  - Connected detail panels with dotted lines
+
+### Signal Discovery & Collection
+- **Direct Click Collection**: Click directly on signals to collect them (no box selection needed)
+- **Cargo System**: Resources are stored as cargo on the nearest active probe
+- **Delayed Rewards**: Resources only added to inventory when probe returns to hub
+- **Rarity Tiers**: Common, Uncommon, Rare, Epic, Legendary
+- **Dynamic Spawning**: 30% chance to spawn signals near probe pulses
+- **Time-Limited**: Signals disappear after a set duration based on rarity
+
+### Planet Exploration
+- **Three Exploration Modes**:
+  - **Excavate**: Mine for minerals
+  - **Exterminate**: Hunt creatures for data
+  - **Expedition**: Search ruins for artifacts
+- **Procedural Planets**: 8 unique planet types with descriptions
+- **Dynamic Visuals**: Planets rendered with randomized colors and surface features
+
+### Research System
+- **Research Laboratory**: Unlocks automatically when you earn your first research point
+- **Three Specialization Trees**: Collection, Probe Technology, and Alien Technology
+- **Milestone-Based Points**: Earn research points at 50/200/500/1000 of each resource type
+- **Sector Discovery Points**: Gain research points for discovering new sectors
+- **Auto-Unlock Modal**: Automatically opens research lab when unlocked
+- **Visual Research Tree**: Three distinct trees with proper spacing and dividers
+- **Universal Collection**: Ultimate automation that collects all resource types
+- **Rarity Progression**: Unlock higher signal rarities for auto-collection
+- **Fixed Info Panel**: Research descriptions and buttons always visible at bottom
+
+### Building & Construction System
+- **Path-Based Building**: Construct facilities along active probe routes
+- **Building Types**:
+  - **Mining Outposts**: Generate passive exotic minerals (50M, 20D)
+  - **Mining Facilities**: Advanced resource extraction (75M, 30D) 
+  - **Recon Hubs**: Expand probe deployment range (100M)
+- **Building Preview**: Visual preview system shows structure placement before confirming
+- **Right-Click Cancellation**: Cancel building mode or probe deployment with right-click
+- **Structure Levels**: Buildings can be upgraded and enhanced over time
+
+### Equipment & Automation
+- **Equipment Slots**: Each probe has equipment slots visible in detail panel
+- **Auto-Collectors**: Research-unlocked equipment for automatic signal collection
+- **Idle Mechanics**: Probes continue working and collecting while away from game
+
+### Infinite Sector System
+- **Procedural Generation**: Unlimited galaxy exploration with unique sector types
+- **Sector Bonuses**: Each sector provides different resource multipliers
+- **Mining Outposts**: Build passive income generators in discovered sectors
+- **Minimap Navigation**: Visual sector overview with click-to-navigate
+- **Balanced Sectors**: Standardized 1920x1080 sector dimensions for consistent gameplay
+
+### Resources
+- **Probes**: Start with 3, consumed on deployment, returned after journey
+- **Minerals**: Gathered through excavation and mining facilities
+- **Data**: Collected from extermination missions and research
+- **Artifacts**: Found during expeditions and special discoveries
+- **Exotic Minerals**: Rare resources from mining outposts and advanced exploration
+- **Research Points**: Currency for unlocking new technologies
+
+## Controls
+
+### Hub Selection & Management
+1. Click on any Recon Hub to select it (turns yellow when selected)
+2. Selected hub info shows in header: "Hub: 3/5" (current/max probes)
+3. Use "Build Probe" to add probes to selected hub (25 Minerals)
+4. Use "Build Recon Hub" to place new hubs (100 Minerals)
+
+### Probe Deployment & Management
+1. Select a Recon Hub by clicking on it
+2. Click "Deploy Probe" (only enabled when hub is selected and has probes)
+3. Move mouse to see deployment line and range circle
+4. Click to set first waypoint (must be within hub range)
+5. Click to set second waypoint (optional)
+6. Click to set third waypoint or right-click to deploy early
+7. **Probe Tracking**: Click any probe in Active Probes list to view detailed panel
+8. **Camera Lock**: Check "Lock Camera to Probe" for continuous tracking
+9. **Patrol Mode**: Enable automatic route looping for continuous exploration
+
+### Building & Construction Controls
+1. **Select Building Mode**: Click probe in Active Probes, then select building type
+2. **Preview Placement**: Move mouse along probe path to see building preview
+3. **Confirm Building**: Click to place structure at desired location
+4. **Cancel Building**: Right-click to exit building mode
+5. **Resource Validation**: Building buttons grey out when resources insufficient
+
+### Research Laboratory
+1. **Access Research**: Click "Research Lab" button (appears when you earn first research point)
+2. **Auto-Open**: Research lab automatically opens when first unlocked
+3. **Navigate Trees**: Scroll through three specialization trees with visual dividers
+4. **View Details**: Click nodes to see research details in fixed bottom panel
+5. **Unlock Technology**: Click "Research" button when you have enough Research Points
+6. **Equipment Management**: Equip unlocked auto-collectors in probe detail panels
+7. **Milestone Tracking**: Earn points at 50/200/500/1000 of each resource type
+
+### Navigation & Camera
+- **Panning**: Click and drag to pan around the galaxy
+- **Minimap Navigation**: Click minimap to jump to different sectors
+- **Arrow Keys**: Alternative panning controls
+- **Probe Focus**: Camera automatically centers on selected/tracked probes
+
+### Resource Management
+- **Button States**: All action buttons grey out when requirements aren't met
+- **Real-time Validation**: Visual feedback prevents invalid actions
+- **Cost Display**: Button text shows resource costs
+- **Cargo Delivery**: Resources collected by probes only credited upon hub return
+- **Auto-Collection**: Equipped probes automatically collect nearby signals
+
+### Signal Collection
+- **Direct Click**: Click directly on signals (colored pulses) to collect them
+- **Probe Cargo**: Collected resources stored on nearest active probe
+- **Delayed Rewards**: Resources added to inventory only when probe returns to hub
+- **Auto-Collection**: Equip Auto-Collectors for automatic signal gathering
+- **Rarity Recognition**: Different colors indicate signal value and rarity
+
+### Planet Exploration
+- Choose one of three exploration modes when visiting a planet
+- Each mode yields different resources based on signal rarity
+
+## Game Loop Ideas for Future Development
+
+### Progression Systems
+
+#### 1. **Probe Upgrades**
+- **Speed Modules**: Increase probe travel speed
+- **Scanner Range**: Larger radar pulse radius
+- **Signal Magnetism**: Attract nearby signals
+- **Multi-Probe**: Deploy multiple probes simultaneously
+- **Auto-Return**: Probes automatically redeploy on optimal paths
+
+#### 2. **Research Tree**
+- Use Data to unlock new technologies:
+  - **Deep Space Scanning**: Reveal distant signal clusters
+  - **Quantum Navigation**: Teleport probes instantly
+  - **Signal Prediction**: AI predicts signal spawn locations
+  - **Wormhole Networks**: Create permanent fast-travel points
+
+#### 3. **Base Building**
+- **Space Station Hub**: Central command center
+- **Mining Outposts**: Passive mineral generation on discovered planets
+- **Research Labs**: Boost data collection efficiency
+- **Artifact Museums**: Display collections, unlock bonuses
+- **Probe Factories**: Automated probe production
+
+#### 4. **Discovery Crafting**
+- Combine resources to create:
+  - **Star Maps**: Unlock new sectors
+  - **Alien Translators**: Communicate with species for quests
+  - **Portal Keys**: Access special dimensions
+  - **Time Crystals**: Manipulate game speed
+
+#### 5. **Prestige Mechanics**
+- **Galaxy Reset**: Start fresh with permanent bonuses
+- **Ancient Tech Points**: Unlock powerful passive abilities
+- **Cosmic Knowledge**: Permanent resource multipliers
+- **Quantum Echoes**: Start with ghost probes from previous runs
+
+#### 6. **Events & Challenges**
+- **Solar Storms**: Navigate hazardous areas for rare rewards
+- **Alien Invasions**: Defend sectors using probe networks
+- **Black Hole Events**: Risk probes for exponential rewards
+- **Time Rifts**: Limited-time high-value signal spawns
+- **Galactic Markets**: Trade resources with fluctuating prices
+
+#### 7. **Collection Systems**
+- **Alien Codex**: Catalog discovered species
+- **Mineral Database**: Complete sets for bonuses
+- **Artifact Gallery**: Display legendary finds
+- **Planet Archives**: 100% exploration achievements
+- **Signal Encyclopedia**: Track all signal types encountered
+
+#### 8. **Automation Features**
+- **Probe AI**: Set behavior patterns (aggressive, cautious, efficient)
+- **Auto-Explore**: Queue planet exploration decisions
+- **Resource Converters**: Automatic resource trading
+- **Signal Harvesters**: Passive collection drones
+
+#### 9. **Multiplayer Elements**
+- **Galactic Leaderboards**: Compete for most discoveries
+- **Trade Networks**: Exchange resources with other players
+- **Cooperative Expeditions**: Team up for mega-signals
+- **Territory Control**: Claim sectors for bonuses
+
+#### 10. **Story Mode**
+- **Mystery of the Ancients**: Uncover why civilizations vanished
+- **The Signal Source**: Track origin of mysterious transmissions
+- **Dimensional Rifts**: Explore parallel universes
+- **The Great Filter**: Prevent galactic catastrophe
+
+## 🧪 Testing & Quality Assurance
+
+### Testing Framework: Playwright
+We use **Playwright** for comprehensive end-to-end testing, chosen specifically for its superior handling of browser APIs and localStorage testing.
+
+#### Setup & Running Tests
+```bash
+# Install dependencies and browsers
+npm install
+npm run install-browsers
+
+# Run all tests
+npm test                    # Headless mode
+npm test:headed            # With browser visible  
+npm test:debug             # Debug mode
+npm test:save              # Save system tests only
+```
+
+#### Test Coverage
+**Save System Tests** (Critical Priority):
+- ✅ Basic save/load operations across multiple slots
+- ✅ Research progress persistence and tree node restoration  
+- ✅ Probe equipment state management and auto-updates
+- ✅ Auto-save functionality during quit operations
+- ✅ Error handling and graceful recovery scenarios
+- ✅ Multiple save overwrites and race condition prevention
+- ✅ Save metadata accuracy and display verification
+- ✅ Cross-session state consistency (save→quit→reload→load)
+
+**Smoke Tests**:
+- ✅ Game startup and core system initialization
+- ✅ UI navigation and modal system functionality
+- ✅ Research system unlock and basic operations
+- ✅ Probe deployment and management basics
+
+#### Testing Philosophy
+The save system is the **most critical component** of an idle game. Our testing approach:
+
+1. **Real Browser Environment**: Tests run in actual browsers to catch issues unit tests miss
+2. **localStorage Focus**: Comprehensive testing of browser storage APIs
+3. **Complex State Scenarios**: Tests intricate game states with multiple interacting systems
+4. **Error Simulation**: Deliberately breaks systems to test recovery mechanisms
+5. **Cross-Session Verification**: Full save→quit→reload→continue workflows
+
+#### Test Results
+All save system tests passing across Chrome, Firefox, and Safari. The save system has been verified as **bulletproof** through comprehensive automated testing.
+
+## Technical Details
+
+- **Pure JavaScript**: No frameworks or external dependencies required
+- **Canvas-Based Rendering**: High-performance 2D graphics with real-time animations
+- **Responsive Design**: Adapts to different screen sizes and resolutions
+- **Standardized Sectors**: Fixed 1920x1080 sector dimensions for consistent gameplay
+- **Real-Time Systems**: 
+  - Continuous probe tracking and status updates
+  - Dynamic UI state management
+  - Smooth camera interpolation and locking
+  - Automated resource collection and processing
+- **Advanced Coordinate Systems**: Separate world and screen coordinate handling
+- **DOM Integration**: Seamless blend of canvas graphics and HTML UI elements
+- **Event-Driven Architecture**: Comprehensive state management and user interaction handling
+- **Robust Data Persistence**: Multi-layer save system with integrity checks and error recovery
+
+## Recent Changes (v0.4.0)
+
+### Signal Collection & Cargo System
+- **Changed**: Signals now collected via direct clicking instead of box selection
+- **Added**: Probe cargo system - resources stored on probes until delivery
+- **Added**: Automatic cargo delivery when probes return to hubs
+- **Updated**: Resource rewards only credited after successful delivery
+- **Improved**: Visual feedback showing pending deliveries
+
+## Technical Achievements
+
+### Recently Implemented
+- ✅ **Cargo Delivery System**: Probes carry resources back to hubs for delivery
+- ✅ **Direct Signal Collection**: Click-to-collect replaced box selection system
+- ✅ **Advanced Probe Management**: Real-time status tracking with detailed panels
+- ✅ **Research System**: Three-tree specialization system with auto-unlock
+- ✅ **Milestone System**: Comprehensive research point awards (16 total possible)
+- ✅ **Equipment System**: Auto-collectors with universal collection upgrade
+- ✅ **Building System**: Path-based construction with preview and validation
+- ✅ **Camera Tracking**: Continuous probe following with smooth interpolation
+- ✅ **Coordinate Systems**: Fixed hub selection and panel positioning bugs
+- ✅ **UI State Management**: Dynamic button states and resource validation
+- ✅ **Research Lab UI**: Fixed scrolling with always-visible info panel
+- ✅ **Visual Improvements**: Tree dividers, proper spacing, and z-index layering
+
+### Critical Systems (Sept 2025)
+- ✅ **Save/Load System**: Bulletproof multi-slot save system with auto-save
+- ✅ **Research Progress Persistence**: Complete research tree state restoration
+- ✅ **Equipment Auto-Updates**: Equipment gains new capabilities when research completes
+- ✅ **Error Handling & Recovery**: Comprehensive error logging and graceful failures
+- ✅ **Cross-Session State Management**: Full game state consistency across saves
+- ✅ **Automated Testing Suite**: Playwright-based testing for save system integrity
+
+## Future Considerations
+
+### Short-term Goals  
+- ✅ **Save/Load System**: Robust persistent game state across sessions (COMPLETED)
+- ✅ **Comprehensive Testing**: Playwright-based automation tests (IMPLEMENTED)
+- **Sound Design**: Audio feedback for actions and ambient space sounds
+- **Enhanced Visual Effects**: Particle systems and advanced animations
+- **More Building Types**: Specialized facilities with unique functions
+- **Advanced Research**: Extended technology tree with branching paths
+
+### Long-term Vision
+- **Performance Optimization**: Web Workers for background calculations
+- **Advanced AI**: Smart probe behaviors and automated exploration
+- **Complex Resource Chains**: Multi-stage production and refinement systems
+- **Diplomatic Systems**: Alien races and trading mechanics
+- **Modular Probe Customization**: Hull types, engine upgrades, specialized equipment
+- **Multiplayer Features**: Cooperative exploration and competitive leaderboards

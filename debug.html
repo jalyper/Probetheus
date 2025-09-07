@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Canvas Debug Test</title>
+    <style>
+        canvas {
+            border: 2px solid red;
+            background: #000;
+            cursor: grab;
+        }
+    </style>
+</head>
+<body>
+    <h1>Canvas Event Debug</h1>
+    <canvas id="testCanvas" width="800" height="600"></canvas>
+    <div id="output"></div>
+
+    <script>
+        const canvas = document.getElementById('testCanvas');
+        const ctx = canvas.getContext('2d');
+        const output = document.getElementById('output');
+
+        console.log('Canvas element:', canvas);
+        console.log('Canvas context:', ctx);
+
+        // Draw a simple test shape
+        ctx.fillStyle = '#0ff';
+        ctx.fillRect(100, 100, 50, 50);
+        
+        ctx.strokeStyle = '#0f0';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(300, 200, 100, 100);
+
+        // Test click events
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const msg = `Canvas clicked at (${x}, ${y})`;
+            console.log(msg);
+            output.innerHTML += '<p>' + msg + '</p>';
+            
+            // Draw a red dot where clicked
+            ctx.fillStyle = '#f00';
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            document.title = `Mouse at (${x}, ${y})`;
+        });
+    </script>
+</body>
+</html>
