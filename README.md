@@ -1,7 +1,7 @@
-# Cosmic Probe Explorer
-**Version 0.3.1-pre-alpha**
+# Probetheus
+**Version 0.4.0-pre-alpha**
 
-A space exploration idle game where you deploy probes from Recon Hubs to discover signals, explore planets, and collect resources across an infinite procedural galaxy. Features advanced probe management, research systems, and automated collection mechanics.
+A space exploration idle game where you deploy probes from Recon Hubs to discover signals, explore planets, and collect resources across an infinite procedural galaxy. Features advanced probe management, cargo delivery systems, research trees, and automated collection mechanics.
 
 ## Current Features
 
@@ -28,7 +28,10 @@ A space exploration idle game where you deploy probes from Recon Hubs to discove
   - Real-time distance validation
   - Connected detail panels with dotted lines
 
-### Signal Discovery
+### Signal Discovery & Collection
+- **Direct Click Collection**: Click directly on signals to collect them (no box selection needed)
+- **Cargo System**: Resources are stored as cargo on the nearest active probe
+- **Delayed Rewards**: Resources only added to inventory when probe returns to hub
 - **Rarity Tiers**: Common, Uncommon, Rare, Epic, Legendary
 - **Dynamic Spawning**: 30% chance to spawn signals near probe pulses
 - **Time-Limited**: Signals disappear after a set duration based on rarity
@@ -127,10 +130,13 @@ A space exploration idle game where you deploy probes from Recon Hubs to discove
 - **Button States**: All action buttons grey out when requirements aren't met
 - **Real-time Validation**: Visual feedback prevents invalid actions
 - **Cost Display**: Button text shows resource costs
+- **Cargo Delivery**: Resources collected by probes only credited upon hub return
 - **Auto-Collection**: Equipped probes automatically collect nearby signals
 
 ### Signal Collection
-- **Manual Collection**: Click on signals (colored pulses) to collect and explore
+- **Direct Click**: Click directly on signals (colored pulses) to collect them
+- **Probe Cargo**: Collected resources stored on nearest active probe
+- **Delayed Rewards**: Resources added to inventory only when probe returns to hub
 - **Auto-Collection**: Equip Auto-Collectors for automatic signal gathering
 - **Rarity Recognition**: Different colors indicate signal value and rarity
 
@@ -208,6 +214,53 @@ A space exploration idle game where you deploy probes from Recon Hubs to discove
 - **Dimensional Rifts**: Explore parallel universes
 - **The Great Filter**: Prevent galactic catastrophe
 
+## 🧪 Testing & Quality Assurance
+
+### Testing Framework: Playwright
+We use **Playwright** for comprehensive end-to-end testing, chosen specifically for its superior handling of browser APIs and localStorage testing.
+
+#### Setup & Running Tests
+```bash
+# Install dependencies and browsers
+npm install
+npm run install-browsers
+
+# Run all tests
+npm test                    # Headless mode
+npm test:headed            # With browser visible  
+npm test:debug             # Debug mode
+npm test:save              # Save system tests only
+```
+
+#### Test Coverage
+**Save System Tests** (Critical Priority):
+- ✅ Basic save/load operations across multiple slots
+- ✅ Research progress persistence and tree node restoration  
+- ✅ Probe equipment state management and auto-updates
+- ✅ Auto-save functionality during quit operations
+- ✅ Error handling and graceful recovery scenarios
+- ✅ Multiple save overwrites and race condition prevention
+- ✅ Save metadata accuracy and display verification
+- ✅ Cross-session state consistency (save→quit→reload→load)
+
+**Smoke Tests**:
+- ✅ Game startup and core system initialization
+- ✅ UI navigation and modal system functionality
+- ✅ Research system unlock and basic operations
+- ✅ Probe deployment and management basics
+
+#### Testing Philosophy
+The save system is the **most critical component** of an idle game. Our testing approach:
+
+1. **Real Browser Environment**: Tests run in actual browsers to catch issues unit tests miss
+2. **localStorage Focus**: Comprehensive testing of browser storage APIs
+3. **Complex State Scenarios**: Tests intricate game states with multiple interacting systems
+4. **Error Simulation**: Deliberately breaks systems to test recovery mechanisms
+5. **Cross-Session Verification**: Full save→quit→reload→continue workflows
+
+#### Test Results
+All save system tests passing across Chrome, Firefox, and Safari. The save system has been verified as **bulletproof** through comprehensive automated testing.
+
 ## Technical Details
 
 - **Pure JavaScript**: No frameworks or external dependencies required
@@ -222,10 +275,22 @@ A space exploration idle game where you deploy probes from Recon Hubs to discove
 - **Advanced Coordinate Systems**: Separate world and screen coordinate handling
 - **DOM Integration**: Seamless blend of canvas graphics and HTML UI elements
 - **Event-Driven Architecture**: Comprehensive state management and user interaction handling
+- **Robust Data Persistence**: Multi-layer save system with integrity checks and error recovery
+
+## Recent Changes (v0.4.0)
+
+### Signal Collection & Cargo System
+- **Changed**: Signals now collected via direct clicking instead of box selection
+- **Added**: Probe cargo system - resources stored on probes until delivery
+- **Added**: Automatic cargo delivery when probes return to hubs
+- **Updated**: Resource rewards only credited after successful delivery
+- **Improved**: Visual feedback showing pending deliveries
 
 ## Technical Achievements
 
 ### Recently Implemented
+- ✅ **Cargo Delivery System**: Probes carry resources back to hubs for delivery
+- ✅ **Direct Signal Collection**: Click-to-collect replaced box selection system
 - ✅ **Advanced Probe Management**: Real-time status tracking with detailed panels
 - ✅ **Research System**: Three-tree specialization system with auto-unlock
 - ✅ **Milestone System**: Comprehensive research point awards (16 total possible)
@@ -237,10 +302,19 @@ A space exploration idle game where you deploy probes from Recon Hubs to discove
 - ✅ **Research Lab UI**: Fixed scrolling with always-visible info panel
 - ✅ **Visual Improvements**: Tree dividers, proper spacing, and z-index layering
 
+### Critical Systems (Sept 2025)
+- ✅ **Save/Load System**: Bulletproof multi-slot save system with auto-save
+- ✅ **Research Progress Persistence**: Complete research tree state restoration
+- ✅ **Equipment Auto-Updates**: Equipment gains new capabilities when research completes
+- ✅ **Error Handling & Recovery**: Comprehensive error logging and graceful failures
+- ✅ **Cross-Session State Management**: Full game state consistency across saves
+- ✅ **Automated Testing Suite**: Playwright-based testing for save system integrity
+
 ## Future Considerations
 
 ### Short-term Goals  
-- **Save/Load System**: Persistent game state across sessions
+- ✅ **Save/Load System**: Robust persistent game state across sessions (COMPLETED)
+- ✅ **Comprehensive Testing**: Playwright-based automation tests (IMPLEMENTED)
 - **Sound Design**: Audio feedback for actions and ambient space sounds
 - **Enhanced Visual Effects**: Particle systems and advanced animations
 - **More Building Types**: Specialized facilities with unique functions

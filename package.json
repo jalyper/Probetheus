@@ -1,0 +1,20 @@
+{
+  "name": "probetheus",
+  "version": "1.0.0",
+  "description": "Probetheus - A space exploration idle game where you deploy probes to discover signals and explore infinite galaxies",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python -m http.server 8000",
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:save": "playwright test tests/save-system.spec.js",
+    "install-browsers": "playwright install"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  },
+  "keywords": ["game", "idle", "space", "exploration", "probes", "probetheus"],
+  "author": "Your Name",
+  "license": "MIT"
+}

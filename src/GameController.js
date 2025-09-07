@@ -16,6 +16,8 @@ class GameController {
         this.buildingSystem = new BuildingSystem(this.gameState, this.eventBus);
         this.researchManager = new ResearchManager(this.gameState, this.eventBus);
         this.sectorManager = new SectorManager(this.gameState, this.eventBus);
+        this.saveManager = new SaveManager(this.gameState, this.eventBus);
+        this.offlineManager = new OfflineManager(this.gameState, this.eventBus);
         this.uiManager = new UIManager(this.gameState, this.eventBus, this.probeManager, this.buildingSystem);
         
         // Expose globally for onclick handlers
@@ -24,6 +26,11 @@ class GameController {
         
         // Listen for resource indicator events
         this.eventBus.on('resource:indicator', this.addResourceIndicator.bind(this));
+        
+        // Listen for research completion to update probe equipment
+        this.eventBus.on('research:completed', (data) => {
+            this.onResearchCompleted(data.node);
+        });
         
         // Listen for screen switching events
         this.eventBus.on('ui:switchScreen', (data) => {
@@ -106,6 +113,12 @@ class GameController {
         
         this.uiManager.updateUI();
         this.startPassiveGeneration();
+        
+        // Check for offline progression on initial load
+        this.checkInitialOfflineProgression();
+        
+        // Setup auto-save on page unload
+        this.setupAutoSaveOnExit();
     }
 
     /**
@@ -180,8 +193,8 @@ class GameController {
         // Canvas click events
         this.canvas.addEventListener('click', (e) => {
             const rect = this.canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left + this.gameState.world.viewOffset.x;
-            const y = e.clientY - rect.top + this.gameState.world.viewOffset.y;
+            const x = (e.clientX - rect.left) / this.gameState.world.zoomLevel + this.gameState.world.viewOffset.x;
+            const y = (e.clientY - rect.top) / this.gameState.world.zoomLevel + this.gameState.world.viewOffset.y;
             
             this.handleCanvasClick(x, y);
         });
@@ -190,36 +203,24 @@ class GameController {
         this.canvas.addEventListener('mousedown', (e) => {
             console.log('Canvas mousedown event fired');
             const rect = this.canvas.getBoundingClientRect();
-            const worldX = e.clientX - rect.left + this.gameState.world.viewOffset.x;
-            const worldY = e.clientY - rect.top + this.gameState.world.viewOffset.y;
+            const worldX = (e.clientX - rect.left) / this.gameState.world.zoomLevel + this.gameState.world.viewOffset.x;
+            const worldY = (e.clientY - rect.top) / this.gameState.world.zoomLevel + this.gameState.world.viewOffset.y;
             
             if (!this.gameState.ui.deployMode && !this.gameState.ui.hubPlacementMode && !this.buildingSystem.isBuildingMode()) {
-                // Check if we're starting over a signal - if so, start signal selection mode
-                const nearbySignals = this.findSignalsInArea(worldX, worldY, 150); // 150 pixel radius for easier selection
-                
-                if (nearbySignals.length > 0) {
-                    // Start signal selection mode
-                    this.gameState.input.isSelectingSignals = true;
-                    this.gameState.input.selectionStart = { x: worldX, y: worldY };
-                    this.gameState.input.selectionEnd = { x: worldX, y: worldY };
-                    this.canvas.className = 'custom-crosshair';
-                    console.log('Started signal selection mode');
-                } else {
-                    // Start normal camera dragging
-                    this.gameState.input.isDragging = true;
-                    this.gameState.input.dragStart = { x: e.clientX, y: e.clientY };
-                    this.gameState.input.lastViewOffset = { ...this.gameState.world.viewOffset };
-                    this.canvas.style.cursor = 'grabbing';
-                    console.log('Started camera dragging');
-                }
+                // Start normal camera dragging
+                this.gameState.input.isDragging = true;
+                this.gameState.input.dragStart = { x: e.clientX, y: e.clientY };
+                this.gameState.input.lastViewOffset = { ...this.gameState.world.viewOffset };
+                this.canvas.style.cursor = 'grabbing';
+                console.log('Started camera dragging');
             }
         });
 
         // Add mousemove for dragging
         this.canvas.addEventListener('mousemove', (e) => {
             const rect = this.canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left + this.gameState.world.viewOffset.x;
-            const y = e.clientY - rect.top + this.gameState.world.viewOffset.y;
+            const x = (e.clientX - rect.left) / this.gameState.world.zoomLevel + this.gameState.world.viewOffset.x;
+            const y = (e.clientY - rect.top) / this.gameState.world.zoomLevel + this.gameState.world.viewOffset.y;
             
             this.gameState.ui.mousePosition = { x, y };
             
@@ -228,15 +229,9 @@ class GameController {
                 const deltaX = e.clientX - this.gameState.input.dragStart.x;
                 const deltaY = e.clientY - this.gameState.input.dragStart.y;
                 
-                this.gameState.world.viewOffset.x = this.gameState.input.lastViewOffset.x - deltaX;
-                this.gameState.world.viewOffset.y = this.gameState.input.lastViewOffset.y - deltaY;
+                this.gameState.world.viewOffset.x = this.gameState.input.lastViewOffset.x - deltaX / this.gameState.world.zoomLevel;
+                this.gameState.world.viewOffset.y = this.gameState.input.lastViewOffset.y - deltaY / this.gameState.world.zoomLevel;
                 return; // Don't update cursor when dragging
-            }
-            
-            // Handle signal selection dragging
-            if (this.gameState.input.isSelectingSignals) {
-                this.gameState.input.selectionEnd = { x, y };
-                return; // Don't update cursor when selecting
             }
             
             // Update cursor based on what's under mouse
@@ -254,26 +249,72 @@ class GameController {
                 this.gameState.input.isDragging = false;
                 this.canvas.style.cursor = 'grab';
             }
-            
-            if (this.gameState.input.isSelectingSignals) {
-                console.log('Finished signal selection');
-                this.completeSignalSelection();
-                this.gameState.input.isSelectingSignals = false;
-                this.gameState.input.selectionStart = null;
-                this.gameState.input.selectionEnd = null;
-                this.canvas.className = '';
-                this.canvas.style.cursor = 'grab';
-            }
         });
 
-        // Add mouse leave to reset cursor and stop dragging/selecting
+        // Add mouse leave to reset cursor and stop dragging
         this.canvas.addEventListener('mouseleave', () => {
             this.gameState.input.isDragging = false;
-            this.gameState.input.isSelectingSignals = false;
-            this.gameState.input.selectionStart = null;
-            this.gameState.input.selectionEnd = null;
-            this.canvas.className = '';
             this.canvas.style.cursor = 'grab';
+        });
+
+        // Add mouse wheel for zooming
+        this.canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            
+            const rect = this.canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            // Get world position before zoom
+            const worldX = mouseX / this.gameState.world.zoomLevel + this.gameState.world.viewOffset.x;
+            const worldY = mouseY / this.gameState.world.zoomLevel + this.gameState.world.viewOffset.y;
+            
+            // Adjust zoom level
+            const zoomDelta = e.deltaY > 0 ? 0.9 : 1.1;
+            let newZoom = this.gameState.world.zoomLevel * zoomDelta;
+            
+            // Clamp zoom between 0.1 (far zoom out) and 3 (close zoom in)
+            newZoom = Math.max(0.1, Math.min(3, newZoom));
+            this.gameState.world.zoomLevel = newZoom;
+            
+            // Adjust view offset to keep mouse position fixed
+            this.gameState.world.viewOffset.x = worldX - mouseX / newZoom;
+            this.gameState.world.viewOffset.y = worldY - mouseY / newZoom;
+            
+            console.log('Zoom level:', this.gameState.world.zoomLevel);
+        });
+
+        // Add keyboard controls for zooming
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '+' || e.key === '=') {
+                // Zoom in (center of screen)
+                const centerX = this.canvas.width / 2;
+                const centerY = this.canvas.height / 2;
+                
+                const worldX = centerX / this.gameState.world.zoomLevel + this.gameState.world.viewOffset.x;
+                const worldY = centerY / this.gameState.world.zoomLevel + this.gameState.world.viewOffset.y;
+                
+                let newZoom = this.gameState.world.zoomLevel * 1.1;
+                newZoom = Math.max(0.2, Math.min(3, newZoom));
+                this.gameState.world.zoomLevel = newZoom;
+                
+                this.gameState.world.viewOffset.x = worldX - centerX / newZoom;
+                this.gameState.world.viewOffset.y = worldY - centerY / newZoom;
+            } else if (e.key === '-' || e.key === '_') {
+                // Zoom out (center of screen)
+                const centerX = this.canvas.width / 2;
+                const centerY = this.canvas.height / 2;
+                
+                const worldX = centerX / this.gameState.world.zoomLevel + this.gameState.world.viewOffset.x;
+                const worldY = centerY / this.gameState.world.zoomLevel + this.gameState.world.viewOffset.y;
+                
+                let newZoom = this.gameState.world.zoomLevel * 0.9;
+                newZoom = Math.max(0.2, Math.min(3, newZoom));
+                this.gameState.world.zoomLevel = newZoom;
+                
+                this.gameState.world.viewOffset.x = worldX - centerX / newZoom;
+                this.gameState.world.viewOffset.y = worldY - centerY / newZoom;
+            }
         });
 
         // Right-click to cancel building mode
@@ -379,6 +420,22 @@ class GameController {
                 this.eventBus.emit('research:showTree');
             });
         }
+
+        // Main menu button
+        const mainMenuBtn = document.getElementById('mainMenuBtn');
+        if (mainMenuBtn) {
+            mainMenuBtn.addEventListener('click', () => {
+                this.showMainMenu();
+            });
+        }
+
+        // Close save/load modal
+        const closeSaveLoadModal = document.getElementById('closeSaveLoadModal');
+        if (closeSaveLoadModal) {
+            closeSaveLoadModal.addEventListener('click', () => {
+                document.getElementById('saveLoadModal').classList.remove('active');
+            });
+        }
     }
 
     /**
@@ -398,15 +455,7 @@ class GameController {
             return;
         }
 
-        // Check for probe clicks
-        const clickedProbe = this.findProbeAt(worldX, worldY);
-        if (clickedProbe) {
-            console.log('Found probe at click location');
-            this.eventBus.emit('probe:select', { probe: clickedProbe });
-            return;
-        }
-
-        // Check for hub clicks
+        // Check for hub clicks FIRST (higher priority than probes)
         const clickedHub = this.findHubAt(worldX, worldY);
         if (clickedHub) {
             console.log('Found hub at click location');
@@ -414,8 +463,21 @@ class GameController {
             return;
         }
 
-        // Signal collection is now handled by drag-to-select system
-        // (removed click-to-collect functionality)
+        // Check for probe clicks SECOND (only if no hub was clicked)
+        const clickedProbe = this.findProbeAt(worldX, worldY);
+        if (clickedProbe) {
+            console.log('Found probe at click location');
+            this.eventBus.emit('probe:select', { probe: clickedProbe });
+            return;
+        }
+
+        // Check for signal clicks
+        const clickedSignal = this.findSignalAt(worldX, worldY);
+        if (clickedSignal) {
+            console.log('Found signal at click location');
+            this.collectSignal(clickedSignal);
+            return;
+        }
 
         // Handle hub placement mode
         if (this.gameState.ui.hubPlacementMode) {
@@ -487,19 +549,14 @@ class GameController {
      * Find hub at coordinates
      */
     findHubAt(x, y) {
-        console.log(`Finding hub at (${x}, ${y})`);
-        console.log(`Total hubs available: ${this.gameState.entities.reconHubs.length}`);
-        
         const clickedHub = this.gameState.entities.reconHubs.find(hub => {
             const distance = Math.sqrt(
                 Math.pow(x - hub.x, 2) + 
                 Math.pow(y - hub.y, 2)
             );
-            console.log(`Hub ${hub.id} at (${hub.x}, ${hub.y}), distance: ${distance}`);
-            return distance <= 30; // Temporarily larger for debugging
+            return distance <= 60; // Large hitbox for easy selection
         });
         
-        console.log('Clicked hub found:', !!clickedHub);
         if (clickedHub) {
             console.log('Found hub:', clickedHub.id);
         }
@@ -515,11 +572,34 @@ class GameController {
                 Math.pow(x - signal.x, 2) + 
                 Math.pow(y - signal.y, 2)
             );
-            // Use much larger click radius to make signals easier to click
-            const clickRadius = signal.radius * 3; // Increased from 2 to 3 for better clickability
+            // Use very large click radius to make signals easy to click even when zoomed out
+            const clickRadius = signal.radius * 8; // Significantly increased for better clickability
             
             return distance <= clickRadius;
         });
+    }
+
+    /**
+     * Find nearest active probe to a position
+     */
+    findNearestActiveProbe(x, y) {
+        let nearestProbe = null;
+        let minDistance = Infinity;
+        
+        this.gameState.entities.probes.forEach(probe => {
+            if (probe.active && probe.status === 'exploring') {
+                const distance = Math.sqrt(
+                    Math.pow(x - probe.current.x, 2) + 
+                    Math.pow(y - probe.current.y, 2)
+                );
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestProbe = probe;
+                }
+            }
+        });
+        
+        return nearestProbe;
     }
 
     /**
@@ -726,23 +806,42 @@ class GameController {
         else if (rarity === 'epic') exoticBonus = 3;
         else if (rarity === 'legendary') exoticBonus = 10;
 
-        // Apply rewards
-        const currentResources = this.gameState.getResources();
-        const newResources = { ...currentResources };
-        newResources[primaryReward] += rewardAmount;
-        if (exoticBonus > 0) {
-            newResources.exoticMinerals += exoticBonus;
+        // Find nearest active probe to store the rewards
+        const nearestProbe = this.findNearestActiveProbe(signal.x, signal.y);
+        if (nearestProbe) {
+            // Initialize cargo if it doesn't exist
+            if (!nearestProbe.cargo) {
+                nearestProbe.cargo = {
+                    minerals: 0,
+                    data: 0,
+                    artifacts: 0,
+                    exoticMinerals: 0
+                };
+            }
+            
+            // Add rewards to probe's cargo
+            nearestProbe.cargo[primaryReward] += rewardAmount;
+            if (exoticBonus > 0) {
+                nearestProbe.cargo.exoticMinerals += exoticBonus;
+            }
+            
+            // Update Probethium stats
+            this.gameState.updateProbethiumStats('signal_collected');
+            this.gameState.updateProbethiumStats('resource_gathered', { amount: rewardAmount + exoticBonus });
+            
+            console.log(`Probe ${nearestProbe.id} carrying cargo:`, nearestProbe.cargo);
+        } else {
+            console.warn('No active probe found to carry rewards!');
         }
 
-        this.gameState.updateResources(newResources, this.eventBus);
-
-        // Show reward message
+        // Show reward message (but don't apply to inventory yet)
         let rewardText = `+${rewardAmount} ${primaryReward.charAt(0).toUpperCase() + primaryReward.slice(1)}`;
         if (exoticBonus > 0) {
             rewardText += `, +${exoticBonus} Exotic Minerals`;
         }
+        rewardText += ' (pending delivery)';
 
-        console.log(`Exploration reward: ${rewardText}`);
+        console.log(`Exploration reward stored: ${rewardText}`);
 
         // Show reward modal
         this.showRewardModal(rewardText, mode);
@@ -773,7 +872,8 @@ class GameController {
         };
 
         title.textContent = modeNames[mode] || 'Exploration Complete!';
-        details.innerHTML = `<div style="font-size: 18px; color: #0f0;">${rewardText}</div>`;
+        details.innerHTML = `<div style="font-size: 18px; color: #0f0;">${rewardText}</div>
+                            <div style="font-size: 14px; color: #ff0; margin-top: 10px;">Resources will be delivered when probe returns to hub</div>`;
 
         modal.classList.add('active');
 
@@ -918,6 +1018,9 @@ class GameController {
         // Update game systems
         this.eventBus.emit('game:update', { deltaTime });
         
+        // Update Probethium accumulation
+        this.gameState.calculateProbethium(deltaTime);
+        
         // Clean up expired signals
         this.cleanupExpiredSignals();
         
@@ -974,6 +1077,10 @@ class GameController {
         this.ctx.fillStyle = '#000';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
+        // Save context and apply zoom
+        this.ctx.save();
+        this.ctx.scale(this.gameState.world.zoomLevel, this.gameState.world.zoomLevel);
+
         // Render stars
         this.renderStars();
         
@@ -995,15 +1102,13 @@ class GameController {
             this.renderDeploymentOverlay();
         }
         
-        // Render signal selection rectangle
-        if (this.gameState.input.isSelectingSignals) {
-            this.renderSelectionRectangle();
-        }
-        
         // Render deployment preview lines
         if (this.gameState.ui.deployMode && this.gameState.ui.selectedHub) {
             this.renderDeploymentPreview();
         }
+
+        // Restore context
+        this.ctx.restore();
     }
 
     /**
@@ -1094,8 +1199,14 @@ class GameController {
             const endX = end.x - this.gameState.world.viewOffset.x;
             const endY = end.y - this.gameState.world.viewOffset.y;
             
-            // Determine if this is the final return segment (last segment in the path)
-            const isReturnSegment = i === probe.waypoints.length - 2 && probe.outboundWaypointsCount;
+            // Determine if this segment is part of the return journey
+            // Return journey starts after outbound waypoints are complete
+            const isReturnSegment = probe.outboundWaypointsCount && i >= probe.outboundWaypointsCount - 1;
+            
+            // Debug coloring logic occasionally
+            if (Math.random() < 0.01 && probe.waypoints.length > 2) {
+                console.log(`Probe ${probe.id} segment ${i}: outboundCount=${probe.outboundWaypointsCount}, isReturn=${isReturnSegment}, totalSegments=${probe.waypoints.length - 1}`);
+            }
             
             // Set color for this segment
             this.ctx.strokeStyle = isReturnSegment ? colors.return : colors.exploration;
@@ -1638,7 +1749,7 @@ class GameController {
      * Add a resource indicator at a specific location
      */
     addResourceIndicator(data) {
-        const { x, y, amount, resourceType } = data;
+        const { x, y, amount, resourceType, pending } = data;
         
         const colors = {
             minerals: '#fff',     // White (common signals)
@@ -1647,15 +1758,20 @@ class GameController {
             all: '#ffd700'        // Gold (universal collection)
         };
         
+        // Different styling for pending vs delivered resources
+        const text = pending ? `+${amount} (pending)` : `+${amount}`;
+        const color = pending ? '#ff9900' : (colors[resourceType] || '#fff'); // Orange for pending
+        
         this.resourceIndicators.push({
             x: x,
             y: y,
-            text: `+${amount}`,
-            color: colors[resourceType] || '#fff',
+            text: text,
+            color: color,
             opacity: 1.0,
             age: 0,
             duration: 2000, // 2 seconds
-            velocityY: -30  // Float upward
+            velocityY: -30,  // Float upward
+            pending: pending || false
         });
     }
 
@@ -1775,6 +1891,492 @@ class GameController {
                 }
             }
         }
+    }
+
+    /**
+     * Show save/load modal
+     */
+    showSaveLoadModal() {
+        console.log('showSaveLoadModal called');
+        console.log('SaveManager available:', !!this.saveManager);
+        const modal = document.getElementById('saveLoadModal');
+        const slotsContainer = document.getElementById('saveSlots');
+        
+        if (!modal || !slotsContainer) return;
+        
+        // Clear existing slots
+        slotsContainer.innerHTML = '';
+        
+        // Get save slot information
+        const slots = this.saveManager.getAllSaveSlots();
+        
+        slots.forEach(slotInfo => {
+            const slotDiv = document.createElement('div');
+            slotDiv.style.cssText = `
+                display: flex;
+                align-items: center;
+                padding: 15px;
+                background: rgba(0,0,0,0.3);
+                border: 1px solid #333;
+                border-radius: 5px;
+                gap: 15px;
+            `;
+            
+            if (slotInfo.empty) {
+                slotDiv.innerHTML = `
+                    <div style="flex: 1;">
+                        <div style="color: #0ff; font-size: 16px; margin-bottom: 5px;">Slot ${slotInfo.slotNumber}</div>
+                        <div style="color: #666; font-size: 12px;">[Empty]</div>
+                    </div>
+                    <button class="control-btn save-slot-btn" data-slot="${slotInfo.slotNumber}" data-action="save" data-original-text="Save Here">
+                        Save Here
+                    </button>
+                `;
+            } else {
+                slotDiv.innerHTML = `
+                    <div style="flex: 1;">
+                        <div style="color: #0ff; font-size: 16px; margin-bottom: 5px;">Slot ${slotInfo.slotNumber}</div>
+                        <div style="color: #aaa; font-size: 12px; line-height: 1.4;">
+                            ${slotInfo.date} ${slotInfo.time}<br>
+                            Probethium: <span style="color: #c9f;">${slotInfo.probethium}</span><br>
+                            Sectors: ${slotInfo.sectors} • Research: ${slotInfo.research}
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <button class="control-btn save-slot-btn" data-slot="${slotInfo.slotNumber}" data-action="load">
+                            Load
+                        </button>
+                        <button class="control-btn save-slot-btn" data-slot="${slotInfo.slotNumber}" data-action="save" data-original-text="Overwrite"
+                                style="background: #653; border-color: #865;">
+                            Overwrite
+                        </button>
+                        <button class="control-btn save-slot-btn" data-slot="${slotInfo.slotNumber}" data-action="delete"
+                                style="background: #533; border-color: #855; font-size: 11px;">
+                            Delete
+                        </button>
+                    </div>
+                `;
+            }
+            
+            slotsContainer.appendChild(slotDiv);
+        });
+        
+        // Add event listeners to slot buttons
+        document.querySelectorAll('.save-slot-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const slot = parseInt(e.target.dataset.slot);
+                const action = e.target.dataset.action;
+                
+                console.log('Save slot button clicked:', { slot, action, buttonText: e.target.textContent });
+                console.log('Button dataset:', e.target.dataset);
+                
+                switch (action) {
+                    case 'save':
+                        if (confirm(`Save game to slot ${slot}?`)) {
+                            // Check if this slot is already being saved
+                            if (this.saveManager.isSlotSaving(slot)) {
+                                console.warn(`Save to slot ${slot} already in progress, ignoring request`);
+                                alert('Save operation already in progress for this slot. Please wait.');
+                                return;
+                            }
+                            
+                            // Disable all save buttons during save operation
+                            this.disableAllSaveButtons();
+                            
+                            try {
+                                // Debug save operation
+                                console.log('Starting save operation for slot:', slot);
+                                console.log('SaveManager exists:', !!this.saveManager);
+                                console.log('SaveManager.saveGame exists:', !!this.saveManager?.saveGame);
+                                console.log('Current saving states:', this.saveManager.savingStates);
+                                
+                                // Update button to show "Saving..." text
+                                e.target.textContent = 'Saving...';
+                                e.target.disabled = true;
+                                
+                                const success = await this.saveManager.saveGame(slot);
+                                console.log('Save operation result:', success);
+                                console.log('Saving states after operation:', this.saveManager.savingStates);
+                                
+                                if (success) {
+                                    // Show "Saved!" confirmation
+                                    e.target.textContent = 'Saved!';
+                                    e.target.style.background = '#0a5';
+                                    
+                                    // Close modal after short delay
+                                    setTimeout(() => {
+                                        modal.classList.remove('active');
+                                    }, 1000);
+                                } else {
+                                    console.error('Save operation returned false');
+                                    // Save failed, restore button
+                                    e.target.textContent = e.target.dataset.originalText || 'Save Here';
+                                    e.target.disabled = false;
+                                    this.enableAllSaveButtons();
+                                    alert('Save operation failed. Please try again.');
+                                }
+                            } catch (error) {
+                                console.error('Save error:', error);
+                                console.error('Error details:', error.message);
+                                console.error('Error stack:', error.stack);
+                                e.target.textContent = e.target.dataset.originalText || 'Save Here';
+                                e.target.disabled = false;
+                                this.enableAllSaveButtons();
+                                alert(`Save failed: ${error.message}`);
+                            }
+                        }
+                        break;
+                    case 'load':
+                        if (confirm(`Load game from slot ${slot}? Current progress will be lost!`)) {
+                            try {
+                                await this.saveManager.loadGame(slot);
+                                modal.classList.remove('active');
+                            } catch (error) {
+                                console.error('Load game error:', error);
+                            }
+                        }
+                        break;
+                    case 'delete':
+                        if (confirm(`Delete save in slot ${slot}? This cannot be undone!`)) {
+                            this.saveManager.deleteSave(slot);
+                            // Small delay to ensure localStorage is updated before refresh
+                            setTimeout(() => {
+                                this.showSaveLoadModal(); // Refresh display
+                            }, 50);
+                        }
+                        break;
+                }
+            });
+        });
+        
+        modal.classList.add('active');
+    }
+
+    /**
+     * Show main menu
+     */
+    showMainMenu() {
+        const modal = document.getElementById('mainMenuModal');
+        if (!modal) return;
+
+        // Set up main menu event listeners
+        this.setupMainMenuListeners();
+        
+        modal.classList.add('active');
+    }
+
+    /**
+     * Setup main menu event listeners
+     */
+    setupMainMenuListeners() {
+        // Save/Load from main menu
+        const saveLoadMenuBtn = document.getElementById('saveLoadMenuBtn');
+        if (saveLoadMenuBtn) {
+            saveLoadMenuBtn.replaceWith(saveLoadMenuBtn.cloneNode(true)); // Remove old listeners
+            document.getElementById('saveLoadMenuBtn').addEventListener('click', () => {
+                console.log('Save/Load menu button clicked from main menu');
+                console.log('GameController context:', this);
+                document.getElementById('mainMenuModal').classList.remove('active');
+                this.showSaveLoadModal();
+            });
+        }
+
+        // Quit from main menu
+        const quitGameMenuBtn = document.getElementById('quitGameMenuBtn');
+        if (quitGameMenuBtn) {
+            quitGameMenuBtn.replaceWith(quitGameMenuBtn.cloneNode(true)); // Remove old listeners
+            document.getElementById('quitGameMenuBtn').addEventListener('click', () => {
+                document.getElementById('mainMenuModal').classList.remove('active');
+                this.quitGame();
+            });
+        }
+
+        // Close main menu
+        const closeMainMenu = document.getElementById('closeMainMenu');
+        if (closeMainMenu) {
+            closeMainMenu.replaceWith(closeMainMenu.cloneNode(true)); // Remove old listeners
+            document.getElementById('closeMainMenu').addEventListener('click', () => {
+                document.getElementById('mainMenuModal').classList.remove('active');
+            });
+        }
+    }
+
+    /**
+     * Check for offline progression on initial game load
+     */
+    async checkInitialOfflineProgression() {
+        // Check if there's a recent auto-save timestamp in localStorage
+        const lastPlayTime = localStorage.getItem('csog_last_play_time');
+        if (lastPlayTime) {
+            const lastTime = parseInt(lastPlayTime);
+            const currentTime = Date.now();
+            const timeSinceLastPlay = currentTime - lastTime;
+            
+            // Only process offline progression if away for more than 30 seconds
+            if (timeSinceLastPlay > 30000) {
+                try {
+                    const offlineResults = await this.offlineManager.processOfflineProgress(lastTime);
+                    if (offlineResults) {
+                        // Show offline progress after a delay to ensure UI is ready
+                        setTimeout(() => {
+                            this.offlineManager.showOfflineProgressSummary(offlineResults);
+                        }, 1000);
+                    }
+                } catch (error) {
+                    console.error('Error processing initial offline progression:', error);
+                }
+            }
+        }
+        
+        // Update the last play time
+        localStorage.setItem('csog_last_play_time', Date.now().toString());
+        
+        // Update last play time every 30 seconds while playing
+        setInterval(() => {
+            localStorage.setItem('csog_last_play_time', Date.now().toString());
+        }, 30000);
+    }
+
+    /**
+     * Setup auto-save when player closes browser or refreshes
+     */
+    setupAutoSaveOnExit() {
+        // Auto-save on page unload (browser close, refresh, navigation)
+        window.addEventListener('beforeunload', (event) => {
+            try {
+                // Perform immediate synchronous save to slot 1 (auto-save slot)
+                const saveData = this.saveManager.createSaveData();
+                const autoSaveKey = 'csog_save_auto';
+                localStorage.setItem(autoSaveKey, JSON.stringify(saveData));
+                
+                // Also update the last play time
+                localStorage.setItem('csog_last_play_time', Date.now().toString());
+                
+                console.log('Auto-saved on page unload');
+                
+                // Don't show confirmation dialog for normal operation
+                // event.preventDefault() or returning a string would show "Are you sure?" dialog
+            } catch (error) {
+                console.error('Auto-save failed:', error);
+            }
+        });
+
+        // Also setup auto-save every 5 minutes during play
+        setInterval(() => {
+            try {
+                const saveData = this.saveManager.createSaveData();
+                const autoSaveKey = 'csog_save_auto';
+                localStorage.setItem(autoSaveKey, JSON.stringify(saveData));
+                console.log('Periodic auto-save completed');
+            } catch (error) {
+                console.error('Periodic auto-save failed:', error);
+            }
+        }, 5 * 60 * 1000); // 5 minutes
+    }
+
+    /**
+     * Load from auto-save if available
+     */
+    async loadAutoSave() {
+        try {
+            const autoSaveKey = 'csog_save_auto';
+            const savedData = localStorage.getItem(autoSaveKey);
+            
+            if (!savedData) {
+                console.log('No auto-save data found');
+                return false;
+            }
+
+            const saveData = JSON.parse(savedData);
+            this.saveManager.restoreGameState(saveData.gameState);
+            
+            // Process offline progression if enough time has passed
+            if (saveData.lastSaveTime && this.offlineManager) {
+                try {
+                    const offlineResults = await this.offlineManager.processOfflineProgress(saveData.lastSaveTime);
+                    if (offlineResults) {
+                        setTimeout(() => {
+                            this.offlineManager.showOfflineProgressSummary(offlineResults);
+                        }, 1000);
+                    }
+                } catch (error) {
+                    console.error('Error processing offline progression from auto-save:', error);
+                }
+            }
+            
+            console.log('Auto-save loaded successfully');
+            this.eventBus.emit('ui:message', { 
+                text: 'Previous session restored!', 
+                type: 'success' 
+            });
+            return true;
+        } catch (error) {
+            console.error('Failed to load auto-save:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Quit game with auto-save and return to start screen
+     */
+    async quitGame() {
+        if (confirm('Quit game? Your progress will be automatically saved.')) {
+            try {
+                console.log('quitGame: Starting auto-save process...');
+                console.log('quitGame: SaveManager available:', !!this.saveManager);
+                
+                // Use proper auto-save method instead of direct localStorage
+                console.log('quitGame: Performing auto-save...');
+                const autoSaveSuccess = await this.performAutoSave();
+                
+                if (autoSaveSuccess) {
+                    console.log('quitGame: Auto-save completed successfully');
+                    
+                    // Show confirmation
+                    this.eventBus.emit('ui:message', { 
+                        text: 'Game saved! Thanks for playing!', 
+                        type: 'success' 
+                    });
+                    
+                    // Wait a moment for the message to show
+                    setTimeout(() => {
+                        // Reload the page to return to start screen
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    console.error('Auto-save failed during quit');
+                    alert('Error saving game during quit! Your progress may not be saved. Try using the Save/Load menu to manually save before quitting.');
+                }
+                
+            } catch (error) {
+                console.error('Error during quit operation:', error);
+                console.error('Error details:', error.message);
+                console.error('Error stack:', error.stack);
+                alert('Error saving game during quit operation! Your progress may not be saved. Try using the Save/Load menu to manually save before quitting.');
+            }
+        }
+    }
+
+    /**
+     * Perform auto-save using proper SaveManager methods
+     */
+    async performAutoSave() {
+        try {
+            console.log('performAutoSave: Creating save data...');
+            const saveData = this.saveManager.createSaveData();
+            console.log('performAutoSave: Save data created successfully');
+            
+            const autoSaveKey = 'csog_save_auto';
+            console.log('performAutoSave: Attempting to save to localStorage with key:', autoSaveKey);
+            localStorage.setItem(autoSaveKey, JSON.stringify(saveData));
+            console.log('performAutoSave: Auto-save written to localStorage');
+            
+            localStorage.setItem('csog_last_play_time', Date.now().toString());
+            console.log('performAutoSave: Last play time updated');
+            
+            return true;
+        } catch (error) {
+            console.error('performAutoSave failed:', error);
+            console.error('Error details:', error.message);
+            console.error('Error stack:', error.stack);
+            return false;
+        }
+    }
+
+    /**
+     * Handle research completion to update probe equipment
+     */
+    onResearchCompleted(node) {
+        // Check if this is an auto-collection research
+        const autoCollectionResearch = ['auto_minerals', 'auto_data', 'auto_artifacts', 'auto_all'];
+        if (autoCollectionResearch.includes(node.id)) {
+            console.log(`Auto-collection research completed: ${node.id}`);
+            this.updateAllProbeEquipment();
+        }
+    }
+
+    /**
+     * Update all probe equipment to include newly researched collection types
+     */
+    updateAllProbeEquipment() {
+        const probes = this.gameState.entities.probes.filter(probe => probe.equipment && probe.equipment.type === 'auto_collector');
+        
+        if (probes.length === 0) {
+            console.log('No probes with auto-collectors found');
+            return;
+        }
+
+        console.log(`Updating equipment for ${probes.length} probes with auto-collectors`);
+        
+        probes.forEach(probe => {
+            const oldCollectionTypes = [...probe.equipment.collectionTypes];
+            
+            // Recalculate available collection types based on current research
+            const research = this.gameState.getResearchSystem();
+            const availableTypes = [];
+            if (research.researched.has('auto_minerals')) availableTypes.push('minerals');
+            if (research.researched.has('auto_data')) availableTypes.push('data');
+            if (research.researched.has('auto_artifacts')) availableTypes.push('artifacts');
+            
+            // Update the equipment
+            probe.equipment.availableTypes = availableTypes;
+            
+            // If universal collection is researched, set collection to 'all'
+            if (research.researched.has('auto_all')) {
+                probe.equipment.collectionTypes = ['all'];
+            } else {
+                // Add new collection types to existing ones (don't remove existing preferences)
+                const currentTypes = probe.equipment.collectionTypes;
+                const updatedTypes = [...new Set([...currentTypes, ...availableTypes])];
+                probe.equipment.collectionTypes = updatedTypes;
+            }
+            
+            console.log(`Updated probe ${probe.id} equipment:`, {
+                old: oldCollectionTypes,
+                new: probe.equipment.collectionTypes,
+                available: availableTypes
+            });
+        });
+        
+        // Update UI for any selected probe
+        if (this.gameState.ui.selectedProbe) {
+            this.uiManager.updateEquipmentDisplay(this.gameState.ui.selectedProbe);
+        }
+        
+        // Show notification
+        this.eventBus.emit('ui:message', { 
+            text: 'Probe equipment updated with new collection capabilities!', 
+            type: 'success' 
+        });
+    }
+
+    /**
+     * Remove equipment from probe (delegate to UIManager)
+     */
+    removeEquipment(probeId) {
+        this.uiManager.removeEquipment(probeId);
+    }
+
+    /**
+     * Disable all save buttons to prevent rapid clicking during save operations
+     */
+    disableAllSaveButtons() {
+        document.querySelectorAll('.save-slot-btn[data-action="save"]').forEach(btn => {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+        });
+    }
+
+    /**
+     * Re-enable all save buttons after save operation completes
+     */
+    enableAllSaveButtons() {
+        document.querySelectorAll('.save-slot-btn[data-action="save"]').forEach(btn => {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+        });
     }
 }
 

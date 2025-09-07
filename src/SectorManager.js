@@ -130,6 +130,9 @@ class SectorManager {
                 research.points += 1;
                 console.log(`Research point awarded for discovering ${sector.name}! Total points: ${research.points}`);
                 
+                // Update Probethium stats
+                this.gameState.updateProbethiumStats('sector_discovered');
+                
                 // Emit event to trigger research unlock check
                 this.eventBus.emit('research:pointAwarded', { source: 'sector_discovery' });
                 
@@ -304,11 +307,19 @@ class SectorManager {
         modal.classList.add('active');
         console.log('Modal should now be visible with class "active"');
         
-        // Auto-hide after 3 seconds
-        setTimeout(() => {
-            modal.classList.remove('active');
-            console.log('Modal hidden after 3 seconds');
-        }, 3000);
+        // Add click handler for OK button
+        const okBtn = document.getElementById('sectorOkBtn');
+        if (okBtn) {
+            // Remove any existing listeners to prevent duplicates
+            const newOkBtn = okBtn.cloneNode(true);
+            okBtn.parentNode.replaceChild(newOkBtn, okBtn);
+            
+            // Add new click listener
+            newOkBtn.addEventListener('click', () => {
+                modal.classList.remove('active');
+                console.log('Sector discovery modal closed by user');
+            });
+        }
     }
 
     /**

@@ -99,11 +99,20 @@ class ProbeManager {
                 returnedToHub: false,
                 damage: 0,
                 maxDamage: 3,
-                lastDamageTime: 0
+                lastDamageTime: 0,
+                cargo: {
+                    minerals: 0,
+                    data: 0,
+                    artifacts: 0,
+                    exoticMinerals: 0
+                }
             };
             
             this.gameState.entities.probes.push(probe);
             this.gameState.updateResources({ minerals: resources.minerals - 25 }, this.eventBus);
+            
+            // Update Probethium stats
+            this.gameState.updateProbethiumStats('probe_built');
             
             this.eventBus.emit('ui:message', { text: 'Probe built!', type: 'success' });
             this.eventBus.emit('ui:update');
@@ -175,6 +184,15 @@ class ProbeManager {
         probe.pulses = [];
         probe.radarPulses = [];
         probe.active = true;
+        // Initialize cargo if it doesn't exist
+        if (!probe.cargo) {
+            probe.cargo = {
+                minerals: 0,
+                data: 0,
+                artifacts: 0,
+                exoticMinerals: 0
+            };
+        }
         
         console.log(`Probe ${probe.id} setup: starting at (${probe.current.x}, ${probe.current.y}), waypoints: ${probe.waypoints.length}`);
     }
@@ -204,7 +222,13 @@ class ProbeManager {
             returnedToHub: false,
             damage: 0,
             maxDamage: 3,
-            lastDamageTime: 0
+            lastDamageTime: 0,
+            cargo: {
+                minerals: 0,
+                data: 0,
+                artifacts: 0,
+                exoticMinerals: 0
+            }
         };
         return probe;
     }
@@ -220,13 +244,74 @@ class ProbeManager {
         
         if (probe.currentWaypoint >= probe.waypoints.length - 1) {
             // Probe has completed all waypoints
+            
+            // Always deliver cargo when returning to hub, even in patrol mode
+            if (!probe.returnedToHub) {
+                probe.returnedToHub = true;
+                
+                // Deliver cargo when returning to hub
+                if (probe.cargo && Object.keys(probe.cargo).some(key => probe.cargo[key] > 0)) {
+                    const currentResources = this.gameState.getResources();
+                    const newResources = { ...currentResources };
+                    
+                    let deliveryMessage = 'Cargo delivered: ';
+                    let deliveryParts = [];
+                    
+                    if (probe.cargo.minerals > 0) {
+                        newResources.minerals += probe.cargo.minerals;
+                        deliveryParts.push(`+${probe.cargo.minerals} Minerals`);
+                    }
+                    if (probe.cargo.data > 0) {
+                        newResources.data += probe.cargo.data;
+                        deliveryParts.push(`+${probe.cargo.data} Data`);
+                    }
+                    if (probe.cargo.artifacts > 0) {
+                        newResources.artifacts += probe.cargo.artifacts;
+                        deliveryParts.push(`+${probe.cargo.artifacts} Artifacts`);
+                    }
+                    if (probe.cargo.exoticMinerals > 0) {
+                        newResources.exoticMinerals += probe.cargo.exoticMinerals;
+                        deliveryParts.push(`+${probe.cargo.exoticMinerals} Exotic`);
+                    }
+                    
+                    this.gameState.updateResources(newResources, this.eventBus);
+                    
+                    deliveryMessage += deliveryParts.join(', ');
+                    console.log(`Probe ${probe.id} delivered cargo:`, probe.cargo);
+                    
+                    this.eventBus.emit('ui:message', { 
+                        text: deliveryMessage, 
+                        type: 'success' 
+                    });
+                    
+                    // Clear cargo after delivery
+                    probe.cargo = {
+                        minerals: 0,
+                        data: 0,
+                        artifacts: 0,
+                        exoticMinerals: 0
+                    };
+                }
+                
+                // Heal probe damage when returning to hub
+                if (probe.damage > 0) {
+                    console.log(`Probe ${probe.id} healed at hub (was ${probe.damage} damage)`);
+                    probe.damage = 0;
+                    this.eventBus.emit('ui:message', { 
+                        text: 'Probe repaired at hub!', 
+                        type: 'success' 
+                    });
+                }
+            }
+            
             if (probe.patrolMode && probe.waypoints.length > 2) {
                 // Restart patrol loop from the hub
                 probe.currentWaypoint = 0; // Start from hub (waypoint 0)
                 probe.segmentProgress = 0;
                 probe.current = { x: probe.hub.x, y: probe.hub.y }; // Reset position to hub
-                probe.speed = probe.outboundWaypointsCount > probe.currentWaypoint ? 
-                    0.0001 : probe.returnSpeed;
+                // Always reset to base outbound speed for patrol restart
+                probe.speed = 0.0001; // Base outbound speed
+                probe.returnedToHub = false; // Reset for next patrol cycle
             } else {
                 // Mark as ready at hub
                 if (probe.status !== 'ready') {
@@ -234,20 +319,6 @@ class ProbeManager {
                     probe.currentWaypoint = 0;
                     probe.current = { x: probe.hub.x, y: probe.hub.y };
                     probe.active = true;
-
-                    if (!probe.returnedToHub) {
-                        probe.returnedToHub = true;
-                        
-                        // Heal probe damage when returning to hub
-                        if (probe.damage > 0) {
-                            console.log(`Probe ${probe.id} healed at hub (was ${probe.damage} damage)`);
-                            probe.damage = 0;
-                            this.eventBus.emit('ui:message', { 
-                                text: 'Probe repaired at hub!', 
-                                type: 'success' 
-                            });
-                        }
-                    }
 
                     // Clear path for non-patrolling probes
                     probe.waypoints = [];
@@ -268,8 +339,13 @@ class ProbeManager {
         }
 
         // Move probe along current segment - use return speed when on return journey
-        const isOnReturnJourney = probe.currentWaypoint >= probe.waypoints.length - 2;
+        const isOnReturnJourney = probe.outboundWaypointsCount && probe.currentWaypoint >= probe.outboundWaypointsCount - 1;
         const currentSpeed = isOnReturnJourney ? probe.returnSpeed : probe.speed;
+        
+        // Debug speed logic occasionally
+        if (Math.random() < 0.001) {
+            console.log(`Probe ${probe.id} speed: currentWP=${probe.currentWaypoint}, outboundCount=${probe.outboundWaypointsCount}, isReturn=${isOnReturnJourney}, speed=${currentSpeed}, baseSpeed=${probe.speed}, returnSpeed=${probe.returnSpeed}`);
+        }
         
         // Safety check for reasonable deltaTime (max 1 second)
         const safeDeltaTime = Math.min(deltaTime, 1000);
@@ -321,10 +397,17 @@ class ProbeManager {
             return;
         }
 
-        // Only generate pulses during exploration (outbound journey), not during recovery/return
+        // Generate pulses during exploration (outbound journey) and patrol mode
         const isExploring = probe.outboundWaypointsCount && probe.currentWaypoint < probe.outboundWaypointsCount - 1;
+        const isPatrolling = probe.patrolMode && probe.waypoints && probe.waypoints.length > 2;
+        const shouldGenerateSignals = isExploring || isPatrolling;
         
-        if (!isExploring) {
+        // Debug signal generation conditions
+        if (Math.random() < 0.001) { // Occasional debug logging
+            console.log(`Probe ${probe.id} signal check: isExploring=${isExploring}, isPatrolling=${isPatrolling}, shouldGenerate=${shouldGenerateSignals}, waypoints=${probe.waypoints.length}, currentWP=${probe.currentWaypoint}, outboundCount=${probe.outboundWaypointsCount}`);
+        }
+        
+        if (!shouldGenerateSignals) {
             // Still update existing radar pulses even if not generating new ones
             probe.radarPulses = probe.radarPulses.filter(pulse => {
                 pulse.elapsed += deltaTime;
@@ -336,7 +419,7 @@ class ProbeManager {
 
         probe.pulseTimer += deltaTime;
 
-        // Generate radar pulse every 3 seconds (only during exploration)
+        // Generate radar pulse every 3 seconds (during exploration and patrol)
         if (probe.pulseTimer >= 3000) {
             probe.pulseTimer = 0;
 
@@ -530,16 +613,24 @@ class ProbeManager {
                 };
                 
                 const rewards = baseRewards[signal.rarity] || baseRewards.common;
-                const resources = this.gameState.getResources();
-                const newResources = { ...resources };
                 
-                // Calculate and apply resources
+                // Initialize probe cargo if it doesn't exist
+                if (!probe.cargo) {
+                    probe.cargo = {
+                        minerals: 0,
+                        data: 0,
+                        artifacts: 0,
+                        exoticMinerals: 0
+                    };
+                }
+                
+                // Store resources in probe cargo instead of adding immediately
                 let totalResourcesGained = 0;
                 let primaryResourceType = '';
                 let primaryResourceAmount = 0;
                 
                 if (canCollectMinerals) {
-                    newResources.minerals += rewards.minerals;
+                    probe.cargo.minerals += rewards.minerals;
                     if (rewards.minerals > primaryResourceAmount) {
                         primaryResourceAmount = rewards.minerals;
                         primaryResourceType = 'minerals';
@@ -547,7 +638,7 @@ class ProbeManager {
                     totalResourcesGained += rewards.minerals;
                 }
                 if (canCollectData) {
-                    newResources.data += rewards.data;
+                    probe.cargo.data += rewards.data;
                     if (rewards.data > primaryResourceAmount) {
                         primaryResourceAmount = rewards.data;
                         primaryResourceType = 'data';
@@ -555,7 +646,7 @@ class ProbeManager {
                     totalResourcesGained += rewards.data;
                 }
                 if (canCollectArtifacts) {
-                    newResources.artifacts += rewards.artifacts;
+                    probe.cargo.artifacts += rewards.artifacts;
                     if (rewards.artifacts > primaryResourceAmount) {
                         primaryResourceAmount = rewards.artifacts;
                         primaryResourceType = 'artifacts';
@@ -563,26 +654,32 @@ class ProbeManager {
                     totalResourcesGained += rewards.artifacts;
                 }
                 
-                // Add exotic minerals for rare+ signals
-                if (signal.rarity === 'rare') newResources.exoticMinerals += 1;
-                else if (signal.rarity === 'epic') newResources.exoticMinerals += 3;
-                else if (signal.rarity === 'legendary') newResources.exoticMinerals += 10;
+                // Add exotic minerals for rare+ signals to cargo
+                let exoticBonus = 0;
+                if (signal.rarity === 'rare') exoticBonus = 1;
+                else if (signal.rarity === 'epic') exoticBonus = 3;
+                else if (signal.rarity === 'legendary') exoticBonus = 10;
                 
-                console.log('Before update - Current resources:', resources);
-                console.log('After calculation - New resources:', newResources);
+                if (exoticBonus > 0) {
+                    probe.cargo.exoticMinerals += exoticBonus;
+                    totalResourcesGained += exoticBonus;
+                }
                 
-                this.gameState.updateResources(newResources, this.eventBus);
+                // Update Probethium stats for auto-collection
+                this.gameState.updateProbethiumStats('signal_collected');
+                this.gameState.updateProbethiumStats('resource_gathered', { amount: totalResourcesGained });
                 
-                console.log('After update - Updated resources:', this.gameState.getResources());
+                console.log(`Auto-collected signal stored in probe ${probe.id} cargo:`, probe.cargo);
                 
-                // Show resource indicator instead of signal animation
+                // Show resource indicator with pending delivery message
                 if (hasUniversal) {
                     // Universal collector shows total resources
                     this.eventBus.emit('resource:indicator', {
                         x: signal.x,
                         y: signal.y,
                         amount: totalResourcesGained,
-                        resourceType: 'all'
+                        resourceType: 'all',
+                        pending: true // Indicate resources are pending delivery
                     });
                 } else {
                     // Show primary resource type gained
@@ -590,7 +687,8 @@ class ProbeManager {
                         x: signal.x,
                         y: signal.y,
                         amount: primaryResourceAmount,
-                        resourceType: primaryResourceType
+                        resourceType: primaryResourceType,
+                        pending: true // Indicate resources are pending delivery
                     });
                 }
                 

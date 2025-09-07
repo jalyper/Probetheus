@@ -299,7 +299,7 @@ class UIManager {
                     const canAfford = resources.minerals >= 25;
                     
                     equipmentActions.innerHTML = `
-                        <button class="control-btn" style="font-size: 11px; padding: 6px 12px;" 
+                        <button class="control-btn" style="font-size: 11px; padding: 6px 12px; ${!canAfford ? 'opacity: 0.5; cursor: not-allowed; background: #333; color: #666;' : ''}" 
                                 onclick="window.uiManager.equipAutoCollector('${probe.id}')" 
                                 ${!canAfford ? 'disabled' : ''}
                                 title="${canAfford ? 'Craft and equip Auto-Collector for automatic signal collection' : 'Need 25 Minerals to craft'}">
@@ -357,6 +357,42 @@ class UIManager {
                 statusElement.textContent = '';
             }, 2000);
         }
+    }
+
+    /**
+     * Show alert message in the dedicated alert area
+     */
+    showAlert(text, type = 'info', duration = 3000) {
+        const alertElement = document.getElementById('alertMessages');
+        if (!alertElement) return;
+        
+        // Set color based on type
+        const colors = {
+            'success': '#0f0',
+            'warning': '#ff0', 
+            'error': '#f00',
+            'info': '#0ff'
+        };
+        
+        alertElement.style.color = colors[type] || colors.info;
+        alertElement.textContent = text;
+        
+        // Add pulsing animation for important alerts
+        if (type === 'success' || type === 'warning') {
+            alertElement.style.animation = 'pulse 0.5s ease-in-out';
+            setTimeout(() => {
+                alertElement.style.animation = '';
+            }, 500);
+        }
+        
+        // Clear alert after duration
+        setTimeout(() => {
+            if (alertElement.textContent === text) { // Only clear if it's still the same message
+                alertElement.textContent = '';
+            }
+        }, duration);
+        
+        console.log(`[ALERT ${type}] ${text}`);
     }
 
     /**
@@ -436,11 +472,22 @@ class UIManager {
      */
     updateResourceDisplay() {
         const resources = this.gameState.getResources();
+        const probethium = this.gameState.getProbethium();
         
         document.getElementById('minerals').textContent = resources.minerals;
         document.getElementById('data').textContent = resources.data;
         document.getElementById('artifacts').textContent = resources.artifacts;
         document.getElementById('exoticMinerals').textContent = resources.exoticMinerals;
+        
+        // Update Probethium display with appropriate precision
+        const probethiumElement = document.getElementById('probethium');
+        if (probethiumElement) {
+            if (probethium.current >= 1) {
+                probethiumElement.textContent = probethium.current.toFixed(6);
+            } else {
+                probethiumElement.textContent = probethium.current.toFixed(10);
+            }
+        }
     }
 
     /**
@@ -619,6 +666,15 @@ class UIManager {
             this.showResearchUnlockModal();
             console.log('Research system unlocked! All three trees and root nodes are now available.');
         }
+        
+        // Ensure research button is visible if research is already unlocked (e.g., after loading save)
+        if (research.unlocked) {
+            const researchBtn = document.getElementById('researchBtn');
+            if (researchBtn) {
+                researchBtn.style.display = 'inline-block';
+                console.log('Research already unlocked, ensuring button is visible');
+            }
+        }
     }
 
 
@@ -663,6 +719,17 @@ class UIManager {
         
         // Update research points display
         this.animateResearchPoints();
+        
+        // Show alert for research point earned with context
+        let alertText = '🎯 +1 Research Point!';
+        if (source === 'sector_discovery') {
+            alertText = '🎯 +1 Research Point! (Sector Discovery)';
+        } else if (source === 'milestone') {
+            alertText = '🎯 +1 Research Point! (Milestone)';
+        } else if (source === 'tree_unlock') {
+            alertText = '🎯 +1 Research Point! (New Research Tree)';
+        }
+        this.showAlert(alertText, 'success');
         
         // Check if research should be unlocked (first research point)
         this.checkResearchUnlock();
@@ -714,6 +781,9 @@ class UIManager {
         } else if (!isPrimary) {
             // Additional tree unlock
             research.points += 1; // Award 1 research point for additional tree
+            
+            // Emit research point awarded event for alert display
+            this.eventBus.emit('research:pointAwarded', { source: 'tree_unlock' });
             
             // Automatically research the root node of the additional tree
             const rootNodeId = this.getRootNodeId(treeType);
@@ -907,12 +977,6 @@ class UIManager {
             if (modalContent) {
                 modalContent.style.animation = 'researchUnlock 1s ease-out';
             }
-            
-            // Automatically open research lab after 3 seconds
-            setTimeout(() => {
-                modal.classList.remove('active');
-                this.eventBus.emit('ui:switchScreen', { screen: 'research' });
-            }, 3000);
         }, 100);
     }
 

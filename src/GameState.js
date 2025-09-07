@@ -12,6 +12,41 @@ class GameState {
             exoticMinerals: 0
         };
 
+        // Probethium scoring system
+        this.probethium = {
+            current: 0.0000000000,  // Start with 0, accumulates VERY slowly
+            totalAccumulated: 0.0000000000,  // Track lifetime accumulation
+            lastUpdateTime: Date.now(),
+            
+            // Statistics for efficiency calculations
+            stats: {
+                totalResourcesGathered: 0,
+                totalProbesBuilt: 3,  // Start with 3 initial probes
+                totalProbesDestroyed: 0,
+                totalSignalsCollected: 0,
+                totalSectorsDiscovered: 0,
+                totalBuildingsConstructed: 0,
+                totalResearchUnlocked: 0,
+                totalDistanceTraveled: 0,
+                resourcesSpent: {
+                    minerals: 0,
+                    data: 0,
+                    artifacts: 0,
+                    exoticMinerals: 0
+                },
+                peakEfficiencyRatio: 0,  // Best resources/probe ratio achieved
+                sessionStartTime: Date.now()
+            },
+            
+            // Multipliers for different achievements
+            multipliers: {
+                efficiency: 1.0,      // Resources per probe/building
+                exploration: 1.0,     // Sectors discovered
+                research: 1.0,        // Research progress
+                endurance: 1.0        // Time played continuously
+            }
+        };
+
         this.researchSystem = {
             points: 0,
             unlocked: false,
@@ -328,7 +363,7 @@ class GameState {
             viewOffset: { x: 0, y: 0 },
             standardSectorWidth: 1920,
             standardSectorHeight: 1080,
-            zoomLevel: 1.3
+            zoomLevel: 1.0
         };
 
         this.entities = {
@@ -417,6 +452,9 @@ class GameState {
                     
                     // Emit milestone event for UI updates
                     eventBus.emit('research:milestone', { resourceType, threshold });
+                    
+                    // Emit research point awarded event for alert display
+                    eventBus.emit('research:pointAwarded', { source: 'milestone' });
                 }
             });
         });
@@ -469,6 +507,110 @@ class GameState {
      */
     getVersion() {
         return this.version;
+    }
+
+    /**
+     * Get Probethium system
+     */
+    getProbethium() {
+        return this.probethium;
+    }
+
+    /**
+     * Update Probethium statistics
+     */
+    updateProbethiumStats(eventType, data = {}) {
+        const stats = this.probethium.stats;
+        
+        switch (eventType) {
+            case 'resource_gathered':
+                stats.totalResourcesGathered += data.amount || 1;
+                break;
+            case 'probe_built':
+                stats.totalProbesBuilt += 1;
+                stats.resourcesSpent.minerals += 25;
+                break;
+            case 'probe_destroyed':
+                stats.totalProbesDestroyed += 1;
+                break;
+            case 'signal_collected':
+                stats.totalSignalsCollected += 1;
+                break;
+            case 'sector_discovered':
+                stats.totalSectorsDiscovered += 1;
+                break;
+            case 'building_constructed':
+                stats.totalBuildingsConstructed += 1;
+                if (data.cost) {
+                    Object.keys(data.cost).forEach(resource => {
+                        stats.resourcesSpent[resource] += data.cost[resource];
+                    });
+                }
+                break;
+            case 'research_unlocked':
+                stats.totalResearchUnlocked += 1;
+                break;
+            case 'distance_traveled':
+                stats.totalDistanceTraveled += data.distance || 0;
+                break;
+        }
+        
+        // Calculate current efficiency ratio
+        if (stats.totalProbesBuilt > 0) {
+            const currentEfficiency = stats.totalResourcesGathered / stats.totalProbesBuilt;
+            if (currentEfficiency > stats.peakEfficiencyRatio) {
+                stats.peakEfficiencyRatio = currentEfficiency;
+            }
+        }
+    }
+
+    /**
+     * Calculate and accumulate Probethium based on efficiency and progress
+     */
+    calculateProbethium(deltaTime) {
+        const now = Date.now();
+        const timeDelta = now - this.probethium.lastUpdateTime;
+        
+        if (timeDelta < 1000) return; // Only update once per second
+        
+        const stats = this.probethium.stats;
+        const multipliers = this.probethium.multipliers;
+        
+        // Base accumulation rate - EXTREMELY small (0.00000000277 per second)
+        // This equals 1 Probethium after 100 hours of continuous optimal play
+        let baseRate = 0.00000000277; // 1 / (100 * 3600) seconds
+        
+        // Efficiency multiplier (resources per probe/building)
+        const totalInvestment = stats.totalProbesBuilt + stats.totalBuildingsConstructed;
+        multipliers.efficiency = totalInvestment > 0 ? 
+            Math.log(1 + stats.totalResourcesGathered / totalInvestment) : 1.0;
+        
+        // Exploration multiplier (sector discovery bonus)
+        multipliers.exploration = 1.0 + (stats.totalSectorsDiscovered * 0.1);
+        
+        // Research multiplier (knowledge progression)
+        multipliers.research = 1.0 + (stats.totalResearchUnlocked * 0.2);
+        
+        // Endurance multiplier (time played continuously)
+        const hoursPlayed = (now - stats.sessionStartTime) / (1000 * 3600);
+        multipliers.endurance = 1.0 + Math.min(hoursPlayed * 0.05, 2.0); // Cap at 3x for 40+ hours
+        
+        // Calculate final rate
+        const totalMultiplier = multipliers.efficiency * multipliers.exploration * 
+                               multipliers.research * multipliers.endurance;
+        
+        const finalRate = baseRate * totalMultiplier;
+        
+        // Accumulate Probethium
+        const accumulated = finalRate * (timeDelta / 1000);
+        this.probethium.current += accumulated;
+        this.probethium.totalAccumulated += accumulated;
+        this.probethium.lastUpdateTime = now;
+        
+        // Console logging for debugging (remove in production)
+        if (Math.random() < 0.001) { // Log occasionally
+            console.log(`Probethium rate: ${finalRate.toExponential(3)}/s, Total: ${this.probethium.current.toFixed(10)}`);
+        }
     }
 }
 
