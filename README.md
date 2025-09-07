@@ -8,7 +8,7 @@ A space exploration idle game where you deploy probes from Recon Hubs to discove
 ### Recon Hub System
 - **Hub-Based Deployment**: All probes must be deployed from Recon Hubs
 - **Limited Range**: Probes can only travel 1/3 of sector width from their hub
-- **Hub Management**: Each hub stores 3-5 probes independently
+- **Hub Management**: Each hub stores up to 5 probes independently
 - **Strategic Placement**: Build new hubs (100 Minerals) to expand exploration range
 - **Visual Design**: Hexagonal green icons with animated pulses
 
