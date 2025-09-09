@@ -76,22 +76,23 @@ class ResearchManager {
      * Draw dividers between tech trees
      */
     drawTreeDividers(container) {
-        // Calculate divider positions based on actual node positions
-        // Collection tree: highest node at y:20, lowest at y:200 (+ 80px height + 5px margin = 285px bottom)
-        // Probe tree: highest node at y:290, lowest at y:470 (+ 80px height + 5px margin = 555px bottom)
-        // Alien tree: highest node at y:560, lowest at y:740
+        // Calculate divider positions based on updated node positions
+        // Collection tree: highest node at y:20, lowest at y:200 (+ 80px height = 280px bottom)
+        // Probe tree: highest node at y:350, lowest at y:530 (+ 80px height = 610px bottom)  
+        // Alien tree: highest node at y:650, lowest at y:830 (+ 80px height = 910px bottom)
         
-        // Divider between Collection and Probe trees (after collection tree ends)
+        // Divider between Collection and Probe trees (mid-gap at ~330px)
         const divider1 = document.createElement('div');
         divider1.style.cssText = `
             position: absolute;
             left: 0;
-            top: 250px;
+            top: 320px;
             width: 100%;
             height: 2px;
             background: linear-gradient(90deg, transparent 0%, #0ff 20%, #0ff 80%, transparent 100%);
-            opacity: 0.3;
+            opacity: 0.4;
             z-index: 10;
+            box-shadow: 0 0 6px rgba(0, 255, 255, 0.3);
         `;
         container.appendChild(divider1);
 
@@ -110,17 +111,18 @@ class ResearchManager {
         collectionLabel.textContent = '📦 COLLECTION SPECIALIZATION';
         container.appendChild(collectionLabel);
 
-        // Divider between Probe and Alien trees (after probe tree ends)
+        // Divider between Probe and Alien trees (mid-gap at ~630px)
         const divider2 = document.createElement('div');
         divider2.style.cssText = `
             position: absolute;
             left: 0;
-            top: 520px;
+            top: 630px;
             width: 100%;
             height: 2px;
             background: linear-gradient(90deg, transparent 0%, #4f4 20%, #4f4 80%, transparent 100%);
-            opacity: 0.3;
+            opacity: 0.4;
             z-index: 10;
+            box-shadow: 0 0 6px rgba(68, 255, 68, 0.3);
         `;
         container.appendChild(divider2);
 
@@ -129,7 +131,7 @@ class ResearchManager {
         probeLabel.style.cssText = `
             position: absolute;
             left: 10px;
-            top: 260px;
+            top: 330px;
             color: #4f4;
             font-size: 14px;
             font-weight: bold;
@@ -144,7 +146,7 @@ class ResearchManager {
         alienLabel.style.cssText = `
             position: absolute;
             left: 10px;
-            top: 530px;
+            top: 640px;
             color: #f4f;
             font-size: 14px;
             font-weight: bold;
@@ -168,8 +170,8 @@ class ResearchManager {
             }
         });
         
-        // Add padding and set minimum content height
-        const contentHeight = Math.max(maxY + 50, 850); // 50px bottom padding, minimum 850px
+        // Add padding and set minimum content height  
+        const contentHeight = Math.max(maxY + 50, 950); // 50px bottom padding, minimum 950px for alien tree
         
         // Create invisible spacer element to ensure scroll area
         const spacer = document.createElement('div');
@@ -189,21 +191,61 @@ class ResearchManager {
     }
 
     /**
-     * Draw connection line between research nodes
+     * Draw connection line between research nodes (family tree style)
      */
     drawResearchConnection(container, fromNode, toNode) {
-        const line = document.createElement('div');
-        line.style.position = 'absolute';
-        line.style.height = '2px';
-        line.style.background = fromNode.researched && toNode.available ? '#0ff' : '#444';
-        line.style.left = `${fromNode.position.x + 40}px`; // 40 = half node width
-        line.style.top = `${fromNode.position.y + 40}px`; // 40 = half node height
-        line.style.width = `${toNode.position.x - fromNode.position.x - 80}px`;
-        line.style.transformOrigin = 'left center';
-        line.style.zIndex = '30';
-        line.style.pointerEvents = 'none'; // Don't interfere with clicks
+        const fromCenterX = fromNode.position.x + 90; // Right edge of source node
+        const fromCenterY = fromNode.position.y + 40; // Vertical center of source node
+        const toCenterX = toNode.position.x; // Left edge of target node
+        const toCenterY = toNode.position.y + 40; // Vertical center of target node
         
-        container.appendChild(line);
+        // Connection should light up if both nodes are researched or if parent is researched and child is available
+        const connectionActive = fromNode.researched && (toNode.researched || toNode.available);
+        const lineColor = connectionActive ? '#0ff' : '#444';
+        const lineOpacity = connectionActive ? '1' : '0.5';
+        const glowEffect = connectionActive ? '0 0 8px rgba(0, 255, 255, 0.6)' : 'none';
+        
+        // Create horizontal line from parent to child
+        if (fromCenterX < toCenterX) {
+            // Horizontal connector line
+            const horizontalLine = document.createElement('div');
+            horizontalLine.style.cssText = `
+                position: absolute;
+                left: ${fromCenterX}px;
+                top: ${fromCenterY - 1}px;
+                width: ${toCenterX - fromCenterX}px;
+                height: 2px;
+                background: ${lineColor};
+                opacity: ${lineOpacity};
+                box-shadow: ${glowEffect};
+                z-index: 10;
+                pointer-events: none;
+                transition: all 0.3s ease;
+            `;
+            container.appendChild(horizontalLine);
+            
+            // Add vertical connector if nodes are at different heights
+            if (Math.abs(fromCenterY - toCenterY) > 5) {
+                const verticalLine = document.createElement('div');
+                const verticalTop = Math.min(fromCenterY, toCenterY);
+                const verticalHeight = Math.abs(fromCenterY - toCenterY);
+                
+                verticalLine.style.cssText = `
+                    position: absolute;
+                    left: ${toCenterX - 1}px;
+                    top: ${verticalTop - 1}px;
+                    width: 2px;
+                    height: ${verticalHeight + 2}px;
+                    background: ${lineColor};
+                    opacity: ${lineOpacity};
+                    box-shadow: ${glowEffect};
+                    z-index: 10;
+                    pointer-events: none;
+                    transition: all 0.3s ease;
+                `;
+                container.appendChild(verticalLine);
+            }
+        }
     }
 
     /**
@@ -212,31 +254,56 @@ class ResearchManager {
     createResearchNode(container, node) {
         const nodeDiv = document.createElement('div');
         nodeDiv.className = 'research-node';
+        
+        // Determine node styling based on state
+        const borderColor = node.researched ? '#0f0' : node.available ? '#0ff' : '#666';
+        const backgroundColor = node.researched ? 'rgba(0,255,0,0.15)' : node.available ? 'rgba(0,255,255,0.15)' : 'rgba(0,0,0,0.4)';
+        const boxShadow = node.researched ? '0 0 25px rgba(0,255,0,0.6), inset 0 0 15px rgba(0,255,0,0.1)' : 
+                         node.available ? '0 0 15px rgba(0,255,255,0.4), inset 0 0 10px rgba(0,255,255,0.1)' : 
+                         '0 0 5px rgba(0,0,0,0.5), inset 0 0 10px rgba(0,0,0,0.2)';
+        
         nodeDiv.style.cssText = `
             position: absolute;
             left: ${node.position.x}px;
             top: ${node.position.y}px;
-            width: 80px;
+            width: 90px;
             height: 80px;
-            border: 2px solid ${node.researched ? '#0f0' : node.available ? '#0ff' : '#666'};
-            border-radius: 10px;
-            background: ${node.researched ? 'rgba(0,255,0,0.1)' : node.available ? 'rgba(0,255,255,0.1)' : 'rgba(0,0,0,0.3)'};
+            border: 3px solid ${borderColor};
+            border-radius: 12px;
+            background: ${backgroundColor};
+            backdrop-filter: blur(2px);
             cursor: ${node.available ? 'pointer' : 'not-allowed'};
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s;
-            box-shadow: ${node.researched ? '0 0 20px rgba(0,255,0,0.5)' : node.available ? '0 0 10px rgba(0,255,255,0.3)' : 'none'};
-            margin: 5px;
-            z-index: 100;
+            transition: all 0.3s ease;
+            box-shadow: ${boxShadow};
+            z-index: 50;
+            overflow: hidden;
+        `;
+        
+        // Add rigid perimeter with double border effect
+        const innerBorder = document.createElement('div');
+        innerBorder.style.cssText = `
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            right: 2px;
+            bottom: 2px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            pointer-events: none;
         `;
         
         nodeDiv.innerHTML = `
-            <div style="font-size: 20px; margin-bottom: 2px;">${node.icon}</div>
-            <div style="font-size: 9px; color: #fff; text-align: center; line-height: 1.1;">${node.name}</div>
-            <div style="font-size: 8px; color: #888; margin-top: 2px;">${node.cost}RP</div>
+            <div style="font-size: 20px; margin-bottom: 2px; position: relative; z-index: 10;">${node.icon}</div>
+            <div style="font-size: 9px; color: #fff; text-align: center; line-height: 1.1; position: relative; z-index: 10;">${node.name}</div>
+            <div style="font-size: 8px; color: #888; margin-top: 2px; position: relative; z-index: 10;">${node.cost}RP</div>
         `;
+        
+        // Add the inner border
+        nodeDiv.appendChild(innerBorder);
         
         if (node.available) {
             nodeDiv.addEventListener('click', () => {
@@ -245,10 +312,16 @@ class ResearchManager {
             
             nodeDiv.addEventListener('mouseenter', () => {
                 nodeDiv.style.transform = 'scale(1.05)';
+                nodeDiv.style.boxShadow = node.researched ? 
+                    '0 0 35px rgba(0,255,0,0.8), inset 0 0 20px rgba(0,255,0,0.15)' : 
+                    '0 0 25px rgba(0,255,255,0.6), inset 0 0 15px rgba(0,255,255,0.15)';
             });
             
             nodeDiv.addEventListener('mouseleave', () => {
                 nodeDiv.style.transform = 'scale(1)';
+                nodeDiv.style.boxShadow = node.researched ? 
+                    '0 0 25px rgba(0,255,0,0.6), inset 0 0 15px rgba(0,255,0,0.1)' : 
+                    '0 0 15px rgba(0,255,255,0.4), inset 0 0 10px rgba(0,255,255,0.1)';
             });
         }
         

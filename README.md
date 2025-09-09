@@ -1,5 +1,5 @@
 # Probetheus
-**Version 0.4.0-pre-alpha**
+**Version 0.5.0-pre-alpha**
 
 A space exploration idle game where you deploy probes from Recon Hubs to discover signals, explore planets, and collect resources across an infinite procedural galaxy. Features advanced probe management, cargo delivery systems, research trees, and automated collection mechanics.
 
@@ -277,9 +277,25 @@ All save system tests passing across Chrome, Firefox, and Safari. The save syste
 - **Event-Driven Architecture**: Comprehensive state management and user interaction handling
 - **Robust Data Persistence**: Multi-layer save system with integrity checks and error recovery
 
-## Recent Changes (v0.4.0)
+## Recent Changes (v0.5.0)
 
-### Signal Collection & Cargo System
+### Tutorial & New Player Experience
+- **Added**: Mission Briefing tutorial system for first-time players
+- **Added**: Automatic tutorial trigger on first probe deployment
+- **Added**: Example signals with animated demonstrations in tutorial
+- **Added**: Tutorial disable option with localStorage persistence
+- **Added**: Professional TRON-style modal design with backdrop blur
+
+### Research Tree Enhancements
+- **Redesigned**: Left-to-right family tree layout with proper connecting lines
+- **Added**: Smart line routing with horizontal + vertical connections
+- **Added**: Line lighting effects that activate when research progresses
+- **Improved**: Rigid node perimeters with double-border effects
+- **Enhanced**: Visual hierarchy with improved glow and shadow effects
+- **Fixed**: Clean category separation with 70px gaps between trees
+- **Optimized**: Research tree takes maximum vertical space available
+
+### Previous Changes (v0.4.0)
 - **Changed**: Signals now collected via direct clicking instead of box selection
 - **Added**: Probe cargo system - resources stored on probes until delivery
 - **Added**: Automatic cargo delivery when probes return to hubs
@@ -288,7 +304,16 @@ All save system tests passing across Chrome, Firefox, and Safari. The save syste
 
 ## Technical Achievements
 
-### Recently Implemented
+### Recently Implemented (v0.5.0)
+- ✅ **Tutorial System**: Mission Briefing panel with first probe deployment detection
+- ✅ **Interactive Tutorials**: Animated signal examples with disable functionality
+- ✅ **Family Tree Research Layout**: Left-to-right flow with smart connecting lines
+- ✅ **Line Lighting System**: Dynamic connection highlighting based on research progress
+- ✅ **Enhanced Node Design**: Rigid perimeters with double-border and glow effects
+- ✅ **Clean Category Separation**: Proper spacing between Collection/Probe/Alien trees
+- ✅ **Optimized Research UI**: Maximized tree space with compact info panel
+
+### Previous Achievements (v0.4.0)
 - ✅ **Cargo Delivery System**: Probes carry resources back to hubs for delivery
 - ✅ **Direct Signal Collection**: Click-to-collect replaced box selection system
 - ✅ **Advanced Probe Management**: Real-time status tracking with detailed panels
@@ -299,8 +324,6 @@ All save system tests passing across Chrome, Firefox, and Safari. The save syste
 - ✅ **Camera Tracking**: Continuous probe following with smooth interpolation
 - ✅ **Coordinate Systems**: Fixed hub selection and panel positioning bugs
 - ✅ **UI State Management**: Dynamic button states and resource validation
-- ✅ **Research Lab UI**: Fixed scrolling with always-visible info panel
-- ✅ **Visual Improvements**: Tree dividers, proper spacing, and z-index layering
 
 ### Critical Systems (Sept 2025)
 - ✅ **Save/Load System**: Bulletproof multi-slot save system with auto-save

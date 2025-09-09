@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Probetheus</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- Anime.js for cutscene animations -->
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
 </head>
 <body>
     <!-- Start Screen -->
@@ -35,6 +37,12 @@
                 Your progress is automatically saved. Close the browser anytime safely!
             </div>
         </div>
+    </div>
+
+    <!-- Cutscene Container -->
+    <div id="cutsceneContainer" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 10000;">
+        <canvas id="cutsceneCanvas" style="width: 100%; height: 100%;"></canvas>
+        <button id="skipCutscene" style="position: absolute; bottom: 30px; right: 30px; padding: 10px 20px; background: rgba(0,255,255,0.2); border: 1px solid #0ff; color: #0ff; cursor: pointer; font-family: monospace; display: none;">Skip →</button>
     </div>
 
     <div id="gameContainer" style="display: none;">
@@ -165,9 +173,9 @@
 
         <!-- Research Screen -->
         <div id="researchScreen" class="screen">
-            <div style="padding: 20px; height: 100%; display: flex; flex-direction: column;">
+            <div style="padding: 15px 15px 25px 15px; height: 100vh; display: flex; flex-direction: column; box-sizing: border-box;">
                 <!-- Header -->
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-shrink: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-shrink: 0; min-height: 60px;">
                     <h2 style="color: #0ff; margin: 0;">Research Laboratory</h2>
                     <div style="display: flex; align-items: center; gap: 20px;">
                         <div style="color: #0ff;">
@@ -178,14 +186,14 @@
                     </div>
                 </div>
                 
-                <!-- Research Tree - scrollable -->
-                <div id="researchTree" style="flex: 1; position: relative; width: 100%; background: rgba(0,0,0,0.3); border: 1px solid #333; border-radius: 5px; overflow-y: auto; min-height: 400px;">
+                <!-- Research Tree - takes maximum available space -->
+                <div id="researchTree" style="flex: 1; position: relative; width: 100%; background: rgba(0,0,0,0.3); border: 1px solid #333; border-radius: 5px; overflow-y: auto; margin-bottom: 15px;">
                     <!-- Research nodes will be dynamically generated here -->
                 </div>
                 
-                <!-- Research Info Panel - fixed at bottom -->
-                <div id="researchInfo" style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.5); border: 1px solid #333; border-radius: 5px; min-height: 120px; max-height: 180px; flex-shrink: 0;">
-                    <div style="color: #888; font-size: 14px; text-align: center; margin-top: 30px;">
+                <!-- Research Info Panel - compact fixed height at bottom -->
+                <div id="researchInfo" style="padding: 12px; background: rgba(0,0,0,0.5); border: 1px solid #333; border-radius: 5px; height: 140px; flex-shrink: 0; overflow-y: auto;">
+                    <div style="color: #888; font-size: 14px; text-align: center; margin-top: 35px;">
                         Click on a research node to view details and unlock new technologies.
                     </div>
                 </div>
@@ -327,6 +335,7 @@
     </div>
 
     <!-- Modular Game System -->
+    <script src="src/IntroCutscene.js"></script>
     <script src="src/EventBus.js"></script>
     <script src="src/GameState.js"></script>
     <script src="src/ProbeManager.js"></script>
@@ -335,6 +344,7 @@
     <script src="src/SectorManager.js"></script>
     <script src="src/SaveManager.js"></script>
     <script src="src/OfflineManager.js"></script>
+    <script src="src/TutorialManager.js"></script>
     <script src="src/UIManager.js"></script>
     <script src="src/GameController.js"></script>
     
@@ -368,6 +378,14 @@
             document.getElementById('loadGameBtn').addEventListener('click', () => {
                 loadSavedGame();
             });
+            
+            // Debug: Press 'C' on start screen to reset cutscene flag
+            document.addEventListener('keypress', (e) => {
+                if (e.key === 'c' || e.key === 'C') {
+                    localStorage.removeItem('cutsceneSeen');
+                    console.log('Cutscene reset - will play on next new game');
+                }
+            });
         }
 
         function startNewGame() {
@@ -375,12 +393,16 @@
             localStorage.removeItem('csog_save_auto');
             localStorage.removeItem('csog_last_play_time');
             
-            // Hide start screen and show game
+            // Hide start screen
             document.getElementById('startScreen').style.display = 'none';
-            document.getElementById('gameContainer').style.display = 'block';
             
-            // Initialize new game
-            window.game = new GameController();
+            // Play cutscene for new games
+            const cutscene = new IntroCutscene();
+            cutscene.play(() => {
+                // After cutscene, show game and initialize
+                document.getElementById('gameContainer').style.display = 'block';
+                window.game = new GameController();
+            });
         }
 
         async function continueGame() {

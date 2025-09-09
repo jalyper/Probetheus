@@ -18,6 +18,7 @@ class GameController {
         this.sectorManager = new SectorManager(this.gameState, this.eventBus);
         this.saveManager = new SaveManager(this.gameState, this.eventBus);
         this.offlineManager = new OfflineManager(this.gameState, this.eventBus);
+        this.tutorialManager = new TutorialManager(this.gameState, this.eventBus);
         this.uiManager = new UIManager(this.gameState, this.eventBus, this.probeManager, this.buildingSystem);
         
         // Expose globally for onclick handlers
@@ -511,7 +512,7 @@ class GameController {
             this.gameState.ui.deploymentPoints.push({ x: worldX, y: worldY });
             
             if (this.gameState.ui.deploymentPoints.length === 1) {
-                document.getElementById('probeStatus').textContent = 'Click second destination (or right-click to deploy)...';
+                document.getElementById('probeStatus').textContent = 'Click second destination (or right-click to cancel deployment)...';
             } else if (this.gameState.ui.deploymentPoints.length >= 2) {
                 // Deploy probe
                 this.eventBus.emit('probe:deploy', {
