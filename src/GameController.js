@@ -14,12 +14,22 @@ class GameController {
         // Initialize managers
         this.probeManager = new ProbeManager(this.gameState, this.eventBus);
         this.buildingSystem = new BuildingSystem(this.gameState, this.eventBus);
+        this.miningManager = new MiningManager(this.gameState, this.eventBus);
         this.researchManager = new ResearchManager(this.gameState, this.eventBus);
         this.sectorManager = new SectorManager(this.gameState, this.eventBus);
         this.saveManager = new SaveManager(this.gameState, this.eventBus);
         this.offlineManager = new OfflineManager(this.gameState, this.eventBus);
         this.tutorialManager = new TutorialManager(this.gameState, this.eventBus);
+        this.cosmeticManager = new CosmeticManager(this.gameState, this.eventBus);
         this.uiManager = new UIManager(this.gameState, this.eventBus, this.probeManager, this.buildingSystem);
+        
+        // Make cosmetic manager available to gameState for easy access
+        this.gameState.cosmeticManager = this.cosmeticManager;
+        
+        // Initialize details panel after a brief delay to ensure DOM is ready
+        setTimeout(() => {
+            this.detailsPanel = new DetailsPanel(this.gameState, this.eventBus);
+        }, 100);
         
         // Expose globally for onclick handlers
         window.uiManager = this.uiManager;
@@ -241,6 +251,7 @@ class GameController {
             if (this.buildingSystem.isBuildingMode()) {
                 this.buildingSystem.updateBuildingPreview({ mouseX: x, mouseY: y });
             }
+            
         });
 
         // Add mouseup for dragging and signal selection
@@ -315,6 +326,13 @@ class GameController {
                 
                 this.gameState.world.viewOffset.x = worldX - centerX / newZoom;
                 this.gameState.world.viewOffset.y = worldY - centerY / newZoom;
+            } else if (e.key === 'Escape') {
+                // ESC to close hub panel
+                if (this.gameState.ui.selectedHub) {
+                    this.gameState.ui.selectedHub.selected = false;
+                    this.gameState.ui.selectedHub = null;
+                    this.uiManager.updateUI();
+                }
             }
         });
 
@@ -332,6 +350,24 @@ class GameController {
                 this.canvas.style.cursor = 'grab';
                 document.getElementById('probeStatus').textContent = '';
                 console.log('Cancelled hub placement mode');
+            }
+            
+            
+            // Cancel shuttle placement mode
+            if (this.gameState.ui.shuttlePlacementMode) {
+                this.gameState.ui.shuttlePlacementMode = false;
+                this.canvas.style.cursor = 'grab';
+                document.getElementById('probeStatus').textContent = '';
+                console.log('Cancelled shuttle placement mode');
+            }
+            
+            // Cancel shuttle connection mode
+            if (this.gameState.ui.shuttleConnectionMode) {
+                this.gameState.ui.shuttleConnectionMode = false;
+                this.gameState.ui.selectedStation = null;
+                this.canvas.style.cursor = 'grab';
+                document.getElementById('probeStatus').textContent = '';
+                console.log('Cancelled shuttle connection mode');
             }
             
             // Cancel deployment mode
@@ -364,7 +400,108 @@ class GameController {
             }
         });
 
+        // Mining station button (check if it exists)
+        const buildMiningBtn = document.getElementById('buildMiningBtn');
+        if (buildMiningBtn) {
+            buildMiningBtn.addEventListener('click', () => {
+                // Use BuildingSystem for mining facility placement
+                this.buildingSystem.enterBuildingMode({
+                    structureType: 'miningFacility',
+                    probe: null // No specific probe needed for mining facilities
+                });
+                this.canvas.style.cursor = 'crosshair';
+                document.getElementById('probeStatus').textContent = 'Click along exploration routes to place mining station...';
+                console.log('Entered mining facility building mode via BuildingSystem');
+            });
+        }
+
+        // Shuttle button (check if it exists)
+        const buildShuttleBtn = document.getElementById('buildShuttleBtn');
+        if (buildShuttleBtn) {
+            buildShuttleBtn.addEventListener('click', () => {
+            if (!this.gameState.ui.selectedHub) {
+                this.eventBus.emit('ui:message', { 
+                    text: 'Select a hub first!', 
+                    type: 'error' 
+                });
+                return;
+            }
+            
+            if (!this.gameState.mining || this.gameState.mining.stations.length === 0) {
+                this.eventBus.emit('ui:message', { 
+                    text: 'No mining stations available!', 
+                    type: 'error' 
+                });
+                return;
+            }
+            
+            // Enter shuttle placement mode - user clicks on a station to connect
+            this.gameState.ui.shuttlePlacementMode = true;
+            this.canvas.style.cursor = 'crosshair';
+            document.getElementById('probeStatus').textContent = 'Click on a mining station to connect shuttle...';
+            });
+        }
+
         // Build hub button removed - now handled by probe building system
+
+        // Testing panel handlers
+        document.querySelectorAll('.test-resource-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const resource = e.currentTarget.dataset.resource;
+                const amount = parseInt(e.currentTarget.dataset.amount);
+                
+                if (resource === 'all') {
+                    // Add to all resources
+                    const resources = this.gameState.getResources();
+                    this.gameState.updateResources({
+                        minerals: (resources.minerals || 0) + amount,
+                        data: (resources.data || 0) + amount,
+                        artifacts: (resources.artifacts || 0) + amount,
+                        exoticMinerals: (resources.exoticMinerals || 0) + amount,
+                        researchPoints: (resources.researchPoints || 0) + 10
+                    }, this.eventBus);
+                    console.log(`Added ${amount} to all resources`);
+                } else {
+                    // Add to specific resource
+                    const resources = this.gameState.getResources();
+                    resources[resource] = (resources[resource] || 0) + amount;
+                    this.gameState.updateResources(resources, this.eventBus);
+                    console.log(`Added ${amount} ${resource}`);
+                }
+            });
+        });
+
+        // Probetheum test button
+        const testProbetheum = document.getElementById('testAddProbetheum');
+        if (testProbetheum) {
+            testProbetheum.addEventListener('click', () => {
+                if (this.miningManager && this.miningManager.gameState.mining) {
+                    this.miningManager.gameState.mining.totalProbetheum += 1.0;
+                    this.miningManager.updateProbetheum();
+                    console.log('Added 1.0 Probetheum');
+                }
+            });
+        }
+
+        // Toggle test panel
+        const toggleBtn = document.getElementById('toggleTestPanel');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                const panel = document.getElementById('testPanel');
+                panel.style.display = 'none';
+            });
+        }
+
+        // Add keyboard shortcut for test panel (Ctrl+T)
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 't') {
+                e.preventDefault();
+                const panel = document.getElementById('testPanel');
+                if (panel) {
+                    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+                }
+            }
+        });
 
         // Exploration button handlers
         document.querySelectorAll('.explore-btn').forEach(btn => {
@@ -456,19 +593,43 @@ class GameController {
             return;
         }
 
+        // Handle shuttle placement mode (hub -> station) - PRIORITY OVER entity selection
+        if (this.gameState.ui.shuttlePlacementMode) {
+            console.log('Handling shuttle placement click');
+            this.placeShuttle(worldX, worldY);
+            return;
+        }
+        
+        // Handle shuttle connection mode (station -> hub) - PRIORITY OVER entity selection
+        if (this.gameState.ui.shuttleConnectionMode) {
+            console.log('Handling shuttle connection click');
+            this.connectShuttle(worldX, worldY);
+            return;
+        }
+
         // Check for hub clicks FIRST (higher priority than probes)
         const clickedHub = this.findHubAt(worldX, worldY);
         if (clickedHub) {
             console.log('Found hub at click location');
             this.selectHub(clickedHub);
+            this.eventBus.emit('entity:selected', { entity: clickedHub, type: 'hub' });
+            return;
+        }
+        
+        // Check for mining station clicks
+        const clickedStation = this.findMiningStationAt(worldX, worldY);
+        if (clickedStation) {
+            console.log('Found mining station at click location');
+            this.eventBus.emit('entity:selected', { entity: clickedStation, type: 'miningStation' });
             return;
         }
 
-        // Check for probe clicks SECOND (only if no hub was clicked)
+        // Check for probe clicks
         const clickedProbe = this.findProbeAt(worldX, worldY);
         if (clickedProbe) {
             console.log('Found probe at click location');
             this.eventBus.emit('probe:select', { probe: clickedProbe });
+            this.eventBus.emit('entity:selected', { entity: clickedProbe, type: 'probe' });
             return;
         }
 
@@ -486,6 +647,8 @@ class GameController {
             this.placeReconHub(worldX, worldY);
             return;
         }
+
+
 
         // Handle deployment mode
         if (this.gameState.ui.deployMode && this.gameState.ui.selectedHub) {
@@ -577,6 +740,22 @@ class GameController {
             const clickRadius = signal.radius * 8; // Significantly increased for better clickability
             
             return distance <= clickRadius;
+        });
+    }
+    
+    /**
+     * Find mining station at coordinates
+     */
+    findMiningStationAt(x, y) {
+        if (!this.gameState.mining || !this.gameState.mining.stations) return null;
+        
+        return this.gameState.mining.stations.find(station => {
+            const distance = Math.sqrt(
+                Math.pow(x - station.position.x, 2) + 
+                Math.pow(y - station.position.y, 2)
+            );
+            // Mining stations have a large click radius for easy clicking
+            return distance <= 60;
         });
     }
 
@@ -925,11 +1104,125 @@ class GameController {
         this.uiManager.updateUI();
     }
 
+
+
+    /**
+     * Place a shuttle by clicking on a mining station
+     */
+    placeShuttle(worldX, worldY) {
+        const selectedHub = this.gameState.ui.selectedHub;
+        console.log('placeShuttle called - selectedHub:', selectedHub?.id, 'at position:', worldX, worldY);
+        
+        if (!selectedHub) {
+            console.log('No selected hub for shuttle placement');
+            return;
+        }
+        
+        // Find clicked mining station (within large radius for easy clicking)
+        let clickedStation = null;
+        if (this.gameState.mining && this.gameState.mining.stations) {
+            clickedStation = this.gameState.mining.stations.find(station => {
+                const distance = Math.sqrt(
+                    Math.pow(station.position.x - worldX, 2) + 
+                    Math.pow(station.position.y - worldY, 2)
+                );
+                return distance <= 60; // Large click radius for better UX
+            });
+        }
+        
+        if (!clickedStation) {
+            this.eventBus.emit('ui:message', { 
+                text: 'Click directly on a mining station to connect shuttle!', 
+                type: 'error' 
+            });
+            return;
+        }
+        
+        // Check if there's already a shuttle for this hub-station pair
+        const existingShuttle = this.gameState.mining.shuttles.find(shuttle => 
+            shuttle.hubId === selectedHub.id && shuttle.stationId === clickedStation.id
+        );
+        
+        if (existingShuttle) {
+            this.eventBus.emit('ui:message', { 
+                text: 'Shuttle already exists between this hub and station!', 
+                type: 'error' 
+            });
+            return;
+        }
+        
+        // Build the shuttle
+        this.eventBus.emit('mining:buildShuttle', {
+            hubId: selectedHub.id,
+            stationId: clickedStation.id
+        });
+        
+        // Exit placement mode
+        this.gameState.ui.shuttlePlacementMode = false;
+        this.canvas.style.cursor = 'grab';
+        document.getElementById('probeStatus').textContent = '';
+    }
+
+    /**
+     * Connect a shuttle from station to hub (reverse of placeShuttle)
+     */
+    connectShuttle(worldX, worldY) {
+        const selectedStation = this.gameState.ui.selectedStation;
+        console.log('connectShuttle called - selectedStation:', selectedStation?.id, 'at position:', worldX, worldY);
+        
+        if (!selectedStation) {
+            console.log('No selected station for shuttle connection');
+            return;
+        }
+        
+        // Find clicked hub (within 50 pixel radius)
+        const clickedHub = this.findHubAt(worldX, worldY);
+        
+        if (!clickedHub) {
+            this.eventBus.emit('ui:message', { 
+                text: 'Click directly on a hub to connect shuttle!', 
+                type: 'error' 
+            });
+            return;
+        }
+        
+        // Check if there's already a shuttle for this hub-station pair
+        const existingShuttle = this.gameState.mining.shuttles.find(shuttle => 
+            shuttle.hubId === clickedHub.id && shuttle.stationId === selectedStation.id
+        );
+        
+        if (existingShuttle) {
+            this.eventBus.emit('ui:message', { 
+                text: 'Shuttle already exists between this hub and station!', 
+                type: 'error' 
+            });
+            // Exit connection mode
+            this.gameState.ui.shuttleConnectionMode = false;
+            this.canvas.style.cursor = 'grab';
+            document.getElementById('probeStatus').textContent = '';
+            return;
+        }
+        
+        // Create the shuttle using MiningManager
+        this.eventBus.emit('mining:buildShuttle', {
+            hubId: clickedHub.id,
+            stationId: selectedStation.id
+        });
+        
+        // Exit connection mode
+        this.gameState.ui.shuttleConnectionMode = false;
+        this.gameState.ui.selectedStation = null;
+        this.canvas.style.cursor = 'grab';
+        document.getElementById('probeStatus').textContent = '';
+    }
+
     /**
      * Update cursor based on what's under mouse
      */
     updateCursor(worldX, worldY) {
-        if (this.gameState.ui.deployMode || this.gameState.ui.hubPlacementMode) {
+        if (this.gameState.ui.deployMode || this.gameState.ui.hubPlacementMode || 
+            this.gameState.ui.miningPlacementMode || this.gameState.ui.shuttlePlacementMode ||
+            this.gameState.ui.shuttleConnectionMode) {
             this.canvas.style.cursor = 'crosshair';
             return;
         }
@@ -1092,11 +1385,14 @@ class GameController {
         this.renderResourceIndicators();
         this.renderSectorBoundaries();
         this.renderBuildings();
+        this.renderMiningStations();
+        this.renderShuttles();
         
         // Render building preview
         if (this.buildingSystem.getBuildingPreview()) {
             this.renderBuildingPreview(this.buildingSystem.getBuildingPreview());
         }
+        
         
         // Render UI overlays
         if (this.gameState.ui.deployMode) {
@@ -1134,6 +1430,17 @@ class GameController {
      * Render probes
      */
     renderProbes() {
+        // First pass: Draw all probe paths (background layer)
+        this.gameState.entities.probes.forEach(probe => {
+            if (!probe.active) return;
+            
+            // Draw path for all probes with waypoints (behind probe)
+            if (probe.waypoints && probe.waypoints.length > 1) {
+                this.renderProbePath(probe);
+            }
+        });
+        
+        // Second pass: Draw all probes (foreground layer)
         this.gameState.entities.probes.forEach(probe => {
             if (!probe.active) return;
             
@@ -1152,10 +1459,36 @@ class GameController {
                 probeColor = '#ff8c00'; // Dark orange for returning unselected
             }
             
-            this.ctx.fillStyle = probeColor;
-            this.ctx.beginPath();
-            this.ctx.arc(screenX, screenY, 5, 0, Math.PI * 2);
-            this.ctx.fill();
+            // Draw trail effect if enabled
+            if (probe.cosmetic && probe.cosmetic.trailEnabled) {
+                this.drawProbeTrail(probe, screenX, screenY);
+            }
+            
+            // Calculate probe rotation based on movement direction
+            let probeAngle = 0;
+            if (probe.waypoints && probe.currentWaypoint < probe.waypoints.length - 1) {
+                // Get current and next waypoint to determine direction
+                const currentWaypoint = probe.waypoints[probe.currentWaypoint];
+                const nextWaypoint = probe.waypoints[probe.currentWaypoint + 1];
+                
+                if (currentWaypoint && nextWaypoint) {
+                    const dx = nextWaypoint.x - currentWaypoint.x;
+                    const dy = nextWaypoint.y - currentWaypoint.y;
+                    probeAngle = Math.atan2(dy, dx);
+                }
+            }
+            
+            // Save context and apply rotation
+            this.ctx.save();
+            this.ctx.translate(screenX, screenY);
+            this.ctx.rotate(probeAngle);
+            
+            // Draw probe components (all relative to origin now)
+            const skin = probe.cosmetic || null;
+            this.drawProbeComponents(probeColor, skin);
+            
+            // Restore context
+            this.ctx.restore();
             
             // Draw radar pulses
             probe.radarPulses.forEach(pulse => {
@@ -1168,12 +1501,202 @@ class GameController {
                 this.ctx.arc(pulseX, pulseY, pulse.radius, 0, Math.PI * 2);
                 this.ctx.stroke();
             });
-            
-            // Draw path for all probes with waypoints (not just selected)
-            if (probe.waypoints && probe.waypoints.length > 1) {
-                this.renderProbePath(probe);
-            }
         });
+    }
+
+    /**
+     * Draw individual probe components (body, wings, front, antenna)
+     * All drawing is relative to origin (0,0) which is the probe center
+     * @param {string} probeColor - Base color for the probe
+     * @param {Object} skin - Optional cosmetic skin data
+     */
+    drawProbeComponents(probeColor, skin = null) {
+        const time = Date.now();
+        const blinkCycle = skin?.blinkSpeed || 1500; // Customizable blink speed
+        const blinkPhase = (time % blinkCycle) / blinkCycle;
+        const componentAlpha = 0.6 + 0.4 * Math.abs(Math.sin(blinkPhase * Math.PI * 2));
+        
+        // Apply skin overrides
+        const bodyColor = skin?.bodyColor || probeColor;
+        const wingColorBase = skin?.wingColor || probeColor;
+        const antennaColorBase = skin?.antennaColor || probeColor;
+        const frontColor = skin?.frontColor || probeColor;
+        
+        // Convert hex colors to rgba for alpha blending
+        let wingColor = wingColorBase;
+        if (wingColorBase === '#0ff') wingColor = `rgba(0,255,255,${componentAlpha})`;
+        else if (wingColorBase === '#ff0') wingColor = `rgba(255,255,0,${componentAlpha})`;
+        else if (wingColorBase === '#ffa500') wingColor = `rgba(255,165,0,${componentAlpha})`;
+        else if (wingColorBase === '#ff8c00') wingColor = `rgba(255,140,0,${componentAlpha})`;
+        else if (wingColorBase.startsWith('#')) {
+            // Handle custom hex colors
+            const r = parseInt(wingColorBase.slice(1, 3), 16);
+            const g = parseInt(wingColorBase.slice(3, 5), 16);
+            const b = parseInt(wingColorBase.slice(5, 7), 16);
+            wingColor = `rgba(${r},${g},${b},${componentAlpha})`;
+        }
+        
+        let antennaColor = antennaColorBase;
+        if (antennaColorBase.startsWith('#')) {
+            const r = parseInt(antennaColorBase.slice(1, 3), 16);
+            const g = parseInt(antennaColorBase.slice(3, 5), 16);
+            const b = parseInt(antennaColorBase.slice(5, 7), 16);
+            antennaColor = `rgba(${r},${g},${b},${componentAlpha})`;
+        }
+        
+        // 1. Draw main body (circular center)
+        const bodyRadius = skin?.bodyRadius || 4;
+        
+        this.ctx.fillStyle = bodyColor;
+        this.ctx.strokeStyle = bodyColor;
+        this.ctx.lineWidth = 1;
+        this.ctx.beginPath();
+        this.ctx.arc(0, 0, bodyRadius, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // 2. Draw wings (extending perpendicular to travel direction, detached from body)
+        const wingLength = skin?.wingLength || 8;
+        const wingWidth = skin?.wingWidth || 2;
+        const wingGap = skin?.wingGap || 2; // Small gap between body and wings
+        
+        this.ctx.fillStyle = wingColor;
+        this.ctx.strokeStyle = bodyColor;
+        this.ctx.lineWidth = 1;
+        
+        // Top wing (extending perpendicular upward from body with gap)
+        this.ctx.beginPath();
+        this.ctx.rect(-wingWidth/2, -bodyRadius - wingGap - wingLength, wingWidth, wingLength);
+        this.ctx.fill();
+        this.ctx.stroke();
+        
+        // Bottom wing (extending perpendicular downward from body with gap) 
+        this.ctx.beginPath();
+        this.ctx.rect(-wingWidth/2, bodyRadius + wingGap, wingWidth, wingLength);
+        this.ctx.fill();
+        this.ctx.stroke();
+        
+        // 3. Draw front (triangular nose - bigger and overlapping into body)
+        const frontSize = skin?.frontSize || 4; // Made significantly bigger
+        const frontHeight = skin?.frontHeight || 2.5; // Taller triangle
+        this.ctx.fillStyle = frontColor;
+        this.ctx.beginPath();
+        this.ctx.moveTo(bodyRadius - 1, 0); // Start inside the body to hide connection
+        this.ctx.lineTo(bodyRadius + frontSize, -frontHeight); // Top point
+        this.ctx.lineTo(bodyRadius + frontSize, frontHeight); // Bottom point
+        this.ctx.closePath();
+        this.ctx.fill();
+        this.ctx.stroke();
+        
+        // 4. Draw antennas (angled outward to avoid trail overlap)
+        const antennaLength = skin?.antennaLength || 6;
+        const antennaAngle = skin?.antennaAngle || 15; // 15 degrees outward angle
+        this.ctx.strokeStyle = antennaColor;
+        this.ctx.lineWidth = skin?.antennaWidth || 1;
+        
+        // Convert angle to radians
+        const angleRad = (antennaAngle * Math.PI) / 180;
+        
+        // Upper antenna (angled upward and back)
+        this.ctx.beginPath();
+        this.ctx.moveTo(-bodyRadius, -1);
+        this.ctx.lineTo(
+            -bodyRadius - antennaLength * Math.cos(angleRad), 
+            -1 - antennaLength * Math.sin(angleRad)
+        );
+        this.ctx.stroke();
+        
+        // Lower antenna (angled downward and back)
+        this.ctx.beginPath();
+        this.ctx.moveTo(-bodyRadius, 1);
+        this.ctx.lineTo(
+            -bodyRadius - antennaLength * Math.cos(angleRad), 
+            1 + antennaLength * Math.sin(angleRad)
+        );
+        this.ctx.stroke();
+    }
+
+    /**
+     * Draw trail effect for probe
+     * @param {Object} probe - The probe object
+     * @param {number} screenX - Screen X position of probe
+     * @param {number} screenY - Screen Y position of probe
+     */
+    drawProbeTrail(probe, screenX, screenY) {
+        // Initialize trail array if it doesn't exist
+        if (!probe.trail) {
+            probe.trail = [];
+        }
+        
+        const trailConfig = probe.cosmetic.trail || {};
+        const maxTrailLength = trailConfig.length || 15;
+        const trailColor = trailConfig.color || probe.cosmetic.bodyColor || '#0ff';
+        const trailWidth = trailConfig.width || 2;
+        const trailOpacity = trailConfig.opacity || 0.8;
+        
+        // Add current position to trail (only if moved enough distance)
+        const minTrailDistance = 3; // Minimum distance between trail points
+        let shouldAddPoint = true;
+        
+        if (probe.trail.length > 0) {
+            const lastPoint = probe.trail[probe.trail.length - 1];
+            const distance = Math.sqrt(
+                Math.pow(probe.current.x - lastPoint.x, 2) + 
+                Math.pow(probe.current.y - lastPoint.y, 2)
+            );
+            shouldAddPoint = distance >= minTrailDistance;
+        }
+        
+        if (shouldAddPoint) {
+            probe.trail.push({
+                x: probe.current.x,
+                y: probe.current.y,
+                time: Date.now()
+            });
+        }
+        
+        // Remove old trail points
+        if (probe.trail.length > maxTrailLength) {
+            probe.trail = probe.trail.slice(-maxTrailLength);
+        }
+        
+        // Draw trail
+        if (probe.trail.length > 1) {
+            this.ctx.lineWidth = trailWidth;
+            this.ctx.lineCap = 'round';
+            
+            for (let i = 1; i < probe.trail.length; i++) {
+                const point = probe.trail[i];
+                const prevPoint = probe.trail[i - 1];
+                
+                // Calculate fade based on position in trail
+                const fadeRatio = i / probe.trail.length;
+                const alpha = (trailOpacity * fadeRatio).toFixed(2);
+                
+                // Convert hex to rgba
+                let rgba;
+                if (trailColor.startsWith('#')) {
+                    const r = parseInt(trailColor.slice(1, 3), 16);
+                    const g = parseInt(trailColor.slice(3, 5), 16);
+                    const b = parseInt(trailColor.slice(5, 7), 16);
+                    rgba = `rgba(${r},${g},${b},${alpha})`;
+                } else {
+                    rgba = `rgba(0,255,255,${alpha})`; // Default cyan
+                }
+                
+                this.ctx.strokeStyle = rgba;
+                
+                // Convert world coordinates to screen coordinates
+                const x1 = prevPoint.x - this.gameState.world.viewOffset.x;
+                const y1 = prevPoint.y - this.gameState.world.viewOffset.y;
+                const x2 = point.x - this.gameState.world.viewOffset.x;
+                const y2 = point.y - this.gameState.world.viewOffset.y;
+                
+                this.ctx.beginPath();
+                this.ctx.moveTo(x1, y1);
+                this.ctx.lineTo(x2, y2);
+                this.ctx.stroke();
+            }
+        }
     }
 
     /**
@@ -1454,6 +1977,281 @@ class GameController {
     }
 
     /**
+     * Render mining stations
+     */
+    renderMiningStations() {
+        if (!this.gameState.mining || !this.gameState.mining.stations) return;
+        
+        this.gameState.mining.stations.forEach(station => {
+            const screenX = station.position.x - this.gameState.world.viewOffset.x;
+            const screenY = station.position.y - this.gameState.world.viewOffset.y;
+            
+            // Skip if off-screen
+            if (screenX < -50 || screenX > this.canvas.width + 50 || 
+                screenY < -50 || screenY > this.canvas.height + 50) return;
+            
+            const stationType = this.miningManager.getStationTypes()[station.type];
+            const baseSize = station.type === 'basic' ? 18 : station.type === 'advanced' ? 22 : 26;
+            const size = baseSize + station.level * 2;
+            
+            // Animation values
+            const time = Date.now() * 0.001; // Convert to seconds
+            const rotationSpeed = station.active ? 0.5 : 0; // Rotate only when active
+            const rotation = time * rotationSpeed;
+            const pulsePhase = Math.sin(time * 2) * 0.5 + 0.5; // 0 to 1, every 0.5 seconds
+            
+            // TRON-like color scheme
+            const baseColor = '#aaa'; // Light gray
+            const activeGlow = station.active ? '#00ffff' : '#004444'; // Cyan glow when active
+            const strokeColor = station.active ? '#00dddd' : '#666666';
+            
+            this.ctx.save();
+            this.ctx.translate(screenX, screenY);
+            
+            // Outer glow effect when active (color changes based on resource status)
+            if (station.active) {
+                const glowIntensity = 0.3 + pulsePhase * 0.4; // Pulse between 0.3 and 0.7
+                const glowSize = size + 8 + pulsePhase * 6;
+                
+                // Determine glow color based on resource status
+                const progress = this.miningManager.getStationResourceProgress(station, stationType);
+                let glowColor = '#00ffff'; // Default cyan
+                
+                if (progress < 0.3) {
+                    glowColor = '#ff4400'; // Red when low on resources
+                } else if (progress < 0.7) {
+                    glowColor = '#ff8800'; // Orange when medium resources
+                } else {
+                    glowColor = '#00ffff'; // Cyan when good resources
+                }
+                
+                this.ctx.shadowColor = glowColor;
+                this.ctx.shadowBlur = 15 * glowIntensity;
+                this.ctx.globalAlpha = glowIntensity * 0.6;
+                
+                // Outer glow ring
+                this.ctx.strokeStyle = glowColor;
+                this.ctx.lineWidth = 3;
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, glowSize, 0, Math.PI * 2);
+                this.ctx.stroke();
+                
+                this.ctx.shadowBlur = 0;
+                this.ctx.globalAlpha = 1;
+            }
+            
+            // Rotate the entire station if active
+            if (station.active) {
+                this.ctx.rotate(rotation);
+            }
+            
+            // Main octagonal structure
+            this.ctx.fillStyle = baseColor;
+            this.ctx.strokeStyle = strokeColor;
+            this.ctx.lineWidth = 2;
+            
+            this.ctx.beginPath();
+            for (let i = 0; i < 8; i++) {
+                const angle = (i * Math.PI) / 4;
+                const x = Math.cos(angle) * size;
+                const y = Math.sin(angle) * size;
+                if (i === 0) {
+                    this.ctx.moveTo(x, y);
+                } else {
+                    this.ctx.lineTo(x, y);
+                }
+            }
+            this.ctx.closePath();
+            this.ctx.fill();
+            this.ctx.stroke();
+            
+            // Inner geometric details (TRON-style lines)
+            this.ctx.strokeStyle = strokeColor;
+            this.ctx.lineWidth = 1;
+            
+            // Draw inner cross pattern
+            this.ctx.beginPath();
+            const innerSize = size * 0.6;
+            this.ctx.moveTo(-innerSize, 0);
+            this.ctx.lineTo(innerSize, 0);
+            this.ctx.moveTo(0, -innerSize);
+            this.ctx.lineTo(0, innerSize);
+            
+            // Diagonal lines
+            const diagSize = size * 0.4;
+            this.ctx.moveTo(-diagSize, -diagSize);
+            this.ctx.lineTo(diagSize, diagSize);
+            this.ctx.moveTo(-diagSize, diagSize);
+            this.ctx.lineTo(diagSize, -diagSize);
+            this.ctx.stroke();
+            
+            // Central energy core
+            if (station.active) {
+                const coreSize = 4 + pulsePhase * 3;
+                const coreGlow = 0.8 + pulsePhase * 0.2;
+                
+                this.ctx.fillStyle = '#00ffff';
+                this.ctx.globalAlpha = coreGlow;
+                this.ctx.shadowColor = '#00ffff';
+                this.ctx.shadowBlur = 10;
+                
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, coreSize, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                this.ctx.shadowBlur = 0;
+                this.ctx.globalAlpha = 1;
+            } else {
+                // Inactive core
+                this.ctx.fillStyle = '#333';
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, 3, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
+            
+            this.ctx.restore();
+            
+            // Note: Low resources indication is now handled by the main glow color above
+            
+            // Draw level indicator
+            if (station.level > 1) {
+                this.ctx.font = '10px Arial';
+                this.ctx.fillStyle = '#ff0';
+                this.ctx.fillText(`Lv${station.level}`, screenX, screenY + size + 10);
+            }
+            
+            // Draw resource requirement progress bar (gradual filling)
+            if (station.stationInventory && stationType.requirements) {
+                const barWidth = 40;
+                const barHeight = 4;
+                
+                // Get progress percentage (0-1) and check if fully ready
+                const progress = this.miningManager.getStationResourceProgress(station, stationType);
+                const hasAllRequirements = this.miningManager.checkStationHasRequirements(station, stationType);
+                const time = Date.now() * 0.005;
+                
+                // Background bar
+                this.ctx.fillStyle = 'rgba(60, 60, 60, 0.8)';
+                this.ctx.fillRect(screenX - 20, screenY + size + 15, barWidth, barHeight);
+                
+                // Calculate fill width based on progress
+                const fillWidth = barWidth * progress;
+                let barColor;
+                
+                if (progress >= 0.95) { // Green when 95% or more filled (accounts for continuous consumption)
+                    barColor = '#00ff00';
+                } else if (progress > 0) {
+                    // Yellow to orange gradient as it fills up
+                    const intensity = Math.min(1, progress + 0.3);
+                    barColor = `rgb(${Math.floor(255 * intensity)}, ${Math.floor(255 * intensity * 0.8)}, 0)`;
+                } else {
+                    // Blinking red when empty
+                    const blinkAlpha = 0.3 + 0.7 * Math.abs(Math.sin(time));
+                    barColor = `rgba(255, 68, 0, ${blinkAlpha})`;
+                }
+                
+                if (fillWidth > 0) {
+                    this.ctx.fillStyle = barColor;
+                    this.ctx.fillRect(screenX - 20, screenY + size + 15, fillWidth, barHeight);
+                }
+            }
+        });
+    }
+
+    /**
+     * Render shuttles
+     */
+    renderShuttles() {
+        if (!this.gameState.mining || !this.gameState.mining.shuttles) return;
+        
+        this.gameState.mining.shuttles.forEach(shuttle => {
+            const screenX = shuttle.position.x - this.gameState.world.viewOffset.x;
+            const screenY = shuttle.position.y - this.gameState.world.viewOffset.y;
+            
+            // Skip if off-screen
+            if (screenX < -20 || screenX > this.canvas.width + 20 || 
+                screenY < -20 || screenY > this.canvas.height + 20) return;
+            
+            // Draw shuttle body with status-based colors
+            const size = 8 + shuttle.level;
+            let shuttleColor = '#ff0'; // Default yellow for returning
+            if (shuttle.status === 'delivering') shuttleColor = '#0f0'; // Green when delivering
+            else if (shuttle.status === 'waiting') shuttleColor = '#888'; // Gray when waiting
+            
+            this.ctx.fillStyle = shuttleColor;
+            this.ctx.strokeStyle = '#fff';
+            this.ctx.lineWidth = 1;
+            
+            // Triangle shape pointing in direction of movement
+            const hub = this.gameState.entities.reconHubs.find(h => h.id === shuttle.hubId);
+            const station = this.gameState.mining.stations.find(s => s.id === shuttle.stationId);
+            
+            if (hub && station) {
+                const targetPos = shuttle.target === 'station' ? station.position : { x: hub.x, y: hub.y };
+                const angle = Math.atan2(targetPos.y - shuttle.position.y, targetPos.x - shuttle.position.x);
+                
+                this.ctx.save();
+                this.ctx.translate(screenX, screenY);
+                this.ctx.rotate(angle);
+                
+                this.ctx.beginPath();
+                this.ctx.moveTo(size, 0);
+                this.ctx.lineTo(-size, -size/2);
+                this.ctx.lineTo(-size, size/2);
+                this.ctx.closePath();
+                this.ctx.fill();
+                this.ctx.stroke();
+                
+                // Draw cargo indicator
+                const cargoAmount = Object.values(shuttle.cargo || {}).reduce((sum, val) => sum + val, 0);
+                if (cargoAmount > 0) {
+                    const cargoPercent = cargoAmount / shuttle.capacity;
+                    this.ctx.fillStyle = `rgba(255, 255, 255, ${0.5 + cargoPercent * 0.5})`;
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, 3, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+                
+                this.ctx.restore();
+            }
+            
+            // Draw shuttle trail
+            this.ctx.strokeStyle = `rgba(200, 150, 255, 0.3)`;
+            this.ctx.lineWidth = 2;
+            this.ctx.setLineDash([2, 4]);
+            this.ctx.beginPath();
+            this.ctx.moveTo(screenX, screenY);
+            
+            if (hub && station) {
+                const targetPos = shuttle.target === 'station' ? station.position : { x: hub.x, y: hub.y };
+                const targetX = targetPos.x - this.gameState.world.viewOffset.x;
+                const targetY = targetPos.y - this.gameState.world.viewOffset.y;
+                this.ctx.lineTo(targetX, targetY);
+            }
+            
+            this.ctx.stroke();
+            this.ctx.setLineDash([]);
+        });
+    }
+
+    /**
+     * Calculate resource buffer percentage for a station
+     */
+    calculateBufferPercent(station, stationType) {
+        if (!station.resourceBuffer || !stationType.consumption) return 0;
+        
+        let totalBuffer = 0;
+        let totalNeeded = 0;
+        
+        Object.entries(stationType.consumption).forEach(([resource, amount]) => {
+            totalBuffer += station.resourceBuffer[resource] || 0;
+            totalNeeded += amount * 5; // 5 minutes worth
+        });
+        
+        return totalNeeded > 0 ? Math.min(totalBuffer / totalNeeded, 1) : 0;
+    }
+
+    /**
      * Render building preview
      */
     renderBuildingPreview(preview) {
@@ -1476,6 +2274,7 @@ class GameController {
         
         this.ctx.setLineDash([]);
     }
+
 
     /**
      * Render deployment overlay
@@ -2089,6 +2888,26 @@ class GameController {
             document.getElementById('quitGameMenuBtn').addEventListener('click', () => {
                 document.getElementById('mainMenuModal').classList.remove('active');
                 this.quitGame();
+            });
+        }
+
+        // Export save file from main menu
+        const exportSaveBtn = document.getElementById('exportSaveBtn');
+        if (exportSaveBtn) {
+            exportSaveBtn.replaceWith(exportSaveBtn.cloneNode(true)); // Remove old listeners
+            document.getElementById('exportSaveBtn').addEventListener('click', async () => {
+                document.getElementById('mainMenuModal').classList.remove('active');
+                await this.saveManager.exportSaveToFile(); // Export current game state
+            });
+        }
+
+        // Import save file from main menu
+        const importSaveBtn = document.getElementById('importSaveBtn');
+        if (importSaveBtn) {
+            importSaveBtn.replaceWith(importSaveBtn.cloneNode(true)); // Remove old listeners
+            document.getElementById('importSaveBtn').addEventListener('click', async () => {
+                document.getElementById('mainMenuModal').classList.remove('active');
+                await this.saveManager.importSaveFromFile();
             });
         }
 

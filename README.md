@@ -1,7 +1,7 @@
 # Probetheus
-**Version 0.5.0-pre-alpha**
+**Version 0.6.0-pre-alpha**
 
-A space exploration idle game where you deploy probes from Recon Hubs to discover signals, explore planets, and collect resources across an infinite procedural galaxy. Features advanced probe management, cargo delivery systems, research trees, and automated collection mechanics.
+A space exploration idle game where you deploy probes from Recon Hubs to discover signals, explore planets, and collect resources across an infinite procedural galaxy. Features advanced probe management, cargo delivery systems, research trees, automated collection mechanics, and Probethium mining operations.
 
 ## Current Features
 
@@ -77,12 +77,39 @@ A space exploration idle game where you deploy probes from Recon Hubs to discove
 - **Minimap Navigation**: Visual sector overview with click-to-navigate
 - **Balanced Sectors**: Standardized 1920x1080 sector dimensions for consistent gameplay
 
+### Probethium Mining System (NEW v0.6.0)
+- **Mining Stations**: Build specialized facilities to extract Probethium cryptocurrency
+  - **Basic Station**: Requires 100 minerals + 50 data to operate (30-second cycles)
+  - **Advanced Station**: Requires 150 minerals + 100 data + 75 artifacts (30-second cycles)
+  - **Quantum Station**: Ultimate mining facility with exotic mineral requirements
+- **Resource Shuttles**: Automated logistics system
+  - Deploy shuttles to deliver resources from hubs to mining stations
+  - 20 resource capacity per trip requires multiple deliveries
+  - Smart return-to-hub behavior when stations are full
+  - Visual cargo indicators show loading/delivering/returning status
+- **Station Management**:
+  - Maximum 3 mining stations per hub
+  - Continuous resource consumption during mining operations
+  - Visual progress bars show resource levels and mining status
+  - Color-coded glow effects: cyan (good), orange (medium), red (low resources)
+- **Deletion & Refunds**: Delete stations or shuttles for 50% resource refund
+
+### Probe Visual System (NEW v0.6.0)
+- **Complete Cosmetic Skins**: Purchase full probe skins with Probethium
+  - Standard Explorer (default): Cyan energy signature design
+  - Crimson Explorer (250 Probethium): Red body with gold-trimmed wings
+- **Enhanced Probe Design**: 
+  - Sleek spacecraft appearance with wings, antennas, and trail effects
+  - Rotation aligned to travel direction
+  - Proper rendering layers (probes appear above route lines)
+
 ### Resources
 - **Probes**: Start with 3, consumed on deployment, returned after journey
 - **Minerals**: Gathered through excavation and mining facilities
 - **Data**: Collected from extermination missions and research
 - **Artifacts**: Found during expeditions and special discoveries
 - **Exotic Minerals**: Rare resources from mining outposts and advanced exploration
+- **Probethium**: Cryptocurrency earned through mining operations (NEW)
 - **Research Points**: Currency for unlocking new technologies
 
 ## Controls

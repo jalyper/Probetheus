@@ -25,7 +25,21 @@ class BuildingSystem {
     enterBuildingMode(data) {
         const { structureType, probe } = data;
         
-        if (!probe || !probe.waypoints || probe.waypoints.length === 0) {
+        // Mining facilities don't require a specific probe
+        if (structureType === 'miningFacility') {
+            // Check if there are any active probes with routes for mining facilities
+            const hasActiveRoutes = this.gameState.entities.probes.some(p => 
+                p.active && p.waypoints && p.waypoints.length >= 2
+            );
+            
+            if (!hasActiveRoutes) {
+                this.eventBus.emit('ui:message', { 
+                    text: 'Deploy probes with routes first to place mining facilities', 
+                    type: 'error' 
+                });
+                return;
+            }
+        } else if (!probe || !probe.waypoints || probe.waypoints.length === 0) {
             this.eventBus.emit('ui:message', { 
                 text: 'No path available for building', 
                 type: 'error' 
@@ -53,7 +67,7 @@ class BuildingSystem {
     /**
      * Exit building mode
      */
-    exitBuildingMode() {
+    exitBuildingMode(wasPlaced = false) {
         this.buildingMode = false;
         this.buildingStructureType = null;
         this.buildingPreview = null;
@@ -63,24 +77,38 @@ class BuildingSystem {
             active: false 
         });
         
-        this.eventBus.emit('ui:message', { 
-            text: 'Building mode cancelled', 
-            type: 'info' 
-        });
+        // Only show cancelled message if not placed
+        if (!wasPlaced) {
+            this.eventBus.emit('ui:message', { 
+                text: 'Building mode cancelled', 
+                type: 'info' 
+            });
+        }
     }
 
     /**
      * Update building preview based on mouse position
      */
     updateBuildingPreview(data) {
-        if (!this.buildingMode || !this.selectedProbe) return;
+        if (!this.buildingMode) return;
 
         const { mouseX, mouseY } = data;
-        const closestPoint = this.findClosestPointOnPath(
-            this.selectedProbe.waypoints, 
-            mouseX, 
-            mouseY
-        );
+        
+        // For mining facilities, check all routes; for others, use selected probe
+        let closestPoint;
+        if (this.buildingStructureType === 'miningFacility') {
+            closestPoint = this.findClosestPointOnAnyExplorationRoute(mouseX, mouseY);
+            if (!closestPoint) {
+                console.log('No valid point found for mining facility placement');
+            }
+        } else {
+            if (!this.selectedProbe) return;
+            closestPoint = this.findClosestPointOnPath(
+                this.selectedProbe.waypoints, 
+                mouseX, 
+                mouseY
+            );
+        }
 
         if (closestPoint) {
             this.buildingPreview = {
@@ -92,6 +120,8 @@ class BuildingSystem {
             this.eventBus.emit('ui:buildingPreviewUpdated', {
                 preview: this.buildingPreview
             });
+        } else {
+            this.buildingPreview = null;
         }
     }
 
@@ -99,14 +129,32 @@ class BuildingSystem {
      * Place a building at the current preview location
      */
     placeBuilding() {
-        if (!this.buildingMode || !this.buildingPreview || !this.selectedProbe) return;
+        console.log('placeBuilding called');
+        console.log('buildingMode:', this.buildingMode);
+        console.log('buildingPreview:', this.buildingPreview);
+        console.log('buildingStructureType:', this.buildingStructureType);
+        
+        if (!this.buildingMode || !this.buildingPreview) {
+            console.log('Early return: no building mode or preview');
+            return;
+        }
+        
+        // For mining facilities, we don't need a selected probe
+        if (this.buildingStructureType !== 'miningFacility' && !this.selectedProbe) {
+            console.log('Early return: not mining facility and no probe selected');
+            return;
+        }
 
         const structureType = this.buildingStructureType;
         const resources = this.gameState.getResources();
+        console.log('Current resources:', resources);
         
         // Check resource requirements
         const requirements = this.getBuildingRequirements(structureType);
+        console.log('Requirements:', requirements);
+        
         if (!this.canAffordBuilding(requirements, resources)) {
+            console.log('Cannot afford building');
             this.eventBus.emit('ui:message', { 
                 text: 'Insufficient resources', 
                 type: 'error' 
@@ -114,15 +162,25 @@ class BuildingSystem {
             return;
         }
 
-        // Create the building
-        const building = this.createBuilding(
-            structureType,
-            this.buildingPreview.x,
-            this.buildingPreview.y
-        );
+        // Handle mining facilities differently
+        if (structureType === 'miningFacility') {
+            console.log('Creating mining facility...');
+            this.createMiningFacility(
+                this.buildingPreview.x,
+                this.buildingPreview.y,
+                requirements
+            );
+        } else {
+            // Create the building
+            const building = this.createBuilding(
+                structureType,
+                this.buildingPreview.x,
+                this.buildingPreview.y
+            );
 
-        // Add to appropriate collection
-        this.addBuildingToGame(building);
+            // Add to appropriate collection
+            this.addBuildingToGame(building);
+        }
 
         // Deduct resources
         this.gameState.updateResources({
@@ -136,7 +194,7 @@ class BuildingSystem {
         });
         
         this.eventBus.emit('ui:update');
-        this.exitBuildingMode();
+        this.exitBuildingMode(true); // Pass true to indicate successful placement
     }
 
     /**
@@ -190,6 +248,117 @@ class BuildingSystem {
     }
 
     /**
+     * Find the closest point on any probe's exploration route (not return path)
+     */
+    findClosestPointOnAnyExplorationRoute(mouseX, mouseY) {
+        let closestPoint = null;
+        let minDistance = Infinity;
+        
+        console.log(`Checking ${this.gameState.entities.probes.length} probes for valid routes`);
+        
+        // Check all active probes that have exploration routes
+        this.gameState.entities.probes.forEach(probe => {
+            if (!probe.waypoints || probe.waypoints.length < 2 || !probe.active) {
+                console.log(`Probe skipped: waypoints=${probe.waypoints?.length}, active=${probe.active}`);
+                return;
+            }
+            
+            // Only consider probes that have actually moved (not just deployed)
+            if (probe.status === 'ready' && probe.waypoints.length === 2) return;
+            
+            // Skip probes that are damaged or returning
+            if (probe.status === 'returning' || probe.damage > 0) return;
+            
+            // Only consider the outbound (exploration) waypoints, not the return path
+            const outboundWaypoints = probe.waypoints.slice(0, probe.outboundWaypointsCount || probe.waypoints.length);
+            if (outboundWaypoints.length < 2) {
+                console.log(`Probe skipped: not enough outbound waypoints (${outboundWaypoints.length})`);
+                return; // Need at least 2 points for a path
+            }
+            
+            // Find closest point on this probe's exploration route
+            const routePoint = this.findClosestPointOnPath(outboundWaypoints, mouseX, mouseY);
+            
+            if (routePoint) {
+                const distance = Math.sqrt(
+                    Math.pow(routePoint.x - mouseX, 2) + 
+                    Math.pow(routePoint.y - mouseY, 2)
+                );
+                
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestPoint = routePoint;
+                }
+            }
+        });
+        
+        return closestPoint;
+    }
+
+    /**
+     * Create mining facility using MiningManager
+     */
+    createMiningFacility(x, y, requirements) {
+        console.log(`Creating mining facility at (${x}, ${y})`);
+        
+        // Find closest hub for the mining station
+        let closestHub = null;
+        let closestDistance = Infinity;
+        
+        // Check both reconHubs and hubs arrays (might be stored in either)
+        const hubs = this.gameState.entities.reconHubs || this.gameState.entities.hubs || [];
+        console.log(`Found ${hubs.length} hubs to check`);
+        
+        hubs.forEach(hub => {
+            const distance = Math.sqrt(Math.pow(hub.x - x, 2) + Math.pow(hub.y - y, 2));
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closestHub = hub;
+            }
+        });
+        
+        if (!closestHub) {
+            console.error('No hubs found!');
+            this.eventBus.emit('ui:message', { 
+                text: 'No hubs available to supply mining station!', 
+                type: 'error' 
+            });
+            return;
+        }
+        
+        console.log(`Using hub at (${closestHub.x}, ${closestHub.y}) with id: ${closestHub.id}`);
+
+        // Get MiningManager from game instance (bit of a hack, but works for now)
+        const gameController = window.game;
+        if (!gameController || !gameController.miningManager) {
+            console.error('MiningManager not found on window.game:', gameController);
+            this.eventBus.emit('ui:message', { 
+                text: 'Mining system not available!', 
+                type: 'error' 
+            });
+            return;
+        }
+
+        // Build the mining station
+        console.log('Calling miningManager.buildMiningStation...');
+        const station = gameController.miningManager.buildMiningStation({
+            type: 'basic',
+            position: { x: x, y: y },
+            hubId: closestHub.id
+        });
+        
+        if (station) {
+            console.log('Mining station created successfully:', station);
+            this.eventBus.emit('ui:message', { 
+                text: 'Mining station built!', 
+                type: 'success' 
+            });
+        } else {
+            console.error('Failed to create mining station');
+        }
+    }
+
+    /**
      * Find closest point on a line segment to a given point
      */
     closestPointOnSegment(x1, y1, x2, y2, px, py) {
@@ -220,7 +389,7 @@ class BuildingSystem {
     getBuildingRequirements(structureType) {
         const requirements = {
             outpost: { minerals: 50, data: 20 },
-            miningFacility: { minerals: 75, data: 30 },
+            miningFacility: { minerals: 100, data: 50 },
             reconHub: { minerals: 100, data: 0 }
         };
 

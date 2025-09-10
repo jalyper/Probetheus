@@ -284,7 +284,7 @@ body {
 #minimapContainer {
     position: absolute;
     top: 20px;
-    right: 20px;
+    left: 20px;
     background: rgba(0, 0, 0, 0.8);
     border: 2px solid #333;
     border-radius: 5px;

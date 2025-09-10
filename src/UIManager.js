@@ -18,7 +18,6 @@ class UIManager {
             cameraLockCheckbox: document.getElementById('cameraLockCheckbox'),
             closeProbeDetail: document.getElementById('closeProbeDetail'),
             buildOutpostBtnProbe: document.getElementById('buildOutpostBtnProbe'),
-            buildMiningFacilityBtnProbe: document.getElementById('buildMiningFacilityBtnProbe'),
             buildPathHubBtnProbe: document.getElementById('buildPathHubBtnProbe')
         };
 
@@ -69,10 +68,6 @@ class UIManager {
         // Building buttons in probe detail panel
         this.elements.buildOutpostBtnProbe.addEventListener('click', () => {
             this.startBuildingForProbe('outpost');
-        });
-
-        this.elements.buildMiningFacilityBtnProbe.addEventListener('click', () => {
-            this.startBuildingForProbe('miningFacility');
         });
 
         this.elements.buildPathHubBtnProbe.addEventListener('click', () => {
@@ -175,11 +170,6 @@ class UIManager {
         const canBuildOutpost = resources.minerals >= 50 && resources.data >= 20;
         this.elements.buildOutpostBtnProbe.disabled = !canBuildOutpost;
         this.elements.buildOutpostBtnProbe.classList.toggle('disabled', !canBuildOutpost);
-        
-        // Mining facility button
-        const canBuildMiningFacility = resources.minerals >= 75 && resources.data >= 30;
-        this.elements.buildMiningFacilityBtnProbe.disabled = !canBuildMiningFacility;
-        this.elements.buildMiningFacilityBtnProbe.classList.toggle('disabled', !canBuildMiningFacility);
         
         // Hub button
         const canBuildHub = resources.minerals >= 100;
@@ -433,6 +423,9 @@ class UIManager {
         buildProbeBtn.disabled = !canBuildProbe;
         buildProbeBtn.classList.toggle('disabled', !canBuildProbe);
         
+        // Update hub panel
+        this.updateHubPanel();
+        
         // Build hub button removed - now handled in probe building panel
     }
 
@@ -506,8 +499,13 @@ class UIManager {
      * Update probe panel when hub is selected
      */
     updateProbePanel() {
+        // Note: This method is kept for compatibility but probePanel no longer exists
+        // Probe details are now handled by the DetailsPanel system
         const panel = document.getElementById('probePanel');
         const probeList = document.getElementById('probeList');
+        
+        // If old panel doesn't exist, skip this update
+        if (!panel) return;
         const buildingPanel = document.getElementById('buildingPanel'); // This might not exist in new version
         
         const selectedHub = this.gameState.ui.selectedHub;
@@ -535,16 +533,34 @@ class UIManager {
             const probeDiv = document.createElement('div');
             probeDiv.className = 'probe-item';
             probeDiv.style.cssText = `
-                padding: 5px 8px;
-                margin: 2px 0;
-                border: 1px solid ${probe === this.gameState.ui.selectedProbe ? '#0ff' : '#333'};
-                background: ${probe === this.gameState.ui.selectedProbe ? 'rgba(0,255,255,0.1)' : 'rgba(0,0,0,0.3)'};
+                padding: 10px 12px;
+                border: 2px solid ${probe === this.gameState.ui.selectedProbe ? '#0ff' : 'rgba(0,255,255,0.3)'};
+                background: ${probe === this.gameState.ui.selectedProbe ? 'rgba(0,255,255,0.15)' : 'rgba(0,255,255,0.05)'};
                 cursor: pointer;
-                border-radius: 3px;
-                transition: border-color 0.2s;
+                border-radius: 6px;
+                transition: all 0.3s ease;
                 font-size: 12px;
                 color: #fff;
+                box-shadow: ${probe === this.gameState.ui.selectedProbe ? '0 0 15px rgba(0,255,255,0.4)' : '0 0 5px rgba(0,0,0,0.3)'};
+                backdrop-filter: blur(2px);
             `;
+            
+            // Add hover effects
+            probeDiv.addEventListener('mouseenter', () => {
+                if (probe !== this.gameState.ui.selectedProbe) {
+                    probeDiv.style.borderColor = '#0ff';
+                    probeDiv.style.background = 'rgba(0,255,255,0.1)';
+                    probeDiv.style.boxShadow = '0 0 10px rgba(0,255,255,0.3)';
+                }
+            });
+            
+            probeDiv.addEventListener('mouseleave', () => {
+                if (probe !== this.gameState.ui.selectedProbe) {
+                    probeDiv.style.borderColor = 'rgba(0,255,255,0.3)';
+                    probeDiv.style.background = 'rgba(0,255,255,0.05)';
+                    probeDiv.style.boxShadow = '0 0 5px rgba(0,0,0,0.3)';
+                }
+            });
             
             // Determine status display
             let statusText = 'Ready';
@@ -560,20 +576,21 @@ class UIManager {
                 }
             }
             
-            // Add damage info
-            let damageInfo = '';
-            if (probe.damage > 0) {
-                const damageColor = probe.damage >= 2 ? '#f44' : '#fa0';
-                damageInfo = `<div style="color: ${damageColor}; font-size: 9px;">⚠ ${probe.damage}/${probe.maxDamage} Damage</div>`;
-            }
+            // Check damage status
+            const hasDamage = probe.damage > 0;
             
             probeDiv.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span>Probe ${index + 1}</span>
-                    <span style="color: ${statusColor}; font-size: 10px;">${statusText}</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="font-size: 14px;">🛸</span>
+                        <span style="font-weight: bold;">Probe ${index + 1}</span>
+                    </div>
+                    <span style="color: ${statusColor}; font-size: 11px; font-weight: bold; padding: 2px 6px; background: rgba(0,0,0,0.3); border-radius: 3px;">${statusText}</span>
                 </div>
-                ${probe.patrolMode ? '<div style="color: #888; font-size: 9px;">🔄 Patrol Mode</div>' : ''}
-                ${damageInfo}
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #888;">
+                    ${probe.patrolMode ? '<span style="color: #0f8;">🔄 Patrol Mode</span>' : '<span>Manual Control</span>'}
+                    ${hasDamage ? `<span style="color: #ff0;">⚠️ ${probe.damage}/${probe.maxDamage} Damage</span>` : '<span style="color: #0f8;">✓ Operational</span>'}
+                </div>
             `;
             
             // Add click handler to select probe
@@ -591,6 +608,9 @@ class UIManager {
         
         // Show right-click hint during deployment mode
         this.updateProbeListHints(panel);
+        
+        // Position probe panel dynamically below hub panel
+        this.positionProbePanel();
     }
 
     /**
@@ -616,6 +636,81 @@ class UIManager {
             hintDiv.innerHTML = hintHTML;
             panel.appendChild(hintDiv);
         }
+    }
+
+    /**
+     * Update hub panel when hub is selected
+     */
+    updateHubPanel() {
+        // Note: This method is kept for compatibility but hubPanel no longer exists
+        // Hub details are now handled by the DetailsPanel system
+        const hubPanel = document.getElementById('hubPanel');
+        const hubInfo = document.getElementById('hubInfo');
+        
+        // If old panel doesn't exist, skip this update
+        if (!hubPanel) return;
+        
+        const selectedHub = this.gameState.ui.selectedHub;
+        const resources = this.gameState.getResources();
+        
+        if (!selectedHub) {
+            hubPanel.style.display = 'none';
+            return;
+        }
+        
+        hubPanel.style.display = 'block';
+        
+        // Update hub info with more detailed vertical layout
+        const readyCount = this.probeManager.getReadyProbeCountForHub(selectedHub);
+        const totalCount = this.probeManager.getActiveProbeCountForHub(selectedHub);
+        const hubStations = this.gameState.mining && this.gameState.mining.stations ? 
+            this.gameState.mining.stations.filter(s => s.hubId === selectedHub.id).length : 0;
+        const hubShuttles = this.gameState.mining && this.gameState.mining.shuttles ?
+            this.gameState.mining.shuttles.filter(s => s.hubId === selectedHub.id).length : 0;
+        
+        hubInfo.innerHTML = `
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span>Ready Probes:</span>
+                <span style="color: #0ff;">${readyCount}/${selectedHub.maxProbes}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span>Active Probes:</span>
+                <span style="color: #0ff;">${totalCount}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span>Mining Stations:</span>
+                <span style="color: #c9f;">${hubStations}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>Shuttles:</span>
+                <span style="color: #c9f;">${hubShuttles}</span>
+            </div>
+        `;
+        
+        // Update mining station button
+        const buildMiningBtn = document.getElementById('buildMiningBtn');
+        const canBuildMining = resources.minerals >= 100 && resources.data >= 50;
+        buildMiningBtn.disabled = !canBuildMining;
+        buildMiningBtn.classList.toggle('disabled', !canBuildMining);
+        
+        // Update shuttle button
+        const buildShuttleBtn = document.getElementById('buildShuttleBtn');
+        const hasStations = this.gameState.mining && this.gameState.mining.stations && this.gameState.mining.stations.length > 0;
+        const canBuildShuttle = hasStations && resources.minerals >= 50 && resources.data >= 25;
+        buildShuttleBtn.disabled = !canBuildShuttle;
+        buildShuttleBtn.classList.toggle('disabled', !canBuildShuttle);
+        
+        // Position probe panel dynamically below hub panel
+        this.positionProbePanel();
+    }
+
+    /**
+     * Position probe panel dynamically based on hub panel height
+     */
+    positionProbePanel() {
+        // Note: This method is kept for compatibility but panels are now handled by DetailsPanel system
+        // Old panels are positioned at fixed locations to avoid conflicts
+        return;
     }
 
     /**

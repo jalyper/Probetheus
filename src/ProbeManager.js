@@ -105,7 +105,20 @@ class ProbeManager {
                     data: 0,
                     artifacts: 0,
                     exoticMinerals: 0
-                }
+                },
+                // Apply active cosmetic skin (if CosmeticManager exists)
+                cosmetic: this.gameState.cosmeticManager ? 
+                    { ...this.gameState.cosmeticManager.getActiveSkinDesign() } :
+                    {
+                        // Fallback default skin
+                        trailEnabled: true,
+                        trail: {
+                            length: 15,
+                            color: '#00ffff',
+                            width: 3,
+                            opacity: 0.9
+                        }
+                    }
             };
             
             this.gameState.entities.probes.push(probe);

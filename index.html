@@ -96,11 +96,116 @@
         <!-- Galactic Map Screen -->
         <div id="mapScreen" class="screen active">
             <canvas id="galaxyCanvas"></canvas>
+            
+            <!-- Testing Panel - Left Sidebar -->
+            <div id="testPanel" style="position: fixed; top: 80px; left: 15px; width: 200px; padding: 15px; background: rgba(40,0,20,0.95); border: 2px solid #f0f; border-radius: 8px; box-shadow: 0 0 20px rgba(255,0,255,0.3); backdrop-filter: blur(3px); z-index: 1000;">
+                <!-- Header -->
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid #f0f; padding-bottom: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="font-size: 16px;">🧪</div>
+                        <div style="color: #f0f; font-size: 14px; font-weight: bold;">Testing</div>
+                    </div>
+                    <button id="toggleTestPanel" style="background: none; border: none; color: #888; cursor: pointer; font-size: 18px;">×</button>
+                </div>
+                
+                <!-- Resource Controls -->
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <div style="color: #f0f; font-size: 12px; font-weight: bold; margin-bottom: 4px;">Add Resources:</div>
+                    
+                    <button class="test-resource-btn" data-resource="minerals" data-amount="100" style="background: rgba(0,255,255,0.1); border: 1px solid #0ff; color: #0ff; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                        +100 Minerals
+                    </button>
+                    
+                    <button class="test-resource-btn" data-resource="data" data-amount="100" style="background: rgba(0,255,0,0.1); border: 1px solid #0f0; color: #0f0; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                        +100 Data
+                    </button>
+                    
+                    <button class="test-resource-btn" data-resource="artifacts" data-amount="100" style="background: rgba(255,255,0,0.1); border: 1px solid #ff0; color: #ff0; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                        +100 Artifacts
+                    </button>
+                    
+                    <button class="test-resource-btn" data-resource="exoticMinerals" data-amount="100" style="background: rgba(255,0,255,0.1); border: 1px solid #f0f; color: #f0f; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                        +100 Exotic
+                    </button>
+                    
+                    <button class="test-resource-btn" data-resource="researchPoints" data-amount="10" style="background: rgba(100,200,255,0.1); border: 1px solid #64c8ff; color: #64c8ff; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                        +10 Research
+                    </button>
+                    
+                    <div style="border-top: 1px solid #333; margin: 8px 0;"></div>
+                    
+                    <button class="test-resource-btn" data-resource="all" data-amount="1000" style="background: rgba(255,255,255,0.1); border: 1px solid #fff; color: #fff; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold;">
+                        +1000 All Resources
+                    </button>
+                    
+                    <div style="border-top: 1px solid #333; margin: 8px 0;"></div>
+                    
+                    <div style="color: #f0f; font-size: 12px; font-weight: bold; margin-bottom: 4px;">Probetheum:</div>
+                    
+                    <button id="testAddProbetheum" style="background: rgba(200,150,255,0.1); border: 1px solid #c9f; color: #c9f; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                        +1.0 Probetheum
+                    </button>
+                </div>
+                
+                <div style="color: #666; font-size: 9px; margin-top: 12px; text-align: center;">
+                    Dev Mode Only
+                </div>
+            </div>
+            
             <div id="minimapContainer">
                 <canvas id="minimapCanvas"></canvas>
                 <div class="minimap-label">Galaxy Map</div>
                 <div class="minimap-hint">Click to navigate • Arrow keys to move</div>
             </div>
+            
+            <!-- Details Area - Right Sidebar (can contain multiple panels) -->
+            <div id="detailsArea" style="position: fixed; top: 80px; right: 15px; width: 320px; display: flex; flex-direction: column; gap: 15px; z-index: 1000; pointer-events: none;">
+                
+                <!-- Main Details Panel (for selected entities) -->
+                <div id="detailsPanel" style="display: none; padding: 15px; background: rgba(0,20,40,0.95); border: 2px solid #0ff; border-radius: 8px; box-shadow: 0 0 20px rgba(0,255,255,0.3); backdrop-filter: blur(3px); pointer-events: auto;">
+                <!-- Dynamic Header -->
+                <div id="detailsHeader" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid #0ff; padding-bottom: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div id="detailsIcon" style="font-size: 20px;">📊</div>
+                        <div id="detailsTitle" style="color: #0ff; font-size: 16px; font-weight: bold;">Details</div>
+                    </div>
+                    <button id="closeDetailsBtn" style="background: none; border: none; color: #888; cursor: pointer; font-size: 18px;">×</button>
+                </div>
+                
+                <!-- Dynamic Content Area -->
+                <div id="detailsContent">
+                    <!-- Content will be dynamically inserted here based on selected entity -->
+                </div>
+                </div>
+                
+                <!-- Additional panels can be added here in the detailsArea -->
+                
+            </div>
+            
+            <!-- Probe Operations Panel - Right Sidebar -->
+            <div id="probePanel" style="display: none; position: fixed; top: 530px; right: 15px; width: 280px; padding: 15px; background: rgba(0,40,40,0.95); border: 2px solid #0ff; border-radius: 8px; box-shadow: 0 0 20px rgba(0,255,255,0.3); backdrop-filter: blur(3px);">
+                <!-- Header -->
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid #0ff; padding-bottom: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="font-size: 20px;">🛸</div>
+                        <div style="color: #0ff; font-size: 16px; font-weight: bold;">Active Probes</div>
+                    </div>
+                    <div style="color: #888; font-size: 10px;">Click to track</div>
+                </div>
+                
+                <!-- Probe List Section -->
+                <div style="background: rgba(0,255,255,0.05); border: 1px solid rgba(0,255,255,0.2); border-radius: 5px; padding: 10px; margin-bottom: 12px;">
+                    <div id="probeList" style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;"></div>
+                </div>
+                
+                <!-- Probe Operations Hints -->
+                <div style="color: #888; font-size: 10px; line-height: 1.3;">
+                    • Click probes to track with camera<br>
+                    • Patrol mode for continuous exploration<br>
+                    • Equipment slots unlock via research
+                </div>
+            </div>
+            
             <div id="probeControls">
                 <!-- Message area above buttons to prevent displacement -->
                 <div id="gameMessages" style="min-height: 25px; margin-bottom: 10px; text-align: center;">
@@ -112,16 +217,12 @@
                 <button id="buildProbeBtn" class="control-btn">Build Probe (25M)</button>
                 <button id="researchBtn" class="control-btn" style="display: none;">Research Lab</button>
                 
-                <!-- Probe Selection Panel -->
-                <div id="probePanel" style="display: none; margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.8); border: 1px solid #333; border-radius: 5px;">
-                    <div style="color: #0ff; font-size: 14px; margin-bottom: 10px;">Active Probes:</div>
-                    <div id="probeList" style="max-height: 100px; overflow-y: auto;"></div>
-                </div>
+
                 
             </div>
         
         <!-- Probe Detail Panel (moved outside probeControls to avoid positioning conflicts) -->
-        <div id="probeDetailPanel" style="display: none; position: fixed; z-index: 1000; width: 280px; padding: 15px; background: rgba(0,0,0,0.95); border: 2px solid #0ff; border-radius: 8px; box-shadow: 0 0 20px rgba(0,255,255,0.3); backdrop-filter: blur(5px);">
+        <div id="probeDetailPanel" style="display: none; position: fixed; top: 780px; right: 15px; z-index: 1000; width: 280px; padding: 15px; background: rgba(0,0,0,0.95); border: 2px solid #0ff; border-radius: 8px; box-shadow: 0 0 20px rgba(0,255,255,0.3); backdrop-filter: blur(5px);">
             <div style="color: #0ff; font-size: 16px; margin-bottom: 12px; text-align: center;">Probe Details</div>
             
             <div id="probeIcon" style="text-align: center; margin-bottom: 15px;">
@@ -161,7 +262,6 @@
                 <div style="color: #888; font-size: 12px; margin-bottom: 8px;">Build along probe path:</div>
                 <div style="display: flex; flex-direction: column; gap: 6px;">
                     <button id="buildOutpostBtnProbe" class="control-btn" style="font-size: 11px; padding: 6px 10px;">Outpost (50M, 20D)</button>
-                    <button id="buildMiningFacilityBtnProbe" class="control-btn" style="font-size: 11px; padding: 6px 10px;">Mining Facility (75M, 30D)</button>
                     <button id="buildPathHubBtnProbe" class="control-btn" style="font-size: 11px; padding: 6px 10px;">Recon Hub (100M)</button>
                 </div>
                 <div id="probeBuildingStatus" style="color: #888; font-size: 10px; margin-top: 8px; text-align: center;"></div>
@@ -307,6 +407,14 @@
                         💾 Save / Load Game
                     </button>
                     
+                    <button id="exportSaveBtn" class="control-btn" style="font-size: 16px; padding: 12px 20px;">
+                        📁 Export Save File
+                    </button>
+                    
+                    <button id="importSaveBtn" class="control-btn" style="font-size: 16px; padding: 12px 20px;">
+                        📂 Import Save File
+                    </button>
+                    
                     <button id="quitGameMenuBtn" class="control-btn" style="font-size: 16px; padding: 12px 20px; background: #542; border-color: #643;">
                         🚪 Quit to Start Screen
                     </button>
@@ -340,12 +448,15 @@
     <script src="src/GameState.js"></script>
     <script src="src/ProbeManager.js"></script>
     <script src="src/BuildingSystem.js"></script>
+    <script src="src/MiningManager.js"></script>
     <script src="src/ResearchManager.js"></script>
     <script src="src/SectorManager.js"></script>
     <script src="src/SaveManager.js"></script>
     <script src="src/OfflineManager.js"></script>
     <script src="src/TutorialManager.js"></script>
+    <script src="src/CosmeticManager.js"></script>
     <script src="src/UIManager.js"></script>
+    <script src="src/DetailsPanel.js"></script>
     <script src="src/GameController.js"></script>
     
     <!-- Initialize Game -->

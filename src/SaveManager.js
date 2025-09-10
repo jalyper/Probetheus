@@ -14,6 +14,9 @@ class SaveManager {
         
         // Track save operation states to prevent rapid clicking exploits
         this.savingStates = {}; // { slotNumber: boolean }
+        
+        // File system API support detection
+        this.supportsFileSystemAPI = 'showSaveFilePicker' in window;
     }
 
     /**
@@ -527,6 +530,194 @@ class SaveManager {
             slots.push(slotInfo);
         }
         return slots;
+    }
+
+    /**
+     * Export save game to a downloadable file
+     */
+    async exportSaveToFile(slotNumber = null) {
+        try {
+            let saveData;
+            let filename;
+
+            if (slotNumber && slotNumber >= 1 && slotNumber <= this.maxSaveSlots) {
+                // Export specific slot
+                const saveKey = `${this.savePrefix}slot_${slotNumber}`;
+                const savedData = localStorage.getItem(saveKey);
+                
+                if (!savedData) {
+                    this.eventBus.emit('ui:message', { 
+                        text: `No save data found in slot ${slotNumber}!`, 
+                        type: 'error' 
+                    });
+                    return false;
+                }
+                
+                saveData = JSON.parse(savedData);
+                filename = `probetheus-save-slot${slotNumber}-${this.formatDateForFilename(saveData.timestamp)}.json`;
+            } else {
+                // Export current game state
+                saveData = this.createSaveData();
+                filename = `probetheus-save-${this.formatDateForFilename(new Date())}.json`;
+            }
+
+            // Create downloadable file
+            const blob = new Blob([JSON.stringify(saveData, null, 2)], { type: 'application/json' });
+            
+            if (this.supportsFileSystemAPI) {
+                // Modern File System Access API
+                const fileHandle = await window.showSaveFilePicker({
+                    suggestedName: filename,
+                    types: [{
+                        description: 'Probetheus Save Files',
+                        accept: { 'application/json': ['.json'] }
+                    }]
+                });
+                
+                const writable = await fileHandle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+            } else {
+                // Fallback: Create download link
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            this.eventBus.emit('ui:message', { 
+                text: 'Save file exported successfully!', 
+                type: 'success' 
+            });
+            return true;
+
+        } catch (error) {
+            console.error('Export failed:', error);
+            this.eventBus.emit('ui:message', { 
+                text: 'Failed to export save file!', 
+                type: 'error' 
+            });
+            return false;
+        }
+    }
+
+    /**
+     * Import save game from a file
+     */
+    async importSaveFromFile() {
+        try {
+            let fileHandle;
+            
+            if (this.supportsFileSystemAPI) {
+                // Modern File System Access API
+                [fileHandle] = await window.showOpenFilePicker({
+                    types: [{
+                        description: 'Probetheus Save Files',
+                        accept: { 'application/json': ['.json'] }
+                    }],
+                    multiple: false
+                });
+                
+                const file = await fileHandle.getFile();
+                return await this.processSaveFile(file);
+            } else {
+                // Fallback: File input element
+                return new Promise((resolve) => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = '.json';
+                    input.onchange = async (e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                            const result = await this.processSaveFile(file);
+                            resolve(result);
+                        } else {
+                            resolve(false);
+                        }
+                    };
+                    input.click();
+                });
+            }
+
+        } catch (error) {
+            console.error('Import failed:', error);
+            this.eventBus.emit('ui:message', { 
+                text: 'Failed to import save file!', 
+                type: 'error' 
+            });
+            return false;
+        }
+    }
+
+    /**
+     * Process uploaded save file
+     */
+    async processSaveFile(file) {
+        try {
+            const text = await file.text();
+            const saveData = JSON.parse(text);
+            
+            // Validate save data structure
+            if (!this.validateSaveData(saveData)) {
+                this.eventBus.emit('ui:message', { 
+                    text: 'Invalid save file format!', 
+                    type: 'error' 
+                });
+                return false;
+            }
+
+            // Load the save data
+            if (this.loadSaveData(saveData)) {
+                this.eventBus.emit('ui:message', { 
+                    text: 'Save file imported successfully!', 
+                    type: 'success' 
+                });
+                return true;
+            } else {
+                return false;
+            }
+
+        } catch (error) {
+            console.error('Failed to process save file:', error);
+            this.eventBus.emit('ui:message', { 
+                text: 'Failed to read save file!', 
+                type: 'error' 
+            });
+            return false;
+        }
+    }
+
+    /**
+     * Format date for filename (removes invalid characters)
+     */
+    formatDateForFilename(date) {
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const hour = String(d.getHours()).padStart(2, '0');
+        const minute = String(d.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}_${hour}-${minute}`;
+    }
+
+    /**
+     * Create save data object (used for both localStorage and file export)
+     */
+    createSaveData() {
+        const saveData = {
+            version: this.version,
+            timestamp: new Date().toISOString(),
+            lastSaveTime: Date.now(),
+            gameState: this.serializeGameState()
+        };
+        
+        // Add checksum for integrity
+        saveData.checksum = this.generateChecksum(saveData.gameState);
+        return saveData;
     }
 }
 
