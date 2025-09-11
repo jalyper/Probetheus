@@ -344,8 +344,8 @@ class ResearchManager {
                     <h3 style="color: #0ff; margin: 0 0 5px 0;">${node.name}</h3>
                     <div style="color: #888; font-size: 12px;">Cost: ${node.cost} Research Point${node.cost !== 1 ? 's' : ''}</div>
                 </div>
-                <button id="researchNodeBtn" class="control-btn" 
-                    style="font-size: 12px; padding: 8px 16px; ${!canResearch ? 'opacity: 0.5; cursor: not-allowed;' : ''}"
+                <button id="researchNodeBtn" class="control-btn resource-button ${!canResearch ? 'insufficient' : ''}" 
+                    style="font-size: 12px; padding: 8px 16px;"
                     ${!canResearch ? 'disabled' : ''}>
                     ${node.researched ? 'Researched ✓' : 'Research'}
                 </button>

@@ -746,11 +746,16 @@ class IntroCutscene {
             opacity: 1,
             translateY: 0,
             duration: 800,
-            delay: 300,
+            delay: 2000, // Full 2 second delay after main title
             easing: 'easeOutQuad'
         });
         
-        // Fade out titles after 3 seconds
+        // Add neon shimmer effect after a beat
+        setTimeout(() => {
+            this.addNeonShimmerEffect(title, subtitle);
+        }, 3000); // Wait 3 seconds then start shimmer
+        
+        // Fade out titles after 6 seconds (longer duration for cool effects)
         setTimeout(() => {
             anime({
                 targets: [title, subtitle],
@@ -763,13 +768,62 @@ class IntroCutscene {
                     this.showTutorial();
                 }
             });
-        }, 3000);
+        }, 6000);
+    }
+    
+    addNeonShimmerEffect(title, subtitle) {
+        // Create a pulsing neon shimmer effect
+        anime({
+            targets: title,
+            textShadow: [
+                '0 0 5px rgba(0,255,255,1), 0 0 10px rgba(0,255,255,0.8), 0 0 20px rgba(0,255,255,0.6), 0 0 40px rgba(0,255,255,0.4), 2px 2px 0px rgba(0,255,255,0.3)',
+                '0 0 10px rgba(0,255,255,1), 0 0 20px rgba(0,255,255,1), 0 0 40px rgba(0,255,255,0.8), 0 0 80px rgba(0,255,255,0.6), 0 0 120px rgba(0,255,255,0.4), 2px 2px 0px rgba(0,255,255,0.5)',
+                '0 0 15px rgba(255,255,255,1), 0 0 30px rgba(0,255,255,1), 0 0 60px rgba(0,255,255,0.9), 0 0 100px rgba(0,255,255,0.7), 0 0 140px rgba(0,255,255,0.5), 2px 2px 0px rgba(255,255,255,0.6)',
+                '0 0 5px rgba(0,255,255,1), 0 0 10px rgba(0,255,255,0.8), 0 0 20px rgba(0,255,255,0.6), 0 0 40px rgba(0,255,255,0.4), 2px 2px 0px rgba(0,255,255,0.3)'
+            ],
+            duration: 2000,
+            easing: 'easeInOutSine',
+            loop: 2 // Shimmer effect cycles twice
+        });
+        
+        // Add subtle shimmer to subtitle
+        anime({
+            targets: subtitle,
+            textShadow: [
+                '0 0 10px rgba(0,170,170,0.8)',
+                '0 0 20px rgba(0,200,200,1), 0 0 40px rgba(0,170,170,0.8)',
+                '0 0 15px rgba(255,255,255,0.9), 0 0 30px rgba(0,200,200,0.9)',
+                '0 0 10px rgba(0,170,170,0.8)'
+            ],
+            duration: 2000,
+            easing: 'easeInOutSine',
+            loop: 2
+        });
+        
+        // Add a subtle scale pulse during shimmer
+        anime({
+            targets: title,
+            scale: [1, 1.02, 1.01, 1],
+            duration: 2000,
+            easing: 'easeInOutSine',
+            loop: 2
+        });
     }
     
     showTutorial() {
-        // Trigger tutorial (implement based on your game's tutorial system)
-        console.log('Tutorial should appear here');
-        // You might want to call something like: window.game.showTutorial();
+        // Trigger the game's tutorial system after cutscene and titles
+        if (window.game && window.game.showGameTips) {
+            console.log('Triggering tutorial after cutscene and titles');
+            window.game.showGameTips();
+        } else {
+            console.warn('Game not initialized yet, delaying tutorial...');
+            // Retry after a short delay if game isn't ready
+            setTimeout(() => {
+                if (window.game && window.game.showGameTips) {
+                    window.game.showGameTips();
+                }
+            }, 500);
+        }
     }
 }
 

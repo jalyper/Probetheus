@@ -250,7 +250,9 @@ class MiningManager {
             station.operationCycleProgress = Math.min(1, cycleElapsed / stationType.operationDuration);
             
             // Continuous Probethium production and resource consumption during mining
-            const productionPerMs = (stationType.output * station.level * station.efficiency * this.gameState.mining.efficiencyBonus) / stationType.operationDuration;
+            // Check if station is in an asteroid field for 3x bonus
+            const sectorBonus = this.getStationSectorBonus(station);
+            const productionPerMs = (stationType.output * station.level * station.efficiency * this.gameState.mining.efficiencyBonus * sectorBonus) / stationType.operationDuration;
             const continuousProduction = productionPerMs * deltaTime;
             
             // Consume resources continuously during the cycle
@@ -343,7 +345,7 @@ class MiningManager {
                     // Station is full, abort delivery and return home
                     shuttle.target = 'hub';
                     shuttle.status = 'returning';
-                    shuttle.cargo = {}; // Return resources to hub (will be re-added when arriving)
+                    // Keep cargo - it will be returned to global resources when arriving at hub
                     return; // Skip movement this frame to recalculate target
                 }
             }
@@ -364,6 +366,17 @@ class MiningManager {
             } else if (shuttle.target === 'hub' && shuttle.status === 'returning') {
                 console.log('Shuttle arrived back at hub, checking if station needs resources');
                 
+                // Return any remaining cargo to global resources (from aborted deliveries)
+                if (shuttle.cargo && Object.keys(shuttle.cargo).length > 0) {
+                    const resources = this.gameState.getResources();
+                    Object.entries(shuttle.cargo).forEach(([resource, amount]) => {
+                        resources[resource] = (resources[resource] || 0) + amount;
+                        console.log(`Returned ${amount} ${resource} to hub from aborted delivery`);
+                    });
+                    this.gameState.updateResources(resources, this.eventBus);
+                    shuttle.cargo = {};
+                }
+                
                 // Check if station needs resources
                 const stationType = this.getStationTypes()[station.type];
                 const progress = this.getStationResourceProgress(station, stationType);
@@ -372,16 +385,25 @@ class MiningManager {
                 console.log('Station progress:', progress.toFixed(3), 'needs resources:', needsResources);
                 
                 if (needsResources) {
-                    // Load resources from hub
-                    this.loadFromHub(shuttle);
+                    // Check if we have ANY of the required resources available
+                    const canLoadAnything = this.canLoadAnyRequiredResources(shuttle, station, stationType);
                     
-                    // Check if we actually loaded anything
-                    if (Object.keys(shuttle.cargo).length > 0) {
-                        shuttle.target = 'station';
-                        shuttle.status = 'delivering';
+                    if (canLoadAnything) {
+                        // Load resources from hub
+                        this.loadFromHub(shuttle);
+                        
+                        // Check if we actually loaded anything
+                        if (Object.keys(shuttle.cargo).length > 0) {
+                            shuttle.target = 'station';
+                            shuttle.status = 'delivering';
+                        } else {
+                            // Nothing loaded despite having resources, wait
+                            shuttle.status = 'waiting';
+                        }
                     } else {
-                        // Nothing to deliver, wait
+                        // No required resources available at hub, wait for probes to return
                         shuttle.status = 'waiting';
+                        console.log('Shuttle waiting at hub - no required resources available');
                     }
                 } else {
                     // Station has sufficient resources, stay at hub
@@ -393,9 +415,16 @@ class MiningManager {
                 const needsResources = !this.checkStationHasRequirements(station, stationType);
                 
                 if (needsResources) {
-                    this.loadFromHub(shuttle);
-                    shuttle.target = 'station';
-                    shuttle.status = 'delivering';
+                    const canLoadAnything = this.canLoadAnyRequiredResources(shuttle, station, stationType);
+                    
+                    if (canLoadAnything) {
+                        this.loadFromHub(shuttle);
+                        shuttle.target = 'station';
+                        shuttle.status = 'delivering';
+                    } else {
+                        shuttle.status = 'waiting';
+                        console.log('Shuttle waiting at initial load - no required resources available');
+                    }
                 } else {
                     shuttle.status = 'waiting';
                 }
@@ -406,16 +435,54 @@ class MiningManager {
                 const shouldResume = progress < 0.3; // Resume deliveries when station is critically low
                 
                 if (shouldResume) {
-                    console.log('Waiting shuttle resuming deliveries, station critically low at', (progress * 100).toFixed(1) + '%');
-                    this.loadFromHub(shuttle);
+                    // Check if we have resources available before attempting to load
+                    const canLoadAnything = this.canLoadAnyRequiredResources(shuttle, station, stationType);
                     
-                    if (Object.keys(shuttle.cargo).length > 0) {
-                        shuttle.target = 'station';
-                        shuttle.status = 'delivering';
+                    if (canLoadAnything) {
+                        console.log('Waiting shuttle resuming deliveries, station critically low at', (progress * 100).toFixed(1) + '%');
+                        this.loadFromHub(shuttle);
+                        
+                        if (Object.keys(shuttle.cargo).length > 0) {
+                            shuttle.target = 'station';
+                            shuttle.status = 'delivering';
+                        }
+                    } else {
+                        // Still waiting for resources
+                        if (!shuttle.lastWaitingMessage || Date.now() - shuttle.lastWaitingMessage > 5000) {
+                            console.log('Shuttle still waiting - station needs resources but none available');
+                            shuttle.lastWaitingMessage = Date.now();
+                        }
                     }
                 }
             }
         }
+    }
+
+    /**
+     * Check if hub has any of the resources required by the station
+     */
+    canLoadAnyRequiredResources(shuttle, station, stationType) {
+        const resources = this.gameState.getResources();
+        
+        // Initialize station inventory if not present
+        if (!station.stationInventory) {
+            station.stationInventory = {};
+        }
+        
+        // Check if we have ANY of the required resources that the station needs
+        for (const [resource, required] of Object.entries(stationType.requirements)) {
+            const currentInventory = station.stationInventory[resource] || 0;
+            const needed = Math.max(0, required - currentInventory);
+            const available = resources[resource] || 0;
+            
+            if (needed > 0 && available > 0) {
+                // We have at least some of this required resource
+                return true;
+            }
+        }
+        
+        // No required resources available
+        return false;
     }
 
     /**
@@ -563,6 +630,24 @@ class MiningManager {
         if (probethiumElement) {
             probethiumElement.textContent = this.gameState.mining.totalProbetheum.toFixed(10);
         }
+    }
+
+    /**
+     * Get sector bonus for mining station
+     */
+    getStationSectorBonus(station) {
+        // Determine which sector the station is in
+        const world = this.gameState.getWorld();
+        const sectorX = Math.floor(station.position.x / world.standardSectorWidth);
+        const sectorY = Math.floor(station.position.y / world.standardSectorHeight);
+        const key = `${sectorX},${sectorY}`;
+        const sector = world.sectors.get(key);
+        
+        // Return 3x bonus for asteroid fields, 1x for others
+        if (sector && sector.type && sector.type.name === 'Asteroid Field') {
+            return 3.0;
+        }
+        return 1.0;
     }
 
     /**

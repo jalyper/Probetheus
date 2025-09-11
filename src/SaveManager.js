@@ -35,6 +35,22 @@ class SaveManager {
     }
 
     /**
+     * Get current tutorial progress from localStorage
+     */
+    getTutorialProgress() {
+        const saved = localStorage.getItem('tutorialProgress');
+        if (saved) {
+            try {
+                return JSON.parse(saved);
+            } catch (e) {
+                console.warn('Failed to parse tutorial progress for save');
+                return null;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Create a comprehensive save data object
      */
     createSaveData() {
@@ -59,6 +75,10 @@ class SaveManager {
                     multipliers: { ...this.gameState.probethium.multipliers }
                 },
                 researchSystem: this.createResearchSystemSaveData(),
+                tutorial: {
+                    completed: localStorage.getItem('tutorialCompleted') === 'true',
+                    progress: this.getTutorialProgress()
+                },
                 world: {
                     currentSector: { ...this.gameState.world.currentSector },
                     viewOffset: { ...this.gameState.world.viewOffset },
@@ -371,6 +391,23 @@ class SaveManager {
         Object.keys(savedState.researchSystem.milestones).forEach(resource => {
             this.gameState.researchSystem.milestones[resource] = new Set(savedState.researchSystem.milestones[resource]);
         });
+        
+        // Restore tutorial state
+        if (savedState.tutorial) {
+            if (savedState.tutorial.completed) {
+                localStorage.setItem('tutorialCompleted', 'true');
+                console.log('Restored tutorial completion state');
+            } else {
+                localStorage.removeItem('tutorialCompleted');
+            }
+            
+            if (savedState.tutorial.progress) {
+                localStorage.setItem('tutorialProgress', JSON.stringify(savedState.tutorial.progress));
+                console.log('Restored tutorial progress:', savedState.tutorial.progress);
+            } else {
+                localStorage.removeItem('tutorialProgress');
+            }
+        }
         
         // CRITICAL: Sync individual research tree nodes with the researched Set
         console.log('Syncing research tree nodes with researched set...');

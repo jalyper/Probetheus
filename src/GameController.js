@@ -11,6 +11,9 @@ class GameController {
         // Resource indicators for auto-collection
         this.resourceIndicators = [];
         
+        // Track if asteroid field tip has been shown
+        this.hasShownAsteroidTip = false;
+        
         // Initialize managers
         this.probeManager = new ProbeManager(this.gameState, this.eventBus);
         this.buildingSystem = new BuildingSystem(this.gameState, this.eventBus);
@@ -41,6 +44,11 @@ class GameController {
         // Listen for research completion to update probe equipment
         this.eventBus.on('research:completed', (data) => {
             this.onResearchCompleted(data.node);
+        });
+        
+        // Listen for asteroid field entry
+        this.eventBus.on('probe:enteredAsteroidField', () => {
+            this.showAsteroidFieldTip();
         });
         
         // Listen for screen switching events
@@ -110,6 +118,12 @@ class GameController {
         this.initializeSector(0, 0, true);
         this.generateStars();
         
+        // Tips will be shown by cutscene system for new games, 
+        // or immediately for continued/loaded games
+        if (this.shouldShowTipsImmediately()) {
+            this.showGameTips();
+        }
+        
         console.log('=== GAME INITIALIZATION ===');
         console.log('Game initialized. Hubs:', this.gameState.entities.reconHubs.length);
         console.log('Canvas dimensions:', this.canvas.width, 'x', this.canvas.height);
@@ -130,6 +144,107 @@ class GameController {
         
         // Setup auto-save on page unload
         this.setupAutoSaveOnExit();
+    }
+
+    /**
+     * Determine if tutorial tips should show immediately
+     * (for continued/loaded games) vs waiting for cutscene (new games)
+     */
+    shouldShowTipsImmediately() {
+        // For new games, tips will be triggered by cutscene system
+        // For continued/loaded games, show tips immediately
+        const gameLoadType = window.gameLoadType || 'unknown';
+        
+        console.log('shouldShowTipsImmediately: gameLoadType =', gameLoadType);
+        
+        // Show immediately for continued and loaded games
+        // Wait for cutscene trigger for new games
+        return gameLoadType === 'continue' || gameLoadType === 'load';
+    }
+
+    /**
+     * Mark tutorial as completed and save progress
+     */
+    completeTutorial() {
+        console.log('Tutorial completed!');
+        localStorage.setItem('tutorialCompleted', 'true');
+        
+        // Clear tutorial progress since it's completed
+        localStorage.removeItem('tutorialProgress');
+        
+        // Trigger an auto-save to preserve completion state
+        if (this.saveManager) {
+            this.performAutoSave();
+        }
+    }
+
+    /**
+     * Check if player can interact with hubs (tutorial restriction)
+     */
+    canInteractWithHubs() {
+        // Always allow interaction if tutorial is completed
+        if (localStorage.getItem('tutorialCompleted') === 'true') {
+            return true;
+        }
+        
+        // During tutorial, only allow interaction at specific steps
+        return this.isTutorialAllowingHubInteraction();
+    }
+
+    /**
+     * Check if tutorial currently allows hub interaction
+     */
+    isTutorialAllowingHubInteraction() {
+        // This will be set by the tutorial system when appropriate
+        return this.tutorialAllowsHubClick === true;
+    }
+
+    /**
+     * Load tutorial progress from localStorage
+     */
+    loadTutorialProgress() {
+        const saved = localStorage.getItem('tutorialProgress');
+        if (saved) {
+            try {
+                return JSON.parse(saved);
+            } catch (e) {
+                console.warn('Failed to parse tutorial progress, starting fresh');
+            }
+        }
+        
+        // Default progress - all steps not completed
+        return {
+            completedSteps: [],
+            currentStep: 0,
+            hasDragged: false,
+            hasScrolled: false,
+            deployedProbeCount: 0,
+            hasIdentifiedSignal: false,
+            hasChosenAction: false,
+            hasSeenProbeLimit: false,
+            hasSeenBuildInfo: false,
+            hasClickedHubForBuild: false
+        };
+    }
+
+    /**
+     * Save tutorial progress to localStorage
+     */
+    saveTutorialProgress(progress) {
+        localStorage.setItem('tutorialProgress', JSON.stringify(progress));
+        console.log('Saved tutorial progress:', progress);
+    }
+
+    /**
+     * Show message when tutorial restricts interaction
+     */
+    showTutorialRestrictedMessage() {
+        // Show a subtle message that tutorial is guiding them
+        this.eventBus.emit('ui:message', { 
+            text: 'Follow the tutorial tips to learn the game!', 
+            type: 'info',
+            duration: 2000
+        });
     }
 
     /**
@@ -185,7 +300,20 @@ class GameController {
                         patrolMode: true,
                         equipment: null,
                         status: 'ready',
-                        returnedToHub: false
+                        returnedToHub: false,
+                        // Apply active cosmetic skin (if CosmeticManager exists)
+                        cosmetic: this.gameState.cosmeticManager ? 
+                            { ...this.gameState.cosmeticManager.getActiveSkinDesign() } :
+                            {
+                                // Fallback default skin
+                                trailEnabled: true,
+                                trail: {
+                                    length: 15,
+                                    color: '#00ffff',
+                                    width: 3,
+                                    opacity: 0.9
+                                }
+                            }
                     };
                     this.gameState.entities.probes.push(probe);
                 }
@@ -379,26 +507,7 @@ class GameController {
             }
         });
 
-        // Deploy probe button
-        document.getElementById('deployProbeBtn').addEventListener('click', () => {
-            if (this.gameState.ui.selectedHub && 
-                this.probeManager.getReadyProbeCountForHub(this.gameState.ui.selectedHub) > 0 && 
-                !this.gameState.ui.deployMode && 
-                !this.gameState.ui.hubPlacementMode) {
-                
-                this.gameState.ui.deployMode = true;
-                this.gameState.ui.deploymentPoints = [];
-                this.canvas.style.cursor = 'crosshair';
-                document.getElementById('probeStatus').textContent = 'Click to set first waypoint...';
-            }
-        });
-
-        // Build probe button
-        document.getElementById('buildProbeBtn').addEventListener('click', () => {
-            if (this.gameState.ui.selectedHub) {
-                this.eventBus.emit('probe:build', { hub: this.gameState.ui.selectedHub });
-            }
-        });
+        // Deploy and build probe buttons removed - now handled in hub panel
 
         // Mining station button (check if it exists)
         const buildMiningBtn = document.getElementById('buildMiningBtn');
@@ -611,8 +720,19 @@ class GameController {
         const clickedHub = this.findHubAt(worldX, worldY);
         if (clickedHub) {
             console.log('Found hub at click location');
+            
+            // Check if tutorial allows hub interaction
+            if (!this.canInteractWithHubs()) {
+                console.log('Tutorial restricting hub interaction');
+                this.showTutorialRestrictedMessage();
+                return;
+            }
+            
             this.selectHub(clickedHub);
             this.eventBus.emit('entity:selected', { entity: clickedHub, type: 'hub' });
+            
+            // Emit event for tutorial
+            this.eventBus.emit('hub:clicked', { hub: clickedHub });
             return;
         }
         
@@ -808,10 +928,13 @@ class GameController {
     }
 
     /**
-     * Collect a signal
+     * Identify a signal
      */
     collectSignal(signal) {
         console.log('Signal collected:', signal.rarity);
+        
+        // Emit event for tutorial
+        this.eventBus.emit('signal:identified');
         
         // Remove signal from world
         const index = this.gameState.entities.signals.indexOf(signal);
@@ -841,16 +964,15 @@ class GameController {
         const planetTypes = [
             'Molten', 'Frozen', 'Toxic', 'Desert', 'Ocean', 'Forest', 'Crystal', 'Volcanic'
         ];
-        const planetNames = [
-            'Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon', 'Zeta', 'Theta', 'Omega'
-        ];
         
         const type = planetTypes[Math.floor(Math.random() * planetTypes.length)];
-        const name = planetNames[Math.floor(Math.random() * planetNames.length)] + ' ' + 
-                     (Math.floor(Math.random() * 999) + 1);
+        
+        // Generate name using advanced name generator
+        const nameGen = new NameGenerator();
+        const name = nameGen.generatePlanetName(type);
         
         return {
-            name: `${type} ${name}`,
+            name: name,
             type: type,
             rarity: signal.rarity,
             description: `A ${type.toLowerCase()} world with ${signal.rarity} potential for discovery.`
@@ -861,8 +983,8 @@ class GameController {
      * Show exploration screen
      */
     showExplorationScreen(planet, signal) {
-        // Update planet info
-        document.getElementById('planetName').textContent = planet.name;
+        // Update planet info - show name and type separately
+        document.getElementById('planetName').textContent = `${planet.name} (${planet.type})`;
         document.getElementById('planetDesc').textContent = planet.description;
         
         // Store planet data for exploration
@@ -872,8 +994,64 @@ class GameController {
         // Show exploration screen
         this.showScreen('exploreScreen');
         
+        // Highlight best resource options based on planet type
+        this.highlightPlanetResources(planet.type);
+        
+        // Emit event for tutorial (when exploration screen first appears)
+        this.eventBus.emit('exploration:screenShown');
+        
         // Draw planet on canvas
         this.drawPlanet(planet);
+    }
+
+    /**
+     * Highlight exploration options based on planet type
+     */
+    highlightPlanetResources(planetType) {
+        // Reset all button highlights first
+        const exploreButtons = document.querySelectorAll('.explore-btn');
+        exploreButtons.forEach(btn => {
+            btn.style.border = '1px solid #333';
+            btn.style.boxShadow = 'none';
+            btn.style.background = '#1a1a1a';
+        });
+        
+        // Define which actions are best for each planet type
+        let bestActions = [];
+        switch (planetType) {
+            case 'Molten':
+            case 'Volcanic':
+                bestActions = ['excavate']; // Minerals (+50%)
+                break;
+            case 'Frozen':
+                bestActions = ['exterminate', 'expedition']; // Data & Artifacts (+30%)
+                break;
+            case 'Toxic':
+                bestActions = ['excavate']; // Minerals (+40%), less artifacts
+                break;
+            case 'Desert':
+                bestActions = ['excavate']; // Minerals (+30%)
+                break;
+            case 'Ocean':
+                bestActions = ['exterminate']; // Data (+50%)
+                break;
+            case 'Forest':
+                bestActions = ['exterminate', 'expedition']; // Data & Artifacts (+20%)
+                break;
+            case 'Crystal':
+                bestActions = ['excavate', 'expedition']; // Minerals (+20%), Artifacts (+40%)
+                break;
+        }
+        
+        // Highlight the best actions with a golden glow
+        bestActions.forEach(action => {
+            const button = document.querySelector(`[data-mode="${action}"]`);
+            if (button) {
+                button.style.border = '2px solid #ffd700';
+                button.style.boxShadow = '0 0 15px rgba(255, 215, 0, 0.5)';
+                button.style.background = 'linear-gradient(135deg, #1a1a1a 0%, #2a2011 100%)';
+            }
+        });
     }
 
     /**
@@ -948,6 +1126,9 @@ class GameController {
     explore(mode) {
         if (!this.currentPlanet || !this.currentSignal) return;
 
+        // Emit event for tutorial
+        this.eventBus.emit('planet:actionChosen');
+
         const signal = this.currentSignal;
         const rarity = signal.rarity;
 
@@ -960,7 +1141,71 @@ class GameController {
             legendary: { minerals: 100, data: 50, artifacts: 25 }
         };
 
-        const rewards = baseRewards[rarity] || baseRewards.common;
+        let rewards = baseRewards[rarity] || baseRewards.common;
+        
+        // Apply planet type bonuses
+        const planet = this.currentPlanet;
+        if (planet && planet.type) {
+            switch (planet.type) {
+                case 'Molten':
+                case 'Volcanic':
+                    // Hot worlds are rich in minerals (lava/metal extraction)
+                    rewards = { ...rewards, minerals: Math.floor(rewards.minerals * 1.5) };
+                    break;
+                case 'Frozen':
+                    // Cold worlds preserve data/artifacts better
+                    rewards = { ...rewards, data: Math.floor(rewards.data * 1.3), artifacts: Math.floor(rewards.artifacts * 1.3) };
+                    break;
+                case 'Toxic':
+                    // Toxic worlds have exotic minerals but less artifacts
+                    rewards = { ...rewards, minerals: Math.floor(rewards.minerals * 1.4), artifacts: Math.floor(rewards.artifacts * 0.8) };
+                    break;
+                case 'Desert':
+                    // Desert worlds have mineral deposits but little else
+                    rewards = { ...rewards, minerals: Math.floor(rewards.minerals * 1.3), data: Math.floor(rewards.data * 0.9) };
+                    break;
+                case 'Ocean':
+                    // Ocean worlds have rich biological data
+                    rewards = { ...rewards, data: Math.floor(rewards.data * 1.5) };
+                    break;
+                case 'Forest':
+                    // Forest worlds have balanced biological resources
+                    rewards = { ...rewards, data: Math.floor(rewards.data * 1.2), artifacts: Math.floor(rewards.artifacts * 1.2) };
+                    break;
+                case 'Crystal':
+                    // Crystal worlds have pristine artifacts and minerals
+                    rewards = { ...rewards, minerals: Math.floor(rewards.minerals * 1.2), artifacts: Math.floor(rewards.artifacts * 1.4) };
+                    break;
+            }
+        }
+        
+        // Apply signal type bonuses
+        if (signal.signalType) {
+            switch (signal.signalType) {
+                case 'mineral':
+                    // 50% bonus to mineral rewards
+                    rewards = { 
+                        ...rewards, 
+                        minerals: Math.floor(rewards.minerals * 1.5) 
+                    };
+                    break;
+                case 'data':
+                    // 50% bonus to data rewards
+                    rewards = { 
+                        ...rewards, 
+                        data: Math.floor(rewards.data * 1.5) 
+                    };
+                    break;
+                case 'artifact':
+                    // 50% bonus to artifact rewards
+                    rewards = { 
+                        ...rewards, 
+                        artifacts: Math.floor(rewards.artifacts * 1.5) 
+                    };
+                    break;
+            }
+        }
+        
         let primaryReward = '';
         let rewardAmount = 0;
 
@@ -1006,7 +1251,7 @@ class GameController {
             }
             
             // Update Probethium stats
-            this.gameState.updateProbethiumStats('signal_collected');
+            this.gameState.updateProbethiumStats('signal_identified');
             this.gameState.updateProbethiumStats('resource_gathered', { amount: rewardAmount + exoticBonus });
             
             console.log(`Probe ${nearestProbe.id} carrying cargo:`, nearestProbe.cargo);
@@ -1273,7 +1518,7 @@ class GameController {
     }
 
     /**
-     * Complete signal selection and collect selected signals
+     * Complete signal selection and identify selected signals
      */
     completeSignalSelection() {
         if (!this.gameState.input.selectionStart || !this.gameState.input.selectionEnd) {
@@ -1287,9 +1532,9 @@ class GameController {
             this.gameState.input.selectionEnd.y
         );
         
-        console.log(`Selected ${selectedSignals.length} signals for collection`);
+        console.log(`Selected ${selectedSignals.length} signals for identification`);
         
-        // Collect all selected signals
+        // Identify all selected signals
         selectedSignals.forEach(signal => {
             this.collectSignal(signal);
         });
@@ -1900,7 +2145,8 @@ class GameController {
             const pulse = Math.sin(age * 0.005 * pulseSpeed) * 0.3 + 1; // Scale between 0.7 and 1.3
             
             // Draw signal with appropriate color and pulsing
-            const colors = {
+            // Get base color for rarity
+            const rarityColors = {
                 common: '#fff',
                 uncommon: '#0f0', 
                 rare: '#06f',
@@ -1908,7 +2154,54 @@ class GameController {
                 legendary: '#ffd700'
             };
             
-            const color = colors[signal.rarity] || '#fff';
+            // Apply signal type theming
+            let color = rarityColors[signal.rarity] || '#fff';
+            
+            // Override color for themed signals
+            if (signal.signalType) {
+                switch (signal.signalType) {
+                    case 'mineral':
+                        // Orange/amber theme for minerals
+                        const mineralColors = {
+                            common: '#ff8c00',
+                            uncommon: '#ffa500', 
+                            rare: '#ff6b00',
+                            epic: '#ff4500',
+                            legendary: '#ff2500'
+                        };
+                        color = mineralColors[signal.rarity] || '#ff8c00';
+                        break;
+                        
+                    case 'data':
+                        // Green/cyan theme for data
+                        const dataColors = {
+                            common: '#00ff88',
+                            uncommon: '#00ffaa', 
+                            rare: '#00ffcc',
+                            epic: '#00ffff',
+                            legendary: '#88ffff'
+                        };
+                        color = dataColors[signal.rarity] || '#00ff88';
+                        break;
+                        
+                    case 'artifact':
+                        // Purple/magenta theme for artifacts
+                        const artifactColors = {
+                            common: '#aa88ff',
+                            uncommon: '#bb99ff', 
+                            rare: '#ccaaff',
+                            epic: '#ddbbff',
+                            legendary: '#eeccff'
+                        };
+                        color = artifactColors[signal.rarity] || '#aa88ff';
+                        break;
+                        
+                    case 'mixed':
+                    default:
+                        // Keep standard rarity colors for mixed signals
+                        break;
+                }
+            }
             const radius = signal.radius * pulse;
             
             // Draw outer glow
@@ -1950,6 +2243,35 @@ class GameController {
                 this.ctx.beginPath();
                 this.ctx.arc(screenX, screenY, radius * 1.5, 0, Math.PI * 2);
                 this.ctx.stroke();
+            }
+            
+            // Special effects for discovery bonus signals
+            if (signal.isDiscoveryBonus) {
+                // Draw sparkle effect
+                this.ctx.globalAlpha = 0.8 * fadeAlpha;
+                this.ctx.fillStyle = '#ffffff';
+                
+                // Create 6 sparkle points around the signal
+                for (let i = 0; i < 6; i++) {
+                    const sparkleAngle = (age * 0.003) + (i * Math.PI / 3);
+                    const sparkleDistance = radius * 2.5;
+                    const sparkleX = screenX + Math.cos(sparkleAngle) * sparkleDistance;
+                    const sparkleY = screenY + Math.sin(sparkleAngle) * sparkleDistance;
+                    
+                    this.ctx.beginPath();
+                    this.ctx.arc(sparkleX, sparkleY, 1.5, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+                
+                // Draw discovery bonus indicator ring
+                this.ctx.globalAlpha = 0.4 * fadeAlpha;
+                this.ctx.strokeStyle = '#ffffff';
+                this.ctx.lineWidth = 1;
+                this.ctx.setLineDash([4, 4]);
+                this.ctx.beginPath();
+                this.ctx.arc(screenX, screenY, radius * 3, 0, Math.PI * 2);
+                this.ctx.stroke();
+                this.ctx.setLineDash([]); // Reset line dash
             }
             
             // Reset global alpha
@@ -2465,6 +2787,394 @@ class GameController {
     /**
      * Generate stars for background
      */
+    /**
+     * Highlight the BUILD PROBE button
+     */
+    highlightBuildProbeButton() {
+        const buildButton = document.getElementById('buildProbeForHub');
+        if (buildButton) {
+            // Add subtle glow and metallic shine effect
+            buildButton.style.boxShadow = '0 0 15px rgba(0, 255, 255, 0.6)';
+            buildButton.style.border = '1px solid #00ffff';
+            
+            // Create metallic shine effect
+            const originalBackground = buildButton.style.background;
+            buildButton.style.background = `linear-gradient(90deg, 
+                transparent 0%, 
+                transparent 40%, 
+                rgba(255, 255, 255, 0.3) 50%, 
+                transparent 60%, 
+                transparent 100%), 
+                ${originalBackground || '#333'}`;
+            buildButton.style.backgroundSize = '200% 100%';
+            buildButton.style.animation = 'metallicShine 2s ease-in-out infinite';
+            
+            // Remove highlight after a few seconds
+            setTimeout(() => {
+                buildButton.style.animation = 'none';
+                buildButton.style.boxShadow = '';
+                buildButton.style.border = '';
+                buildButton.style.background = originalBackground;
+                buildButton.style.backgroundSize = '';
+                
+                // Clean up all tutorial event listeners
+                this.canvas.removeEventListener('mousedown', this.tutorialMouseDown);
+                this.canvas.removeEventListener('mousemove', this.tutorialMouseMove);
+                this.canvas.removeEventListener('mouseup', this.tutorialMouseUp);
+                this.canvas.removeEventListener('wheel', this.tutorialWheel);
+                this.eventBus.off('probe:deployed', this.tutorialProbeDeployment);
+                this.eventBus.off('signal:identified', this.tutorialSignalCollection);
+                this.eventBus.off('exploration:screenShown', this.tutorialExplorationScreen);
+                this.eventBus.off('planet:actionChosen', this.tutorialPlanetAction);
+                this.eventBus.off('hub:clicked', this.tutorialHubClick);
+            }, 4000);
+        }
+    }
+    
+    /**
+     * Show asteroid field warning tip
+     */
+    showAsteroidFieldTip() {
+        if (this.hasShownAsteroidTip) return;
+        this.hasShownAsteroidTip = true;
+        
+        const tipsElement = document.getElementById('gameTips');
+        const tipText = document.getElementById('tipText');
+        
+        if (!tipsElement || !tipText) return;
+        
+        // Update text for asteroid field warning
+        tipText.innerHTML = 'ASTEROID FIELDS YIELD 3X RESOURCES<br>BUT THERE ARE RISKS<br>ROUTES HERE MUST BE PROTECTED FROM ASTEROID IMPACT';
+        
+        // Hide progress dots for this one-time tip
+        const tipProgress = document.getElementById('tipProgress');
+        if (tipProgress) {
+            tipProgress.style.display = 'none';
+        }
+        
+        // Show tip
+        tipsElement.style.opacity = '1';
+        
+        // Fade out after 6 seconds (longer for this important warning)
+        setTimeout(() => {
+            tipsElement.style.opacity = '0';
+            setTimeout(() => {
+                tipsElement.style.display = 'none';
+                // Restore progress dots for future use
+                if (tipProgress) {
+                    tipProgress.style.display = 'flex';
+                }
+            }, 500);
+        }, 6000);
+    }
+    
+    /**
+     * Show TRON-style game tips
+     */
+    showGameTips() {
+        // Check if tutorial has already been completed
+        if (localStorage.getItem('tutorialCompleted') === 'true') {
+            console.log('Tutorial already completed, skipping');
+            return;
+        }
+        
+        // Load tutorial progress
+        const savedProgress = this.loadTutorialProgress();
+        console.log('Loaded tutorial progress:', savedProgress);
+        
+        const tipsElement = document.getElementById('gameTips');
+        const tipText = document.getElementById('tipText');
+        const tipDots = [
+            document.getElementById('tipDot1'),
+            document.getElementById('tipDot2'),
+            document.getElementById('tipDot3'),
+            document.getElementById('tipDot4'),
+            document.getElementById('tipDot5'),
+            document.getElementById('tipDot6'),
+            document.getElementById('tipDot7'),
+            document.getElementById('tipDot8'),
+            document.getElementById('tipDot9')
+        ];
+        
+        if (!tipsElement || !tipText) return;
+        
+        // Initialize from saved progress
+        let hasDragged = savedProgress.hasDragged;
+        let hasScrolled = savedProgress.hasScrolled;
+        let hasIdentifiedSignal = savedProgress.hasIdentifiedSignal;
+        let hasChosenAction = savedProgress.hasChosenAction;
+        let hasSeenProbeLimit = savedProgress.hasSeenProbeLimit;
+        let hasSeenBuildInfo = savedProgress.hasSeenBuildInfo;
+        let hasClickedHubForBuild = savedProgress.hasClickedHubForBuild;
+        let currentTip = savedProgress.currentStep;
+        
+        // Initialize deployment count - track actual deployment actions, not probe count
+        let deployedProbeCount = savedProgress.deployedProbeCount;
+        
+        // For new games, deployedProbeCount should start at 0 regardless of existing probes
+        // Only saved progress from resumed games should count
+        const isNewGame = window.gameLoadType === 'new' && savedProgress.currentStep === 0;
+        if (isNewGame) {
+            deployedProbeCount = 0;
+        }
+        
+        // Define tips
+        const tips = [
+            { text: 'CLICK AND DRAG TO MOVE', action: 'drag' },
+            { text: 'SCROLL TO ZOOM IN/OUT', action: 'scroll' },
+            { text: 'CLICK ON HUB TO DEPLOY YOUR FIRST PROBE', action: 'deploy_first', counter: true },
+            { text: 'IDENTIFY SIGNALS BY CLICKING ON THEM AS THEY\'RE DISCOVERED BY YOUR PROBES', action: 'signal' },
+            { text: 'CONTINUE DEPLOYING PROBES TO EXPLORE MORE SPACE', action: 'deploy_continue', counter: true },
+            { text: 'CHOOSE AN ACTION. EACH ACTION YIELDS DIFFERENT REWARDS.', action: 'planet' },
+            { text: 'YOU CAN DEPLOY UP TO <span style="color: #ffff00; text-shadow: 0 0 10px #ffff00;">5</span> PROBES PER HUB', action: 'info1' },
+            { text: 'WHEN YOU IDENTIFY ENOUGH MINERALS, BUILD MORE PROBES FROM YOUR HUB.', action: 'info2' },
+            { text: 'CLICK ON A HUB TO SEE THE BUILD PROBE BUTTON', action: 'hubclick' }
+        ];
+        
+        // Only skip ahead if this is a resumed game with progress, not a fresh start
+        // Check if tutorial progress exists or if this is a continued/loaded game
+        const isResumedGame = savedProgress.currentStep > 0 || window.gameLoadType === 'continue' || window.gameLoadType === 'load';
+        
+        if (deployedProbeCount >= 3 && isResumedGame) {
+            currentTip = Math.max(savedProgress.currentStep, 5); // Start from planet interaction tip or saved progress
+        }
+        
+        // Initialize tutorial hub interaction state
+        this.tutorialAllowsHubClick = false;
+        
+        // Helper function to update progress
+        const updateProgress = () => {
+            const progress = {
+                completedSteps: [], // We'll track this differently
+                currentStep: currentTip,
+                hasDragged,
+                hasScrolled,
+                deployedProbeCount,
+                hasIdentifiedSignal,
+                hasChosenAction,
+                hasSeenProbeLimit,
+                hasSeenBuildInfo,
+                hasClickedHubForBuild
+            };
+            this.saveTutorialProgress(progress);
+        };
+        
+        // Function to show current tip
+        const showCurrentTip = () => {
+            if (currentTip >= tips.length) {
+                // All tips completed, mark tutorial as complete and fade out
+                this.completeTutorial();
+                setTimeout(() => {
+                    tipsElement.style.opacity = '0';
+                    setTimeout(() => {
+                        tipsElement.style.display = 'none';
+                    }, 3000);
+                }, 3000);
+                return;
+            }
+            
+            // Update text (handle HTML for special formatting)
+            if (tips[currentTip].text.includes('<span')) {
+                tipText.innerHTML = tips[currentTip].text;
+            } else {
+                let displayText = tips[currentTip].text;
+                // Add counter for deploy tips
+                if (tips[currentTip].counter && tips[currentTip].action === 'deploy_first') {
+                    displayText += ` ${deployedProbeCount}/1 PROBE DEPLOYED`;
+                } else if (tips[currentTip].counter && tips[currentTip].action === 'deploy_continue') {
+                    displayText += ` ${deployedProbeCount}/3 PROBES DEPLOYED`;
+                }
+                tipText.textContent = displayText;
+            }
+            
+            // Update progress dots
+            tipDots.forEach((dot, index) => {
+                if (dot) {
+                    if (index === currentTip) {
+                        dot.style.background = '#00ffff';
+                        dot.style.border = 'none';
+                        dot.style.boxShadow = '0 0 5px #00ffff';
+                    } else {
+                        dot.style.background = 'none';
+                        dot.style.border = '1px solid #00ffff';
+                        dot.style.boxShadow = 'none';
+                    }
+                }
+            });
+            
+            // Control hub clicking based on tutorial step
+            const currentAction = tips[currentTip]?.action;
+            this.tutorialAllowsHubClick = (currentAction === 'deploy_first' || currentAction === 'deploy_continue' || currentAction === 'hubclick');
+            console.log(`Tutorial step ${currentTip} (${currentAction}): hub clicking ${this.tutorialAllowsHubClick ? 'allowed' : 'restricted'}`);
+        };
+        
+        // Track drag action
+        let isDragging = false;
+        let dragStartPos = null;
+        
+        const handleMouseDown = (e) => {
+            if (currentTip === 0 && tips[currentTip].action === 'drag') {
+                isDragging = true;
+                dragStartPos = { x: e.clientX, y: e.clientY };
+            }
+        };
+        
+        const handleMouseMove = (e) => {
+            if (isDragging && dragStartPos) {
+                const dragDistance = Math.sqrt(
+                    Math.pow(e.clientX - dragStartPos.x, 2) + 
+                    Math.pow(e.clientY - dragStartPos.y, 2)
+                );
+                
+                // If dragged more than 50 pixels, consider it completed
+                if (dragDistance > 50 && !hasDragged) {
+                    hasDragged = true;
+                    currentTip++;
+                    updateProgress();
+                    showCurrentTip();
+                }
+            }
+        };
+        
+        const handleMouseUp = () => {
+            isDragging = false;
+            dragStartPos = null;
+        };
+        
+        // Track scroll action
+        const handleWheel = (e) => {
+            if (currentTip === 1 && tips[currentTip].action === 'scroll' && !hasScrolled) {
+                hasScrolled = true;
+                currentTip++;
+                updateProgress();
+                showCurrentTip();
+            }
+        };
+        
+        // Track probe deployment with counter
+        const checkProbeDeployment = () => {
+            // First probe deployment (step 2)
+            if (currentTip === 2 && tips[currentTip].action === 'deploy_first') {
+                deployedProbeCount++;
+                updateProgress();
+                // Update the tip text with new count
+                showCurrentTip();
+                
+                // Move to signal identification tip after first probe
+                if (deployedProbeCount >= 1) {
+                    currentTip++;
+                    updateProgress();
+                    showCurrentTip();
+                }
+            }
+            // Continue deploying probes (step 4)
+            else if (currentTip === 4 && tips[currentTip].action === 'deploy_continue') {
+                deployedProbeCount++;
+                updateProgress();
+                // Update the tip text with new count
+                showCurrentTip();
+                
+                // Move to next tip when 3 probes are deployed
+                if (deployedProbeCount >= 3) {
+                    currentTip++;
+                    updateProgress();
+                    showCurrentTip();
+                }
+            }
+        };
+        
+        // Track signal identification
+        const checkSignalCollection = () => {
+            if (currentTip === 3 && tips[currentTip].action === 'signal' && !hasIdentifiedSignal) {
+                hasIdentifiedSignal = true;
+                currentTip++;
+                updateProgress();
+                showCurrentTip();
+            }
+        };
+        
+        // Track exploration screen appearing
+        const checkExplorationScreen = () => {
+            // When exploration screen appears, advance to "CHOOSE AN ACTION" if we're at "CONTINUE DEPLOYING"
+            if (currentTip === 4 && tips[currentTip].action === 'deploy_continue') {
+                currentTip = 5; // Jump to "CHOOSE AN ACTION"
+                updateProgress();
+                showCurrentTip();
+            }
+        };
+        
+        // Track planet action choice
+        const checkPlanetAction = () => {
+            if (currentTip === 5 && tips[currentTip].action === 'planet' && !hasChosenAction) {
+                hasChosenAction = true;
+                currentTip++;
+                updateProgress();
+                showCurrentTip();
+                
+                // Start timer for info tips
+                setTimeout(() => {
+                    if (currentTip === 6 && !hasSeenProbeLimit) {
+                        hasSeenProbeLimit = true;
+                        currentTip++;
+                        updateProgress();
+                        showCurrentTip();
+                        
+                        setTimeout(() => {
+                            if (currentTip === 7 && !hasSeenBuildInfo) {
+                                hasSeenBuildInfo = true;
+                                currentTip++;
+                                updateProgress();
+                                showCurrentTip();
+                                
+                                // No need for automatic progression - wait for hub click
+                            }
+                        }, 3000);
+                    }
+                }, 2000);
+            }
+        };
+        
+        // Track hub click for final tutorial step
+        const checkHubClick = () => {
+            if (currentTip === 8 && tips[currentTip].action === 'hubclick' && !hasClickedHubForBuild) {
+                hasClickedHubForBuild = true;
+                
+                // Mark tutorial as complete
+                this.completeTutorial();
+                
+                // Hide the tip
+                tipsElement.style.opacity = '0';
+                setTimeout(() => {
+                    tipsElement.style.display = 'none';
+                }, 500);
+                
+                // Highlight the BUILD PROBE button after a short delay
+                setTimeout(() => {
+                    this.highlightBuildProbeButton();
+                }, 1000);
+            }
+        };
+        
+        // Listen for game events
+        this.eventBus.on('probe:deployed', checkProbeDeployment);
+        this.eventBus.on('signal:identified', checkSignalCollection);
+        this.eventBus.on('exploration:screenShown', checkExplorationScreen);
+        this.eventBus.on('planet:actionChosen', checkPlanetAction);
+        this.eventBus.on('hub:clicked', checkHubClick);
+        
+        // Add event listeners
+        this.canvas.addEventListener('mousedown', handleMouseDown);
+        this.canvas.addEventListener('mousemove', handleMouseMove);
+        this.canvas.addEventListener('mouseup', handleMouseUp);
+        this.canvas.addEventListener('wheel', handleWheel);
+        
+        // Show first tip after a short delay
+        setTimeout(() => {
+            tipsElement.style.opacity = '1';
+            showCurrentTip();
+        }, 500);
+    }
+    
     generateStars() {
         const starCount = 500;
         const world = this.gameState.world;
@@ -2891,25 +3601,6 @@ class GameController {
             });
         }
 
-        // Export save file from main menu
-        const exportSaveBtn = document.getElementById('exportSaveBtn');
-        if (exportSaveBtn) {
-            exportSaveBtn.replaceWith(exportSaveBtn.cloneNode(true)); // Remove old listeners
-            document.getElementById('exportSaveBtn').addEventListener('click', async () => {
-                document.getElementById('mainMenuModal').classList.remove('active');
-                await this.saveManager.exportSaveToFile(); // Export current game state
-            });
-        }
-
-        // Import save file from main menu
-        const importSaveBtn = document.getElementById('importSaveBtn');
-        if (importSaveBtn) {
-            importSaveBtn.replaceWith(importSaveBtn.cloneNode(true)); // Remove old listeners
-            document.getElementById('importSaveBtn').addEventListener('click', async () => {
-                document.getElementById('mainMenuModal').classList.remove('active');
-                await this.saveManager.importSaveFromFile();
-            });
-        }
 
         // Close main menu
         const closeMainMenu = document.getElementById('closeMainMenu');

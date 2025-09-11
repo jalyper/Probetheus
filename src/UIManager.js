@@ -409,19 +409,7 @@ class UIManager {
         const selectedHub = this.gameState.ui.selectedHub;
         const resources = this.gameState.getResources();
         
-        // Deploy probe button
-        const deployBtn = document.getElementById('deployProbeBtn');
-        const canDeploy = selectedHub && this.probeManager.getReadyProbeCountForHub(selectedHub) > 0;
-        deployBtn.disabled = !canDeploy;
-        deployBtn.classList.toggle('disabled', !canDeploy);
-        
-        // Build probe button
-        const buildProbeBtn = document.getElementById('buildProbeBtn');
-        const canBuildProbe = selectedHub && 
-                               resources.minerals >= 25 && 
-                               this.probeManager.getActiveProbeCountForHub(selectedHub) < selectedHub.maxProbes;
-        buildProbeBtn.disabled = !canBuildProbe;
-        buildProbeBtn.classList.toggle('disabled', !canBuildProbe);
+        // Deploy and build probe buttons removed - now handled in hub panel
         
         // Update hub panel
         this.updateHubPanel();

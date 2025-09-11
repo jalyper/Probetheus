@@ -28,6 +28,17 @@ class DetailsPanel {
         // Listen for entity selection events
         this.eventBus.on('entity:selected', this.showEntityDetails.bind(this));
         this.eventBus.on('details:close', this.hide.bind(this));
+        
+        // Listen for resource changes to update button states
+        this.eventBus.on('ui:update', () => {
+            if (this.currentEntity) {
+                if (this.currentEntityType === 'hub') {
+                    this.updateButtonStates(this.currentEntity);
+                } else if (this.currentEntityType === 'station') {
+                    this.updateMiningStationButtonStates(this.currentEntity);
+                }
+            }
+        });
     }
     
     setupEventListeners() {
@@ -36,12 +47,55 @@ class DetailsPanel {
             this.closeBtn.addEventListener('click', () => this.hide());
         }
         
-        // ESC key to close
+        // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
+            // ESC key to close
             if (e.key === 'Escape' && this.panel.style.display !== 'none') {
                 this.hide();
+                return;
+            }
+            
+            // Hub panel shortcuts - only when hub panel is visible and a hub is selected
+            if (this.panel.style.display !== 'none' && this.currentEntityType === 'hub') {
+                const key = e.key.toLowerCase();
+                
+                switch (key) {
+                    case 'd':
+                        e.preventDefault();
+                        this.triggerButtonClick('deployFromHub');
+                        break;
+                    case 'p':
+                        e.preventDefault();
+                        this.triggerButtonClick('buildProbeForHub');
+                        break;
+                    case 'm':
+                        e.preventDefault();
+                        this.triggerButtonClick('buildMiningBtn');
+                        break;
+                    case 's':
+                        e.preventDefault();
+                        this.triggerButtonClick('buildShuttleBtn');
+                        break;
+                }
             }
         });
+    }
+    
+    /**
+     * Helper method to trigger button clicks programmatically
+     */
+    triggerButtonClick(buttonId) {
+        const button = document.getElementById(buttonId);
+        if (button && !button.disabled && !button.classList.contains('insufficient')) {
+            // Add brief visual feedback
+            button.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                button.style.transform = '';
+            }, 100);
+            
+            // Trigger the click
+            button.click();
+        }
     }
     
     /**
@@ -87,7 +141,21 @@ class DetailsPanel {
      * Show hub details
      */
     showHubDetails(hub) {
-        this.icon.textContent = '🏗️';
+        this.icon.innerHTML = `
+            <svg width="24" height="24" viewBox="0 0 24 24">
+                <!-- Hub base structure -->
+                <rect x="6" y="6" width="12" height="12" fill="#0f8" stroke="#0f8" stroke-width="1.5" rx="2"/>
+                <!-- Inner grid pattern -->
+                <line x1="9" y1="6" x2="9" y2="18" stroke="#333" stroke-width="1"/>
+                <line x1="12" y1="6" x2="12" y2="18" stroke="#333" stroke-width="1"/>
+                <line x1="15" y1="6" x2="15" y2="18" stroke="#333" stroke-width="1"/>
+                <line x1="6" y1="9" x2="18" y2="9" stroke="#333" stroke-width="1"/>
+                <line x1="6" y1="12" x2="18" y2="12" stroke="#333" stroke-width="1"/>
+                <line x1="6" y1="15" x2="18" y2="15" stroke="#333" stroke-width="1"/>
+                <!-- Central hub core -->
+                <circle cx="12" cy="12" r="3" fill="#0f8" stroke="#fff" stroke-width="1"/>
+            </svg>
+        `;
         this.title.textContent = 'Recon Hub';
         this.title.style.color = '#0f8';
         
@@ -111,17 +179,57 @@ class DetailsPanel {
                     <div style="color: #c9f; font-size: 12px; font-weight: bold;">Hub Operations</div>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 6px;">
-                    <button id="deployFromHub" class="control-btn" style="font-size: 12px; padding: 8px 12px; width: 100%;">
-                        🚀 Deploy Probe
+                    <button id="deployFromHub" class="control-btn" style="font-size: 12px; padding: 8px 12px; width: 100%; display: flex; align-items: center; gap: 8px;">
+                        <svg width="16" height="16" viewBox="0 0 16 16" style="flex-shrink: 0;">
+                            <!-- Probe Body (circular center) -->
+                            <circle cx="8" cy="8" r="3" fill="#0ff" stroke="#0ff" stroke-width="0.5"/>
+                            <!-- Wings (extending perpendicular) -->
+                            <rect x="7" y="2" width="2" height="6" fill="rgba(0,255,255,0.8)" stroke="#0ff" stroke-width="0.5"/>
+                            <rect x="7" y="12" width="2" height="2" fill="rgba(0,255,255,0.8)" stroke="#0ff" stroke-width="0.5"/>
+                            <!-- Front (triangular nose) -->
+                            <polygon points="11,8 14,6 14,10" fill="#0ff"/>
+                            <!-- Antennas (angled lines) -->
+                            <line x1="5" y1="7" x2="2" y2="5" stroke="rgba(0,255,255,0.8)" stroke-width="1"/>
+                            <line x1="5" y1="9" x2="2" y2="11" stroke="rgba(0,255,255,0.8)" stroke-width="1"/>
+                        </svg>
+                        <span style="text-decoration: underline;">D</span>eploy Probe
                     </button>
-                    <button id="buildProbeForHub" class="control-btn" style="font-size: 12px; padding: 8px 12px; width: 100%;">
-                        🛠️ Build Probe (25M)
+                    <button id="buildProbeForHub" class="control-btn" style="font-size: 12px; padding: 8px 12px; width: 100%; display: flex; align-items: center; gap: 8px;">
+                        <svg width="16" height="16" viewBox="0 0 16 16" style="flex-shrink: 0;">
+                            <!-- Probe Body (circular center) -->
+                            <circle cx="8" cy="8" r="3" fill="#0ff" stroke="#0ff" stroke-width="0.5"/>
+                            <!-- Wings (extending perpendicular) -->
+                            <rect x="7" y="2" width="2" height="6" fill="rgba(0,255,255,0.8)" stroke="#0ff" stroke-width="0.5"/>
+                            <rect x="7" y="12" width="2" height="2" fill="rgba(0,255,255,0.8)" stroke="#0ff" stroke-width="0.5"/>
+                            <!-- Front (triangular nose) -->
+                            <polygon points="11,8 14,6 14,10" fill="#0ff"/>
+                            <!-- Antennas (angled lines) -->
+                            <line x1="5" y1="7" x2="2" y2="5" stroke="rgba(0,255,255,0.8)" stroke-width="1"/>
+                            <line x1="5" y1="9" x2="2" y2="11" stroke="rgba(0,255,255,0.8)" stroke-width="1"/>
+                        </svg>
+                        Build <span style="text-decoration: underline;">P</span>robe (25M)
                     </button>
-                    <button id="buildMiningBtn" class="control-btn" style="font-size: 12px; padding: 8px 12px; width: 100%;">
-                        ⛏️ Build Mining Station (100M, 50D)
+                    <button id="buildMiningBtn" class="control-btn" style="font-size: 12px; padding: 8px 12px; width: 100%; display: flex; align-items: center; gap: 8px;">
+                        <svg width="16" height="16" viewBox="0 0 16 16" style="flex-shrink: 0;">
+                            <!-- Octagonal mining station -->
+                            <polygon points="8,2 11.3,3.7 13,7 11.3,10.3 8,12 4.7,10.3 3,7 4.7,3.7" fill="#aaa" stroke="#666" stroke-width="1"/>
+                            <!-- Inner cross pattern -->
+                            <line x1="5" y1="7" x2="11" y2="7" stroke="#666" stroke-width="0.8"/>
+                            <line x1="8" y1="4" x2="8" y2="10" stroke="#666" stroke-width="0.8"/>
+                            <!-- Diagonal lines -->
+                            <line x1="6" y1="5" x2="10" y2="9" stroke="#666" stroke-width="0.8"/>
+                            <line x1="10" y1="5" x2="6" y2="9" stroke="#666" stroke-width="0.8"/>
+                        </svg>
+                        <span style="text-decoration: underline;">M</span>ining Station (100M, 50D)
                     </button>
-                    <button id="buildShuttleBtn" class="control-btn" style="font-size: 12px; padding: 8px 12px; width: 100%;">
-                        🚀 Build Shuttle (50M, 25D)
+                    <button id="buildShuttleBtn" class="control-btn" style="font-size: 12px; padding: 8px 12px; width: 100%; display: flex; align-items: center; gap: 8px;">
+                        <svg width="16" height="16" viewBox="0 0 16 16" style="flex-shrink: 0;">
+                            <!-- Triangle shuttle pointing right -->
+                            <polygon points="12,8 4,4 4,12" fill="#ff0" stroke="#fff" stroke-width="0.8"/>
+                            <!-- Cargo indicator (small circle) -->
+                            <circle cx="6" cy="8" r="1.5" fill="rgba(255,255,255,0.7)"/>
+                        </svg>
+                        <span style="text-decoration: underline;">S</span>huttle (50M, 25D)
                     </button>
                 </div>
             </div>
@@ -135,7 +243,18 @@ class DetailsPanel {
      * Show mining station details
      */
     showMiningStationDetails(station) {
-        this.icon.textContent = '⛏️';
+        this.icon.innerHTML = `
+            <svg width="24" height="24" viewBox="0 0 24 24">
+                <!-- Octagonal mining station -->
+                <polygon points="12,3 16.95,5.55 19.5,10.5 16.95,15.45 12,18 7.05,15.45 4.5,10.5 7.05,5.55" fill="#aaa" stroke="#666" stroke-width="1.5"/>
+                <!-- Inner cross pattern -->
+                <line x1="7.5" y1="12" x2="16.5" y2="12" stroke="#666" stroke-width="1.2"/>
+                <line x1="12" y1="6" x2="12" y2="18" stroke="#666" stroke-width="1.2"/>
+                <!-- Diagonal lines -->
+                <line x1="9" y1="8.5" x2="15" y2="14.5" stroke="#666" stroke-width="1.2"/>
+                <line x1="15" y1="8.5" x2="9" y2="14.5" stroke="#666" stroke-width="1.2"/>
+            </svg>
+        `;
         this.title.textContent = 'Mining Station';
         this.title.style.color = '#c9f';
         
@@ -218,7 +337,7 @@ class DetailsPanel {
             </div>
             
             <div style="display: flex; flex-direction: column; gap: 6px;">
-                <button id="upgradeStation" class="control-btn" style="font-size: 12px; padding: 8px 12px; width: 100%;" ${station.level >= 3 ? 'disabled' : ''}>
+                <button id="upgradeStation" class="control-btn resource-button" style="font-size: 12px; padding: 8px 12px; width: 100%;" ${station.level >= 3 ? 'disabled' : ''}>
                     ⬆️ Upgrade Station (${50 * (station.level + 1)}M, ${20 * (station.level + 1)}D)
                 </button>
             </div>
@@ -230,13 +349,29 @@ class DetailsPanel {
         
         // Add button listeners
         this.setupMiningStationButtons(station);
+        
+        // Update button states based on resources
+        this.updateMiningStationButtonStates(station);
     }
     
     /**
      * Show probe details
      */
     showProbeDetails(probe) {
-        this.icon.textContent = '🛸';
+        this.icon.innerHTML = `
+            <svg width="24" height="24" viewBox="0 0 24 24">
+                <!-- Probe Body (circular center) -->
+                <circle cx="12" cy="12" r="4.5" fill="#0ff" stroke="#0ff" stroke-width="0.8"/>
+                <!-- Wings (extending perpendicular) -->
+                <rect x="11" y="3" width="2" height="9" fill="rgba(0,255,255,0.8)" stroke="#0ff" stroke-width="0.8"/>
+                <rect x="11" y="18" width="2" height="3" fill="rgba(0,255,255,0.8)" stroke="#0ff" stroke-width="0.8"/>
+                <!-- Front (triangular nose) -->
+                <polygon points="16.5,12 21,9 21,15" fill="#0ff"/>
+                <!-- Antennas (angled lines) -->
+                <line x1="7.5" y1="10.5" x2="3" y2="7.5" stroke="rgba(0,255,255,0.8)" stroke-width="1.5"/>
+                <line x1="7.5" y1="13.5" x2="3" y2="16.5" stroke="rgba(0,255,255,0.8)" stroke-width="1.5"/>
+            </svg>
+        `;
         this.title.textContent = `Probe ${probe.id}`;
         this.title.style.color = '#0ff';
         
@@ -289,7 +424,14 @@ class DetailsPanel {
      * Show shuttle details
      */
     showShuttleDetails(shuttle) {
-        this.icon.textContent = '🚀';
+        this.icon.innerHTML = `
+            <svg width="24" height="24" viewBox="0 0 24 24">
+                <!-- Triangle shuttle pointing right -->
+                <polygon points="18,12 6,6 6,18" fill="#ff0" stroke="#fff" stroke-width="1.2"/>
+                <!-- Cargo indicator (small circle) -->
+                <circle cx="9" cy="12" r="2.25" fill="rgba(255,255,255,0.7)"/>
+            </svg>
+        `;
         this.title.textContent = 'Resource Shuttle';
         this.title.style.color = '#f90';
         
@@ -320,6 +462,74 @@ class DetailsPanel {
                 </div>
             </div>` : '<div style="color: #888; font-size: 11px;">No cargo currently loaded</div>'}
         `;
+    }
+    
+    /**
+     * Update button states based on resource availability
+     */
+    updateButtonStates(hub) {
+        const resources = this.gameState.getResources();
+        
+        // Build Probe button (25 minerals)
+        const buildProbeBtn = document.getElementById('buildProbeForHub');
+        if (buildProbeBtn) {
+            const canAfford = resources.minerals >= 25;
+            const atCapacity = this.getActiveProbeCount(hub) >= hub.maxProbes;
+            
+            buildProbeBtn.classList.toggle('resource-button', true);
+            buildProbeBtn.classList.toggle('insufficient', !canAfford || atCapacity);
+            buildProbeBtn.disabled = !canAfford || atCapacity;
+        }
+        
+        // Build Mining Station button (100 minerals, 50 data)
+        const buildMiningBtn = document.getElementById('buildMiningBtn');
+        if (buildMiningBtn) {
+            const canAfford = resources.minerals >= 100 && resources.data >= 50;
+            
+            buildMiningBtn.classList.toggle('resource-button', true);
+            buildMiningBtn.classList.toggle('insufficient', !canAfford);
+            buildMiningBtn.disabled = !canAfford;
+        }
+        
+        // Build Shuttle button (50 minerals, 25 data)
+        const buildShuttleBtn = document.getElementById('buildShuttleBtn');
+        if (buildShuttleBtn) {
+            const canAfford = resources.minerals >= 50 && resources.data >= 25;
+            
+            buildShuttleBtn.classList.toggle('resource-button', true);
+            buildShuttleBtn.classList.toggle('insufficient', !canAfford);
+            buildShuttleBtn.disabled = !canAfford;
+        }
+    }
+    
+    /**
+     * Get active probe count for hub (helper method)
+     */
+    getActiveProbeCount(hub) {
+        return this.gameState.entities.probes.filter(probe => 
+            probe.hubId === hub.id && probe.status !== 'destroyed'
+        ).length;
+    }
+    
+    /**
+     * Update mining station button states based on resource availability
+     */
+    updateMiningStationButtonStates(station) {
+        const resources = this.gameState.getResources();
+        
+        // Upgrade Station button
+        const upgradeBtn = document.getElementById('upgradeStation');
+        if (upgradeBtn) {
+            const upgradeCost = {
+                minerals: 50 * (station.level + 1),
+                data: 20 * (station.level + 1)
+            };
+            const canAfford = resources.minerals >= upgradeCost.minerals && resources.data >= upgradeCost.data;
+            const atMaxLevel = station.level >= 3;
+            
+            upgradeBtn.classList.toggle('insufficient', !canAfford || atMaxLevel);
+            upgradeBtn.disabled = !canAfford || atMaxLevel;
+        }
     }
     
     /**
@@ -365,6 +575,9 @@ class DetailsPanel {
                 this.eventBus.emit('probe:build', { hub });
             });
         }
+        
+        // Update button states based on resources
+        this.updateButtonStates(hub);
         
         // Mining station button
         const buildMiningBtn = document.getElementById('buildMiningBtn');

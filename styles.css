@@ -11,6 +11,42 @@ body {
     overflow: hidden;
 }
 
+/* TRON-style scanning line animation */
+@keyframes scanLine {
+    0% {
+        top: 0;
+    }
+    100% {
+        top: 100%;
+    }
+}
+
+/* Subtle metallic shine animation */
+@keyframes metallicShine {
+    0% {
+        background-position: -200% center;
+    }
+    100% {
+        background-position: 200% center;
+    }
+}
+
+/* Resource-dependent button graying */
+.resource-button {
+    transition: all 0.3s ease;
+}
+
+.resource-button.insufficient {
+    opacity: 0.5;
+    filter: grayscale(70%);
+    cursor: not-allowed;
+}
+
+.resource-button.insufficient:hover {
+    background: inherit;
+    transform: none;
+}
+
 #gameContainer {
     width: 100vw;
     height: 100vh;

@@ -138,6 +138,9 @@ class SectorManager {
                 
                 this.showSectorDiscovery(sector.type, sector.name);
                 
+                // Spawn discovery bonus signals
+                this.spawnDiscoveryBonusSignals(x, y, sector.type);
+                
                 // Regenerate all visible stars
                 this.eventBus.emit('world:generateStars');
             } else {
@@ -195,8 +198,8 @@ class SectorManager {
                 color: 'rgba(255, 100, 100, 0.3)', 
                 borderColor: '#f66',
                 mineralBonus: 3.0, 
-                dataBonus: 0.5, 
-                artifactBonus: 0.8,
+                dataBonus: 3.0, 
+                artifactBonus: 3.0,
                 probeDestructionChance: 0.1
             }
         ];
@@ -214,12 +217,9 @@ class SectorManager {
             }
         }
         
-        // Generate sector name
-        const prefixes = ['Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon', 'Zeta', 'Eta', 'Theta', 'Iota', 'Kappa', 'Lambda', 'Mu', 'Nu', 'Xi', 'Omicron', 'Pi', 'Rho', 'Sigma', 'Tau', 'Upsilon', 'Phi', 'Chi', 'Psi', 'Omega'];
-        const suffixes = ['Sector', 'Zone', 'Region', 'Quadrant', 'Expanse', 'Domain', 'Territory'];
-        
-        const name = prefixes[Math.floor(Math.random() * prefixes.length)] + ' ' + 
-                    suffixes[Math.floor(Math.random() * suffixes.length)];
+        // Generate sector name using advanced name generator
+        const nameGen = new NameGenerator();
+        const name = nameGen.generateSectorName(selectedType.name);
         
         const sector = {
             x: x,
@@ -503,6 +503,97 @@ class SectorManager {
             const sector = world.sectors.get(key);
             return sector && sector.explored;
         });
+    }
+
+    /**
+     * Spawn discovery bonus signals when a new sector is discovered
+     */
+    spawnDiscoveryBonusSignals(sectorX, sectorY, sectorType) {
+        const world = this.gameState.getWorld();
+        const sectorCenterX = sectorX * world.standardSectorWidth + world.standardSectorWidth / 2;
+        const sectorCenterY = sectorY * world.standardSectorHeight + world.standardSectorHeight / 2;
+        
+        // Determine bonus signals based on sector type
+        let bonusSignals = [];
+        
+        switch (sectorType.name) {
+            case 'Standard':
+                // 1 guaranteed uncommon signal
+                bonusSignals.push({ rarity: 'uncommon', type: 'mixed' });
+                break;
+                
+            case 'Resource-Rich':
+                // 1 rare mineral signal + 1 uncommon mixed
+                bonusSignals.push({ rarity: 'rare', type: 'mineral' });
+                bonusSignals.push({ rarity: 'uncommon', type: 'mixed' });
+                break;
+                
+            case 'Data Haven':
+                // 1 rare data signal + 1 uncommon data
+                bonusSignals.push({ rarity: 'rare', type: 'data' });
+                bonusSignals.push({ rarity: 'uncommon', type: 'data' });
+                break;
+                
+            case 'Ancient':
+                // 1 epic artifact signal + 1 rare mixed
+                bonusSignals.push({ rarity: 'epic', type: 'artifact' });
+                bonusSignals.push({ rarity: 'rare', type: 'mixed' });
+                break;
+                
+            case 'Asteroid Field':
+                // 1 legendary mixed + 1 epic mixed (high risk, high reward)
+                bonusSignals.push({ rarity: 'legendary', type: 'mixed' });
+                bonusSignals.push({ rarity: 'epic', type: 'mixed' });
+                break;
+        }
+        
+        // Spawn the bonus signals
+        bonusSignals.forEach((signalInfo, index) => {
+            // Spread signals around the sector center
+            const angle = (Math.PI * 2 * index) / bonusSignals.length;
+            const distance = 100 + Math.random() * 200; // 100-300 pixels from center
+            
+            const signalX = sectorCenterX + Math.cos(angle) * distance;
+            const signalY = sectorCenterY + Math.sin(angle) * distance;
+            
+            const signal = {
+                x: signalX,
+                y: signalY,
+                radius: 8 + Math.random() * 4,
+                rarity: signalInfo.rarity,
+                signalType: signalInfo.type, // New property for themed signals
+                duration: 4000 + Math.random() * 2000, // Longer duration for discovery bonuses
+                createdAt: Date.now(),
+                isDiscoveryBonus: true // Mark as special discovery signal
+            };
+            
+            this.gameState.entities.signals.push(signal);
+        });
+        
+        console.log(`Spawned ${bonusSignals.length} discovery bonus signals in ${sectorType.name} sector [${sectorX}, ${sectorY}]`);
+        
+        // Show discovery bonus message
+        const bonusMessage = this.getDiscoveryBonusMessage(sectorType.name, bonusSignals.length);
+        this.eventBus.emit('ui:message', { 
+            text: bonusMessage, 
+            type: 'discovery',
+            duration: 4000
+        });
+    }
+
+    /**
+     * Get discovery bonus message for sector type
+     */
+    getDiscoveryBonusMessage(sectorTypeName, signalCount) {
+        const messages = {
+            'Standard': '🔍 Sector analyzed! Detected energy signatures.',
+            'Resource-Rich': '⛏️ Rich deposits detected! Mineral veins located.',
+            'Data Haven': '📡 Data streams identified! Information caches found.',
+            'Ancient': '🏛️ Ancient technology detected! Artifact sites located.',
+            'Asteroid Field': '💎 Volatile deposits found! High-value signals detected.'
+        };
+        
+        return messages[sectorTypeName] || `${signalCount} discovery signals detected!`;
     }
 }
 

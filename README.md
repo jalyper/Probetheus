@@ -1,7 +1,26 @@
 # Probetheus
-**Version 0.6.0-pre-alpha**
+**Version 0.6.1-dev**
 
 A space exploration idle game where you deploy probes from Recon Hubs to discover signals, explore planets, and collect resources across an infinite procedural galaxy. Features advanced probe management, cargo delivery systems, research trees, automated collection mechanics, and Probethium mining operations.
+
+## Quick Start
+
+1. Install dependencies (if needed for tests):
+   ```bash
+   npm install
+   ```
+
+2. Start the game server:
+   ```bash
+   npm start
+   ```
+   
+3. Open your browser and navigate to:
+   ```
+   http://localhost:3000
+   ```
+
+Alternative: You can also use `npm run dev` which does the same thing, or `npm run dev:python` to use Python's built-in server on port 8000.
 
 ## Current Features
 
@@ -304,7 +323,22 @@ All save system tests passing across Chrome, Firefox, and Safari. The save syste
 - **Event-Driven Architecture**: Comprehensive state management and user interaction handling
 - **Robust Data Persistence**: Multi-layer save system with integrity checks and error recovery
 
-## Recent Changes (v0.5.0)
+## Recent Changes (v0.6.1-dev)
+
+### UI/UX Improvements
+- **Enhanced**: Planet specialization legend moved to top-left of exploration screen for better visibility
+- **Improved**: Exploration screen layout with legend positioned beside planet canvas
+- **Fixed**: Tutorial progression logic - now properly tracks deployment actions vs probe count
+- **Updated**: Save menu simplified to remove external file options, using only internal save slots
+- **Enhanced**: Starting probes now have same cosmetic properties as player-built probes (trail effects, etc.)
+
+### Bug Fixes & System Improvements
+- **Fixed**: Tutorial getting stuck on fourth step by correcting probe deployment counting
+- **Improved**: Tutorial state management with proper new game vs resumed game distinction
+- **Enhanced**: Save system streamlined for better user experience
+- **Fixed**: Starting probe initialization to include full cosmetic system integration
+
+## Previous Changes (v0.5.0)
 
 ### Tutorial & New Player Experience
 - **Added**: Mission Briefing tutorial system for first-time players
@@ -360,11 +394,20 @@ All save system tests passing across Chrome, Firefox, and Safari. The save syste
 - ✅ **Cross-Session State Management**: Full game state consistency across saves
 - ✅ **Automated Testing Suite**: Playwright-based testing for save system integrity
 
-## Future Considerations
+## Development Roadmap & TODO
+
+### Immediate Next Steps (Tomorrow's Priorities)
+- **🎨 Rarity Color Coding**: Add color coding for rarity text in planet descriptions
+  - Example: "A forest world with **common** potential for discovery" - make "common" appear in common-colored text
+  - Apply consistent color coding for all rarity levels (common, uncommon, rare, epic, legendary)
+- **📖 Tutorial System Completion**: Finish building out the comprehensive tutorial system
+- **⚙️ Tutorial Controls**: Add ability to turn off tips/tutorial at any time from the main menu
+- **🎯 Signal Distribution**: Implement new signal distribution system to make sector discovery feel more special
 
 ### Short-term Goals  
 - ✅ **Save/Load System**: Robust persistent game state across sessions (COMPLETED)
 - ✅ **Comprehensive Testing**: Playwright-based automation tests (IMPLEMENTED)
+- ✅ **UI Layout Improvements**: Planet specialization legend repositioning (COMPLETED)
 - **Sound Design**: Audio feedback for actions and ambient space sounds
 - **Enhanced Visual Effects**: Particle systems and advanced animations
 - **More Building Types**: Specialized facilities with unique functions

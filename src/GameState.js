@@ -289,7 +289,19 @@ class GameState {
                     available: false,
                     icon: '👻',
                     parent: 'alien_tech',
-                    children: ['dimensional_drive'],
+                    children: ['dimensional_drive', 'tunnel_tech'],
+                    tree: 'alien'
+                },
+                'tunnel_tech': {
+                    id: 'tunnel_tech',
+                    name: 'Tunnel Technology',
+                    description: 'Build protected routes through asteroid fields for safe passage of shuttles and infrastructure',
+                    cost: 4,
+                    position: { x: 200, y: 750 },
+                    researched: false,
+                    available: false,
+                    icon: '🚇',
+                    parent: 'phase_shift',
                     tree: 'alien'
                 },
                 'energy_shields': {
@@ -533,7 +545,7 @@ class GameState {
             case 'probe_destroyed':
                 stats.totalProbesDestroyed += 1;
                 break;
-            case 'signal_collected':
+            case 'signal_identified':
                 stats.totalSignalsCollected += 1;
                 break;
             case 'sector_discovered':

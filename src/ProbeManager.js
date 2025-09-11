@@ -68,6 +68,9 @@ class ProbeManager {
 
         this.eventBus.emit('ui:message', { text: 'Probe deployed from hub!', type: 'success' });
         this.eventBus.emit('ui:update');
+        
+        // Emit event for tutorial
+        this.eventBus.emit('probe:deployed');
     }
 
     /**
@@ -456,9 +459,12 @@ class ProbeManager {
                     
                     console.log('Generating signal at:', signalX, signalY);
                     
-                    // Check if probe is in an asteroid field for enhanced rarity
+                    // Check current sector for enhanced generation
                     const currentSector = this.getCurrentSector(probe);
                     const isInAsteroidField = currentSector && currentSector.type.name === 'Asteroid Field';
+                    
+                    // Determine signal type based on sector
+                    const signalType = this.determineSignalType(currentSector);
                     
                     // Create signal directly since we don't have a signal manager yet
                     const signal = {
@@ -466,6 +472,7 @@ class ProbeManager {
                         y: signalY,
                         radius: 8 + Math.random() * 4,
                         rarity: this.determineSignalRarity(isInAsteroidField),
+                        signalType: signalType,
                         duration: 2000 + Math.random() * 1000, // 2-3 seconds
                         createdAt: Date.now()
                     };
@@ -506,6 +513,53 @@ class ProbeManager {
             if (rand < 0.9) return 'rare';
             if (rand < 0.98) return 'epic';
             return 'legendary';
+        }
+    }
+
+    /**
+     * Determine signal type based on current sector
+     */
+    determineSignalType(sector) {
+        if (!sector || !sector.type) {
+            return 'mixed'; // Default for unknown sectors
+        }
+        
+        const sectorName = sector.type.name;
+        const random = Math.random();
+        
+        switch (sectorName) {
+            case 'Resource-Rich':
+                // 60% mineral, 25% mixed, 15% others
+                if (random < 0.6) return 'mineral';
+                if (random < 0.85) return 'mixed';
+                return random < 0.925 ? 'data' : 'artifact';
+                
+            case 'Data Haven':
+                // 60% data, 25% mixed, 15% others  
+                if (random < 0.6) return 'data';
+                if (random < 0.85) return 'mixed';
+                return random < 0.925 ? 'artifact' : 'mineral';
+                
+            case 'Ancient':
+                // 60% artifact, 25% mixed, 15% others
+                if (random < 0.6) return 'artifact';
+                if (random < 0.85) return 'mixed';
+                return random < 0.925 ? 'data' : 'mineral';
+                
+            case 'Asteroid Field':
+                // 40% mineral, 30% mixed, 20% data, 10% artifact (chaotic mix)
+                if (random < 0.4) return 'mineral';
+                if (random < 0.7) return 'mixed';
+                if (random < 0.9) return 'data';
+                return 'artifact';
+                
+            case 'Standard':
+            default:
+                // 70% mixed, 10% each specialized type
+                if (random < 0.7) return 'mixed';
+                if (random < 0.8) return 'mineral';
+                if (random < 0.9) return 'data';
+                return 'artifact';
         }
     }
 
@@ -679,7 +733,7 @@ class ProbeManager {
                 }
                 
                 // Update Probethium stats for auto-collection
-                this.gameState.updateProbethiumStats('signal_collected');
+                this.gameState.updateProbethiumStats('signal_identified');
                 this.gameState.updateProbethiumStats('resource_gathered', { amount: totalResourcesGained });
                 
                 console.log(`Auto-collected signal stored in probe ${probe.id} cargo:`, probe.cargo);
@@ -739,6 +793,12 @@ class ProbeManager {
         // Only take damage in asteroid fields
         if (!currentSector || currentSector.type.name !== 'Asteroid Field') {
             return;
+        }
+        
+        // Check if this is the first time entering an asteroid field
+        if (!probe.hasEnteredAsteroidField) {
+            probe.hasEnteredAsteroidField = true;
+            this.eventBus.emit('probe:enteredAsteroidField');
         }
 
         // Only take damage while exploring (not while returning)
