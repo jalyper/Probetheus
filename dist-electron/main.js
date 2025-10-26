@@ -1,12 +1,39 @@
 "use strict";
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
-const Store = require("electron-store");
-const store = new Store({
-  name: "probetheus-saves",
-  cwd: app.getPath("userData")
-});
 let mainWindow;
+let store;
+async function initStore() {
+  const Store = (await import("electron-store")).default;
+  store = new Store({
+    name: "probetheus-saves",
+    cwd: app.getPath("userData")
+  });
+  console.log("electron-store initialized");
+  console.log("Save data location:", store.path);
+}
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1920,
@@ -36,7 +63,8 @@ function createWindow() {
     mainWindow = null;
   });
 }
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  await initStore();
   createWindow();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -51,6 +79,10 @@ app.on("window-all-closed", () => {
 });
 ipcMain.handle("storage:get", async (event, key) => {
   try {
+    if (!store) {
+      console.error("Store not initialized");
+      return null;
+    }
     return store.get(key);
   } catch (error) {
     console.error("Storage get error:", error);
@@ -59,6 +91,10 @@ ipcMain.handle("storage:get", async (event, key) => {
 });
 ipcMain.handle("storage:set", async (event, key, value) => {
   try {
+    if (!store) {
+      console.error("Store not initialized");
+      return { success: false, error: "Store not initialized" };
+    }
     store.set(key, value);
     return { success: true };
   } catch (error) {
@@ -68,6 +104,10 @@ ipcMain.handle("storage:set", async (event, key, value) => {
 });
 ipcMain.handle("storage:remove", async (event, key) => {
   try {
+    if (!store) {
+      console.error("Store not initialized");
+      return { success: false, error: "Store not initialized" };
+    }
     store.delete(key);
     return { success: true };
   } catch (error) {
@@ -77,6 +117,10 @@ ipcMain.handle("storage:remove", async (event, key) => {
 });
 ipcMain.handle("storage:clear", async () => {
   try {
+    if (!store) {
+      console.error("Store not initialized");
+      return { success: false, error: "Store not initialized" };
+    }
     store.clear();
     return { success: true };
   } catch (error) {
@@ -86,6 +130,10 @@ ipcMain.handle("storage:clear", async () => {
 });
 ipcMain.handle("storage:has", async (event, key) => {
   try {
+    if (!store) {
+      console.error("Store not initialized");
+      return false;
+    }
     return store.has(key);
   } catch (error) {
     console.error("Storage has error:", error);
@@ -94,6 +142,10 @@ ipcMain.handle("storage:has", async (event, key) => {
 });
 ipcMain.handle("storage:keys", async () => {
   try {
+    if (!store) {
+      console.error("Store not initialized");
+      return [];
+    }
     const allData = store.store;
     return Object.keys(allData);
   } catch (error) {
@@ -102,7 +154,9 @@ ipcMain.handle("storage:keys", async () => {
   }
 });
 ipcMain.handle("storage:getPath", async () => {
+  if (!store) {
+    return "Store not initialized";
+  }
   return store.path;
 });
 console.log("Electron main process started");
-console.log("Save data location:", store.path);
