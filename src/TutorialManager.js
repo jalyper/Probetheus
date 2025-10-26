@@ -8,13 +8,115 @@ class TutorialManager {
         this.eventBus = eventBus;
         
         // Tutorial state tracking
-        this.firstProbeDeployed = localStorage.getItem('tutorial_first_probe_deployed') === 'true';
-        this.tutorialsDisabled = localStorage.getItem('tutorial_disabled') === 'true';
+        this.currentStep = 0;
+        this.tutorialActive = false;
+        this.tutorialsDisabled = false;
+        
+        // Step tracking
+        this.steps = [
+            {
+                id: 'deploy_first_probe',
+                title: 'Deploy Your First Probe',
+                message: 'Click on your Recon Hub (green hexagon), then click "Deploy Probe" and place waypoints to explore!',
+                checkCondition: () => this.gameState.entities.probes.some(p => p.active),
+                completed: false
+            },
+            {
+                id: 'deploy_all_probes',
+                title: 'Deploy All Your Probes',
+                message: 'Try deploying all the probes in your hub. Your hubs can hold up to 5 probes each. Deploy 2 more probes to fill your starting hub!',
+                checkCondition: () => {
+                    const startingHub = this.gameState.world.hubs[0];
+                    return startingHub && startingHub.currentProbes === 0; // All 3 probes deployed
+                },
+                completed: false
+            }
+        ];
         
         // Listen for relevant events
-        this.eventBus.on('probe:deploy', this.handleProbeDeployment.bind(this));
+        this.eventBus.on('probe:deployed', this.checkStepCompletion.bind(this));
+        this.eventBus.on('probe:returned', this.checkStepCompletion.bind(this));
         
         this.createTutorialPanel();
+    }
+    
+    /**
+     * Start the tutorial from the beginning
+     */
+    startTutorial() {
+        console.log('Starting tutorial from beginning');
+        this.currentStep = 0;
+        this.tutorialActive = true;
+        this.steps.forEach(step => step.completed = false);
+        this.showCurrentStep();
+    }
+    
+    /**
+     * Check if current step is completed
+     */
+    checkStepCompletion() {
+        if (!this.tutorialActive) return;
+        
+        const currentStepData = this.steps[this.currentStep];
+        if (!currentStepData) return;
+        
+        if (currentStepData.checkCondition()) {
+            console.log(`Tutorial step ${this.currentStep} completed: ${currentStepData.id}`);
+            currentStepData.completed = true;
+            
+            // Wait a moment to let player see what they did
+            setTimeout(() => {
+                this.nextStep();
+            }, 1000);
+        }
+    }
+    
+    /**
+     * Show the current tutorial step
+     */
+    showCurrentStep() {
+        const stepData = this.steps[this.currentStep];
+        if (!stepData) {
+            this.completeTutorial();
+            return;
+        }
+        
+        this.showTutorialMessage(stepData.title, stepData.message);
+    }
+    
+    /**
+     * Move to next step
+     */
+    nextStep() {
+        this.closeTutorial();
+        
+        this.currentStep++;
+        if (this.currentStep >= this.steps.length) {
+            this.completeTutorial();
+        } else {
+            // Small delay before showing next step
+            setTimeout(() => {
+                this.showCurrentStep();
+            }, 500);
+        }
+    }
+    
+    /**
+     * Complete the tutorial
+     */
+    completeTutorial() {
+        console.log('Tutorial completed!');
+        this.tutorialActive = false;
+        this.closeTutorial();
+        
+        // Show completion message
+        setTimeout(() => {
+            this.showTutorialMessage(
+                'Tutorial Complete! 🎉',
+                'You\'re ready to explore the galaxy! Collect resources, research technologies, and build your probe network.',
+                true // auto-close after 5 seconds
+            );
+        }, 500);
     }
 
     /**
@@ -183,66 +285,9 @@ class TutorialManager {
     /**
      * Handle probe deployment events
      */
-    handleProbeDeployment(data) {
-        // Only show tutorial for first probe deployment
-        if (!this.firstProbeDeployed && !this.tutorialsDisabled) {
-            console.log('First probe deployed - showing tutorial');
-            this.showFirstProbeDeploymentTutorial();
-            this.firstProbeDeployed = true;
-            localStorage.setItem('tutorial_first_probe_deployed', 'true');
-        }
-    }
-
-    /**
-     * Show the first probe deployment tutorial
-     */
-    showFirstProbeDeploymentTutorial() {
-        const tutorialPanel = document.getElementById('tutorialPanel');
-        if (tutorialPanel) {
-            tutorialPanel.style.display = 'block';
-            
-            // Add entrance animation
-            tutorialPanel.style.opacity = '0';
-            setTimeout(() => {
-                tutorialPanel.style.transition = 'opacity 0.3s ease';
-                tutorialPanel.style.opacity = '1';
-            }, 10);
-        }
-    }
-
-    /**
-     * Close the tutorial panel
-     */
-    closeTutorial() {
-        const tutorialPanel = document.getElementById('tutorialPanel');
-        if (tutorialPanel) {
-            tutorialPanel.style.transition = 'opacity 0.3s ease';
-            tutorialPanel.style.opacity = '0';
-            
-            setTimeout(() => {
-                tutorialPanel.style.display = 'none';
-            }, 300);
-        }
-    }
-
-    /**
-     * Reset tutorial state (for testing/debugging)
-     */
-    resetTutorials() {
-        this.firstProbeDeployed = false;
-        this.tutorialsDisabled = false;
-        localStorage.removeItem('tutorial_first_probe_deployed');
-        localStorage.removeItem('tutorial_disabled');
-        console.log('Tutorial state reset');
-    }
-
-    /**
-     * Check if tutorials are disabled
-     */
-    areTutorialsDisabled() {
-        return this.tutorialsDisabled;
-    }
+    // Now handled by checkStepCompletion via event listener
 }
 
 // Export for use in other modules
+window.TutorialManager = TutorialManager;
 window.TutorialManager = TutorialManager;

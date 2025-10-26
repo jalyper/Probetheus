@@ -624,6 +624,13 @@
                 // After cutscene, show game and initialize
                 document.getElementById('gameContainer').style.display = 'block';
                 window.game = new GameController();
+                
+                // Start tutorial immediately after initialization
+                setTimeout(() => {
+                    if (window.game && window.game.tutorialManager) {
+                        window.game.tutorialManager.startTutorial();
+                    }
+                }, 1000); // Wait 1 second for everything to load
             });
         }
 
