@@ -495,6 +495,20 @@
     <!-- Modular Game System -->
     <!-- StorageAdapter must load first -->
     <script src="src/StorageAdapter.js"></script>
+    <script>
+        // Immediately verify StorageAdapter loaded
+        if (typeof storageAdapter === 'undefined' || typeof window.storageAdapter === 'undefined') {
+            console.error('CRITICAL ERROR: StorageAdapter failed to load!');
+            console.error('typeof storageAdapter:', typeof storageAdapter);
+            console.error('typeof window.storageAdapter:', typeof window.storageAdapter);
+            alert('Critical Error: Storage system failed to load.\n\nPlease check the browser console for details.');
+        } else {
+            console.log('✓ StorageAdapter loaded successfully');
+            console.log('  - Available as global: storageAdapter');
+            console.log('  - Available on window: window.storageAdapter');
+            console.log('  - Mode:', storageAdapter.isElectron ? 'Electron' : 'Web');
+        }
+    </script>
     <script src="src/IntroCutscene.js"></script>
     <script src="src/NameGenerator.js"></script>
     <script src="src/EventBus.js"></script>

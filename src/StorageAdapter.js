@@ -5,16 +5,23 @@
 class StorageAdapter {
     constructor() {
         // Detect if running in Electron
-        this.isElectron = typeof window !== 'undefined' && window.electronAPI;
+        this.isElectron = typeof window !== 'undefined' && typeof window.electronAPI !== 'undefined' && window.electronAPI;
         this.storage = this.isElectron ? window.electronAPI.storage : null;
         
         console.log(`Storage Adapter initialized: ${this.isElectron ? 'Electron' : 'Web'} mode`);
         
         if (this.isElectron) {
+            console.log('Electron API detected:', window.electronAPI);
             // Log save file location in Electron
-            this.storage.getPath().then(path => {
-                console.log('Save files location:', path);
-            });
+            if (this.storage && this.storage.getPath) {
+                this.storage.getPath().then(path => {
+                    console.log('Save files location:', path);
+                }).catch(err => {
+                    console.error('Failed to get save path:', err);
+                });
+            }
+        } else {
+            console.log('Running in web mode - using localStorage');
         }
     }
 
@@ -209,7 +216,20 @@ class StorageAdapter {
 // Create singleton instance
 const storageAdapter = new StorageAdapter();
 
+// Make it globally available
+if (typeof window !== 'undefined') {
+    window.storageAdapter = storageAdapter;
+    console.log('StorageAdapter exposed globally as window.storageAdapter');
+}
+
 // Export for use in modules
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = storageAdapter;
+}
+
+// Also check if it's actually accessible
+if (typeof window !== 'undefined' && typeof window.storageAdapter === 'undefined') {
+    console.error('CRITICAL: storageAdapter failed to attach to window object!');
+} else if (typeof window !== 'undefined') {
+    console.log('✓ storageAdapter successfully available globally');
 }
