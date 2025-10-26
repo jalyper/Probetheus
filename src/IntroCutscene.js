@@ -626,8 +626,10 @@ class IntroCutscene {
             cancelAnimationFrame(this.animationFrameId);
         }
         
-        // Mark cutscene as seen
-        await storageAdapter.setItem('cutsceneSeen', 'true');
+        // Mark cutscene as seen (fire and forget)
+        storageAdapter.setItem('cutsceneSeen', 'true').catch(err => {
+            console.error('Failed to save cutscene state:', err);
+        });
         
         // Start transition to game
         this.transitionToGame();
