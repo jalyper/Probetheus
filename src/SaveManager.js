@@ -254,7 +254,7 @@ class SaveManager {
             await new Promise(resolve => setTimeout(resolve, 100));
             
             console.log('Creating save data...');
-            const saveData = this.createSaveData();
+            const saveData = await this.createSaveData();
             
             // Debug: Log research data being saved
             console.log('Research data being saved:');
@@ -742,22 +742,6 @@ class SaveManager {
         const hour = String(d.getHours()).padStart(2, '0');
         const minute = String(d.getMinutes()).padStart(2, '0');
         return `${year}-${month}-${day}_${hour}-${minute}`;
-    }
-
-    /**
-     * Create save data object (used for both localStorage and file export)
-     */
-    createSaveData() {
-        const saveData = {
-            version: this.version,
-            timestamp: new Date().toISOString(),
-            lastSaveTime: Date.now(),
-            gameState: this.serializeGameState()
-        };
-        
-        // Add checksum for integrity
-        saveData.checksum = this.generateChecksum(saveData.gameState);
-        return saveData;
     }
 }
 
