@@ -68,6 +68,14 @@ class UIManager {
         this.elements.buildPathHubBtnProbe.addEventListener('click', () => {
             this.startBuildingForProbe('reconHub');
         });
+        
+        // Add mining facility button handler
+        const buildPathMiningBtn = document.getElementById('buildPathMiningBtnProbe');
+        if (buildPathMiningBtn) {
+            buildPathMiningBtn.addEventListener('click', () => {
+                this.startBuildingForProbe('miningFacility');
+            });
+        }
     }
 
     /**
@@ -161,11 +169,18 @@ class UIManager {
     updateBuildingButtons() {
         const resources = this.gameState.getResources();
         
-        // Outpost button
         // Hub button
         const canBuildHub = resources.minerals >= 100;
         this.elements.buildPathHubBtnProbe.disabled = !canBuildHub;
         this.elements.buildPathHubBtnProbe.classList.toggle('disabled', !canBuildHub);
+        
+        // Mining facility button  
+        const buildPathMiningBtn = document.getElementById('buildPathMiningBtnProbe');
+        if (buildPathMiningBtn) {
+            const canBuildMining = resources.minerals >= 100 && resources.data >= 50;
+            buildPathMiningBtn.disabled = !canBuildMining;
+            buildPathMiningBtn.classList.toggle('disabled', !canBuildMining);
+        }
     }
 
     /**

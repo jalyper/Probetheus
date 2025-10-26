@@ -17,63 +17,69 @@ class TutorialManager {
             {
                 id: 'deploy_first_probe',
                 title: 'Deploy Your First Probe',
-                message: 'Click on your Recon Hub (green hexagon), then click "Deploy Probe" and place waypoints to explore!',
-                checkCondition: () => this.gameState.entities.probes.some(p => p.active),
-                completed: false
-            },
-            {
-                id: 'wait_for_signals',
-                title: 'Probes Discover Signals',
-                message: 'Your probe will scan the area as it travels. Watch for colored icons to appear - these are signals waiting to be discovered!',
+                message: 'To probe the unknown, you need a probe! Luckily, you have three. Click on your Recon Hub (green hexagon), then click "Deploy Probe" and place waypoints to explore!',
                 checkCondition: () => {
-                    // Check if any signals have appeared (check for any planets in the world)
-                    return this.gameState.world.signals && this.gameState.world.signals.length > 0;
+                    // Check if at least one probe has been deployed (has waypoints and is active)
+                    return this.gameState.entities.probes.some(p => p.active && p.waypoints && p.waypoints.length > 0);
                 },
                 completed: false
             },
             {
                 id: 'click_signal',
                 title: 'Identify a Signal',
-                message: 'Click on a signal (colored icon) to identify what it is. Signals reveal planets and resources!',
+                message: 'Your probes detect SIGNALS which can be identified by clicking on them. Wait for signals to appear, then click on one!',
                 checkCondition: () => {
-                    // Check if player has clicked on a signal (discovered any planet)
-                    return this.gameState.entities.planets.length > 0;
+                    // Check if player has any signals available to click
+                    return this.gameState.entities.signals && this.gameState.entities.signals.length > 0;
                 },
                 completed: false
             },
             {
                 id: 'explore_planet',
-                title: 'Explore the Planet',
-                message: 'Planets offer 3 exploration types: Excavate (minerals), Exterminate (creature data), or Expedition (artifacts). Each planet has specialties based on its geography and climate. Choose an exploration action!',
+                title: 'Choose Exploration Method',
+                message: 'Identifying a SIGNAL brings up the EXPLORATION SCREEN. Here, you can decide how to exploit the planet you\'ve discovered. All planets have specialties for producing certain resources based on climate, geography, and more. Choose an exploration option (Excavate, Exterminate, or Expedition)!',
                 checkCondition: () => {
-                    // Check if player has started any exploration
-                    return this.gameState.entities.planets.some(p => 
-                        p.excavationProgress > 0 || p.exterminationProgress > 0 || p.expeditionProgress > 0
-                    );
+                    // This will be triggered by exploration:actionChosen event
+                    return this.explorationActionChosen === true;
                 },
                 completed: false
             },
             {
-                id: 'deploy_all_starting_probes',
-                title: 'Deploy All Starting Probes',
-                message: 'Deploy your 2 remaining probes. Each hub starts with 3 probes and can hold up to 5 total (you can build more later).',
+                id: 'deploy_remaining_probes',
+                title: 'Deploy Remaining Probes',
+                message: 'Each Hub can support up to 5 probes. It\'s generally a good idea to have as many active probes as possible. Deploy two more probes. You can buy more from the Hub once you have the required materials!',
                 checkCondition: () => {
-                    // Count active probes instead of checking hub inventory
-                    const activeProbes = this.gameState.entities.probes.filter(p => p.active).length;
-                    return activeProbes >= 3;
+                    // Count deployed probes (probes with waypoints)
+                    const deployedProbes = this.gameState.entities.probes.filter(p => 
+                        p.active && p.waypoints && p.waypoints.length > 0
+                    ).length;
+                    return deployedProbes >= 3;
                 },
                 completed: false
             },
             {
-                id: 'build_hub',
-                title: 'Expand Your Network',
-                message: 'Select an active probe, then click "Build Hub" to place a new Recon Hub along its route. Hubs extend your exploration range!',
+                id: 'gather_resources',
+                title: 'Gather Resources for Hub',
+                message: 'Excellent. Now try and gather enough resources through identifying the signals detected by your probes to build a Hub. You need 100 Minerals.',
                 checkCondition: () => {
-                    return this.gameState.world.hubs.length >= 2; // Built at least one additional hub
+                    const resources = this.gameState.getResources();
+                    return resources.minerals >= 100;
+                },
+                completed: false
+            },
+            {
+                id: 'place_hub',
+                title: 'Place Your Hub',
+                message: 'Great! Now select an active probe, then click "Build Hub" from the probe\'s menu. Place a Hub anywhere along the probe\'s route (except the return journey). This allows you to expand further and discover new sectors with special rewards (and special dangers)!',
+                checkCondition: () => {
+                    return this.gameState.entities.reconHubs && this.gameState.entities.reconHubs.length >= 2;
                 },
                 completed: false
             }
         ];
+        
+        // Additional tracking for specific events
+        this.explorationActionChosen = false;
         
         // Listen for relevant events
         this.eventBus.on('probe:deployed', this.checkStepCompletion.bind(this));
@@ -81,6 +87,10 @@ class TutorialManager {
         this.eventBus.on('hub:built', this.checkStepCompletion.bind(this));
         this.eventBus.on('signal:discovered', this.checkStepCompletion.bind(this));
         this.eventBus.on('planet:explored', this.checkStepCompletion.bind(this));
+        this.eventBus.on('planet:actionChosen', () => {
+            this.explorationActionChosen = true;
+            this.checkStepCompletion();
+        });
         
         // Also check periodically in case events don't fire
         this.checkInterval = setInterval(() => {

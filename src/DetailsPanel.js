@@ -68,10 +68,6 @@ class DetailsPanel {
                         e.preventDefault();
                         this.triggerButtonClick('buildProbeForHub');
                         break;
-                    case 'm':
-                        e.preventDefault();
-                        this.triggerButtonClick('buildMiningBtn');
-                        break;
                     case 's':
                         e.preventDefault();
                         this.triggerButtonClick('buildShuttleBtn');
@@ -208,19 +204,6 @@ class DetailsPanel {
                             <line x1="5" y1="9" x2="2" y2="11" stroke="rgba(0,255,255,0.8)" stroke-width="1"/>
                         </svg>
                         Build <span style="text-decoration: underline;">P</span>robe (25M)
-                    </button>
-                    <button id="buildMiningBtn" class="control-btn" style="font-size: 12px; padding: 8px 12px; width: 100%; display: flex; align-items: center; gap: 8px;">
-                        <svg width="16" height="16" viewBox="0 0 16 16" style="flex-shrink: 0;">
-                            <!-- Octagonal mining station -->
-                            <polygon points="8,2 11.3,3.7 13,7 11.3,10.3 8,12 4.7,10.3 3,7 4.7,3.7" fill="#aaa" stroke="#666" stroke-width="1"/>
-                            <!-- Inner cross pattern -->
-                            <line x1="5" y1="7" x2="11" y2="7" stroke="#666" stroke-width="0.8"/>
-                            <line x1="8" y1="4" x2="8" y2="10" stroke="#666" stroke-width="0.8"/>
-                            <!-- Diagonal lines -->
-                            <line x1="6" y1="5" x2="10" y2="9" stroke="#666" stroke-width="0.8"/>
-                            <line x1="10" y1="5" x2="6" y2="9" stroke="#666" stroke-width="0.8"/>
-                        </svg>
-                        <span style="text-decoration: underline;">M</span>ining Station (100M, 50D)
                     </button>
                     <button id="buildShuttleBtn" class="control-btn" style="font-size: 12px; padding: 8px 12px; width: 100%; display: flex; align-items: center; gap: 8px;">
                         <svg width="16" height="16" viewBox="0 0 16 16" style="flex-shrink: 0;">
@@ -481,16 +464,6 @@ class DetailsPanel {
             buildProbeBtn.disabled = !canAfford || atCapacity;
         }
         
-        // Build Mining Station button (100 minerals, 50 data)
-        const buildMiningBtn = document.getElementById('buildMiningBtn');
-        if (buildMiningBtn) {
-            const canAfford = resources.minerals >= 100 && resources.data >= 50;
-            
-            buildMiningBtn.classList.toggle('resource-button', true);
-            buildMiningBtn.classList.toggle('insufficient', !canAfford);
-            buildMiningBtn.disabled = !canAfford;
-        }
-        
         // Build Shuttle button (50 minerals, 25 data)
         const buildShuttleBtn = document.getElementById('buildShuttleBtn');
         if (buildShuttleBtn) {
@@ -578,31 +551,6 @@ class DetailsPanel {
         
         // Update button states based on resources
         this.updateButtonStates(hub);
-        
-        // Mining station button
-        const buildMiningBtn = document.getElementById('buildMiningBtn');
-        if (buildMiningBtn) {
-            buildMiningBtn.addEventListener('click', () => {
-                // Get game controller reference
-                const gameController = window.game;
-                if (gameController && gameController.buildingSystem) {
-                    gameController.buildingSystem.enterBuildingMode({
-                        structureType: 'miningFacility',
-                        probe: null
-                    });
-                    
-                    const canvas = document.getElementById('galaxyCanvas');
-                    if (canvas) canvas.style.cursor = 'crosshair';
-                    
-                    const probeStatus = document.getElementById('probeStatus');
-                    if (probeStatus) {
-                        probeStatus.textContent = 'Click along exploration routes to place mining station...';
-                    }
-                    
-                    this.hide(); // Close details panel
-                }
-            });
-        }
         
         // Shuttle button
         const buildShuttleBtn = document.getElementById('buildShuttleBtn');
