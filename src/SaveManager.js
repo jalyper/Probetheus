@@ -335,7 +335,7 @@ class SaveManager {
                 console.warn('Save data checksum mismatch - data may have been modified');
             }
 
-            this.restoreGameState(saveData.gameState);
+            await this.restoreGameState(saveData.gameState);
             
             // Process offline progression if enough time has passed
             if (saveData.lastSaveTime && window.game && window.game.offlineManager) {
@@ -372,7 +372,7 @@ class SaveManager {
     /**
      * Restore game state from save data
      */
-    restoreGameState(savedState) {
+    async restoreGameState(savedState) {
         // Restore resources
         this.gameState.resources = { ...savedState.resources };
         
