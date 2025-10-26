@@ -22,12 +22,35 @@ class TutorialManager {
                 completed: false
             },
             {
+                id: 'discover_signals',
+                title: 'Discover Signals',
+                message: 'Your probe will scan for signals as it travels. When you see colored icons appear, click on them to discover what they are!',
+                checkCondition: () => {
+                    // Check if player has clicked on a signal (discovered any planet)
+                    return this.gameState.entities.planets.length > 0;
+                },
+                completed: false
+            },
+            {
+                id: 'explore_planet',
+                title: 'Explore the Planet',
+                message: 'Planets offer 3 exploration types: Excavate (minerals), Exterminate (creature data), or Expedition (artifacts). Each planet has specialties based on its geography and climate. Choose an exploration action!',
+                checkCondition: () => {
+                    // Check if player has started any exploration
+                    return this.gameState.entities.planets.some(p => 
+                        p.excavationProgress > 0 || p.exterminationProgress > 0 || p.expeditionProgress > 0
+                    );
+                },
+                completed: false
+            },
+            {
                 id: 'deploy_all_starting_probes',
                 title: 'Deploy All Starting Probes',
                 message: 'Deploy your 2 remaining probes. Each hub starts with 3 probes and can hold up to 5 total (you can build more later).',
                 checkCondition: () => {
-                    const startingHub = this.gameState.world.hubs[0];
-                    return startingHub && startingHub.currentProbes === 0; // All 3 starting probes deployed
+                    // Count active probes instead of checking hub inventory
+                    const activeProbes = this.gameState.entities.probes.filter(p => p.active).length;
+                    return activeProbes >= 3;
                 },
                 completed: false
             },
@@ -46,6 +69,15 @@ class TutorialManager {
         this.eventBus.on('probe:deployed', this.checkStepCompletion.bind(this));
         this.eventBus.on('probe:returned', this.checkStepCompletion.bind(this));
         this.eventBus.on('hub:built', this.checkStepCompletion.bind(this));
+        this.eventBus.on('signal:discovered', this.checkStepCompletion.bind(this));
+        this.eventBus.on('planet:explored', this.checkStepCompletion.bind(this));
+        
+        // Also check periodically in case events don't fire
+        this.checkInterval = setInterval(() => {
+            if (this.tutorialActive) {
+                this.checkStepCompletion();
+            }
+        }, 1000); // Check every second
         
         this.createTutorialPanel();
     }
@@ -117,6 +149,13 @@ class TutorialManager {
     completeTutorial() {
         console.log('Tutorial completed!');
         this.tutorialActive = false;
+        
+        // Clear the periodic check interval
+        if (this.checkInterval) {
+            clearInterval(this.checkInterval);
+            this.checkInterval = null;
+        }
+        
         this.closeTutorial();
         
         // Show completion message
