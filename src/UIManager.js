@@ -17,7 +17,6 @@ class UIManager {
             patrolModeCheckbox: document.getElementById('patrolModeCheckbox'),
             cameraLockCheckbox: document.getElementById('cameraLockCheckbox'),
             closeProbeDetail: document.getElementById('closeProbeDetail'),
-            buildOutpostBtnProbe: document.getElementById('buildOutpostBtnProbe'),
             buildPathHubBtnProbe: document.getElementById('buildPathHubBtnProbe')
         };
 
@@ -66,10 +65,6 @@ class UIManager {
         });
 
         // Building buttons in probe detail panel
-        this.elements.buildOutpostBtnProbe.addEventListener('click', () => {
-            this.startBuildingForProbe('outpost');
-        });
-
         this.elements.buildPathHubBtnProbe.addEventListener('click', () => {
             this.startBuildingForProbe('reconHub');
         });
@@ -167,10 +162,6 @@ class UIManager {
         const resources = this.gameState.getResources();
         
         // Outpost button
-        const canBuildOutpost = resources.minerals >= 50 && resources.data >= 20;
-        this.elements.buildOutpostBtnProbe.disabled = !canBuildOutpost;
-        this.elements.buildOutpostBtnProbe.classList.toggle('disabled', !canBuildOutpost);
-        
         // Hub button
         const canBuildHub = resources.minerals >= 100;
         this.elements.buildPathHubBtnProbe.disabled = !canBuildHub;

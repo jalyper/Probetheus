@@ -22,12 +22,21 @@ class TutorialManager {
                 completed: false
             },
             {
-                id: 'deploy_all_probes',
-                title: 'Deploy All Your Probes',
-                message: 'Try deploying all the probes in your hub. Your hubs can hold up to 5 probes each. Deploy 2 more probes to fill your starting hub!',
+                id: 'deploy_all_starting_probes',
+                title: 'Deploy All Starting Probes',
+                message: 'Deploy your 2 remaining probes. Each hub starts with 3 probes and can hold up to 5 total (you can build more later).',
                 checkCondition: () => {
                     const startingHub = this.gameState.world.hubs[0];
-                    return startingHub && startingHub.currentProbes === 0; // All 3 probes deployed
+                    return startingHub && startingHub.currentProbes === 0; // All 3 starting probes deployed
+                },
+                completed: false
+            },
+            {
+                id: 'build_hub',
+                title: 'Expand Your Network',
+                message: 'Select an active probe, then click "Build Hub" to place a new Recon Hub along its route. Hubs extend your exploration range!',
+                checkCondition: () => {
+                    return this.gameState.world.hubs.length >= 2; // Built at least one additional hub
                 },
                 completed: false
             }
@@ -36,6 +45,7 @@ class TutorialManager {
         // Listen for relevant events
         this.eventBus.on('probe:deployed', this.checkStepCompletion.bind(this));
         this.eventBus.on('probe:returned', this.checkStepCompletion.bind(this));
+        this.eventBus.on('hub:built', this.checkStepCompletion.bind(this));
         
         this.createTutorialPanel();
     }
