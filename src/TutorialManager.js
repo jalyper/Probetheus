@@ -259,13 +259,17 @@ class TutorialManager {
      * Create the tutorial panel HTML structure
      */
     createTutorialPanel() {
-        // Create tutorial banner (top of screen, non-blocking)
+        // Find the canvas to position relative to it
+        const canvas = document.getElementById('galaxyCanvas');
+        const mapScreen = document.getElementById('mapScreen');
+        
+        // Create tutorial banner (positioned relative to canvas)
         const tutorialPanel = document.createElement('div');
         tutorialPanel.id = 'tutorialPanel';
         tutorialPanel.style.cssText = `
             display: none;
-            position: fixed;
-            top: 80px;
+            position: absolute;
+            top: 10px;
             left: 50%;
             transform: translateX(-50%);
             width: 90%;
@@ -310,7 +314,9 @@ class TutorialManager {
         tutorialContent.innerHTML += '<div style="position: relative; z-index: 1;"></div>';
         
         tutorialPanel.appendChild(tutorialContent);
-        document.body.appendChild(tutorialPanel);
+        
+        // Append to mapScreen instead of body so it's positioned relative to canvas
+        mapScreen.appendChild(tutorialPanel);
         
         // Add CSS animations
         const style = document.createElement('style');
