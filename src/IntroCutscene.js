@@ -115,7 +115,8 @@ class IntroCutscene {
     
     async play(onComplete) {
         // Check if cutscene has been seen before
-        if (localStorage.getItem('cutsceneSeen') === 'true') {
+        const cutsceneSeen = await storageAdapter.getItem('cutsceneSeen');
+        if (cutsceneSeen === 'true') {
             onComplete();
             return;
         }
@@ -626,7 +627,7 @@ class IntroCutscene {
         }
         
         // Mark cutscene as seen
-        localStorage.setItem('cutsceneSeen', 'true');
+        await storageAdapter.setItem('cutsceneSeen', 'true');
         
         // Start transition to game
         this.transitionToGame();
