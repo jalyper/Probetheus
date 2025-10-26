@@ -2,11 +2,16 @@
   "name": "probetheus",
   "version": "1.0.0",
   "description": "Probetheus - A space exploration idle game where you deploy probes to discover signals and explore infinite galaxies",
-  "main": "index.html",
+  "main": "electron/main.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
-    "dev:python": "python -m http.server 8000",
+    "dev": "vite",
+    "dev:electron": "vite --mode electron",
+    "build": "vite build",
+    "build:electron": "vite build && electron-builder",
+    "electron": "electron .",
+    "start": "npm run dev:electron",
+    "preview": "vite preview",
+    "legacy:server": "node server.js",
     "test": "playwright test",
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
@@ -14,9 +19,59 @@
     "install-browsers": "playwright install"
   },
   "devDependencies": {
-    "@playwright/test": "^1.40.0"
+    "@playwright/test": "^1.40.0",
+    "electron": "^38.4.0",
+    "electron-builder": "^26.0.12",
+    "vite": "^7.1.12",
+    "vite-plugin-electron": "^0.29.0",
+    "vite-plugin-electron-renderer": "^0.14.6"
   },
-  "keywords": ["game", "idle", "space", "exploration", "probes", "probetheus"],
+  "keywords": [
+    "game",
+    "idle",
+    "space",
+    "exploration",
+    "probes",
+    "probetheus"
+  ],
   "author": "Your Name",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "electron-store": "^11.0.2"
+  },
+  "build": {
+    "appId": "com.probetheus.game",
+    "productName": "Probetheus",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "images/icon.png"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "images/icon.icns",
+      "category": "public.app-category.games"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "images/icon.png",
+      "category": "Game"
+    }
+  }
 }

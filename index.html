@@ -489,6 +489,8 @@
     </div>
 
     <!-- Modular Game System -->
+    <!-- StorageAdapter must load first -->
+    <script src="src/StorageAdapter.js"></script>
     <script src="src/IntroCutscene.js"></script>
     <script src="src/NameGenerator.js"></script>
     <script src="src/EventBus.js"></script>
@@ -514,8 +516,8 @@
         });
 
         async function initializeStartScreen() {
-            // Check if auto-save exists
-            const autoSaveExists = localStorage.getItem('csog_save_auto');
+            // Check if auto-save exists using StorageAdapter
+            const autoSaveExists = await storageAdapter.getItem('csog_save_auto');
             const continueBtn = document.getElementById('continueGameBtn');
             
             if (autoSaveExists) {
@@ -538,23 +540,23 @@
             });
             
             // Debug: Press 'C' on start screen to reset cutscene flag
-            document.addEventListener('keypress', (e) => {
+            document.addEventListener('keypress', async (e) => {
                 if (e.key === 'c' || e.key === 'C') {
-                    localStorage.removeItem('cutsceneSeen');
+                    await storageAdapter.removeItem('cutsceneSeen');
                     console.log('Cutscene reset - will play on next new game');
                 }
             });
         }
 
-        function startNewGame() {
+        async function startNewGame() {
             // Set load type flag for tutorial logic (new games wait for cutscene)
             window.gameLoadType = 'new';
             
             // Clear any existing saves and tutorial progress
-            localStorage.removeItem('csog_save_auto');
-            localStorage.removeItem('csog_last_play_time');
-            localStorage.removeItem('tutorialCompleted');
-            localStorage.removeItem('tutorialProgress');
+            await storageAdapter.removeItem('csog_save_auto');
+            await storageAdapter.removeItem('csog_last_play_time');
+            await storageAdapter.removeItem('tutorialCompleted');
+            await storageAdapter.removeItem('tutorialProgress');
             
             // Hide start screen
             document.getElementById('startScreen').style.display = 'none';
