@@ -34,13 +34,13 @@ function createWindow() {
   });
 
   // Load the app
-  if (process.env.VITE_DEV_SERVER_URL) {
-    // Development mode
-    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
-    mainWindow.webContents.openDevTools(); // Auto-open DevTools in dev mode
-  } else {
-    // Production mode
+  if (process.env.NODE_ENV === 'production') {
+    // Production mode - load built files
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+  } else {
+    // Development mode - load source files directly
+    mainWindow.loadFile(path.join(__dirname, '../index.html'));
+    mainWindow.webContents.openDevTools(); // Auto-open DevTools in dev mode
   }
 
   mainWindow.on('closed', () => {

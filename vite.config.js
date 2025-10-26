@@ -46,5 +46,9 @@ export default defineConfig({
   },
   server: {
     port: 3000
+  },
+  // Ensure proper MIME types for JS files
+  optimizeDeps: {
+    exclude: ['electron']
   }
 })

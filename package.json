@@ -5,11 +5,11 @@
   "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
-    "dev:electron": "vite --mode electron",
+    "dev:electron": "electron .",
     "build": "vite build",
     "build:electron": "vite build && electron-builder",
     "electron": "electron .",
-    "start": "npm run dev:electron",
+    "start": "electron .",
     "preview": "vite preview",
     "legacy:server": "node server.js",
     "test": "playwright test",
