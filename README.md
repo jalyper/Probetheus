@@ -1,18 +1,23 @@
 # Probetheus
-**Version 0.6.1-dev**
+**Version 0.7.0-dev**
 
 A space exploration idle game where you deploy probes from Recon Hubs to discover signals, explore planets, and collect resources across an infinite procedural galaxy. Features advanced probe management, cargo delivery systems, research trees, automated collection mechanics, and Probethium mining operations.
 
+**Now available as desktop app with Electron!**
+
 ## Quick Start
 
-1. Install dependencies (if needed for tests):
+### Web Version (Development)
+1. Install dependencies:
    ```bash
    npm install
    ```
 
-2. Start the game server:
+2. Start the development server:
    ```bash
-   npm start
+   npm run dev              # Vite dev server (web)
+   # or
+   npm run legacy:server    # Node.js server (original)
    ```
    
 3. Open your browser and navigate to:
@@ -20,7 +25,51 @@ A space exploration idle game where you deploy probes from Recon Hubs to discove
    http://localhost:3000
    ```
 
-Alternative: You can also use `npm run dev` which does the same thing, or `npm run dev:python` to use Python's built-in server on port 8000.
+### Desktop Version (Electron)
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Run the desktop app:
+   ```bash
+   npm start               # Runs Electron app
+   ```
+
+3. Build for distribution (Steam-ready):
+   ```bash
+   npm run build:electron  # Creates installers in release/ folder
+   ```
+
+## New in v0.7.0
+
+### 🎮 Desktop App (Electron)
+- Native desktop application for Windows, Mac, and Linux
+- Steam-ready builds with electron-builder
+- Persistent file-based save system
+- No browser required
+
+### 💾 Enhanced Save System
+- **Cross-Platform Storage**: Works in both web (localStorage) and desktop (electron-store)
+- **Automatic Storage Adapter**: Seamlessly switches between storage backends
+- **Multiple Save Slots**: 5 manual save slots with metadata
+- **Auto-Save**: Saves every 5 minutes and on quit
+- **Save Metadata**: Shows timestamp, resources, and progress
+- **Offline Progress**: Calculates resource gain while away
+
+### 🎓 Interactive Tutorial System
+- **Step-Based Progression**: Guides new players through core mechanics
+- **Non-Blocking Design**: Sleek banner at top of screen
+- **Progress Tracking**: Shows current step (e.g., "Step 1 of 2")
+- **Action-Based**: Waits for player to complete each step
+- **Always Available**: Triggers on every new game
+- **Subtle Animations**: Dark theme with gentle shimmer effect
+
+### 🎬 Intro Cutscene
+- Animated space probe journey
+- Skippable with button
+- Plays once per new game session
+- Smooth transition to gameplay
 
 ## Current Features
 
@@ -420,3 +469,139 @@ All save system tests passing across Chrome, Firefox, and Safari. The save syste
 - **Diplomatic Systems**: Alien races and trading mechanics
 - **Modular Probe Customization**: Hull types, engine upgrades, specialized equipment
 - **Multiplayer Features**: Cooperative exploration and competitive leaderboards
+
+---
+
+## Technical Documentation
+
+### Architecture
+
+**Tech Stack:**
+- Frontend: Pure JavaScript (no frameworks), Canvas 2D rendering
+- Desktop: Electron + Vite
+- Storage: localStorage (web) / electron-store (desktop)
+- Testing: Playwright
+- Build: Vite + electron-builder
+
+**File Structure:**
+```
+probetheus/
+├── electron/              # Electron main process
+│   ├── main.js           # Main process entry
+│   └── preload.js        # IPC bridge (secure)
+├── src/                  # Game modules
+│   ├── StorageAdapter.js # Universal storage interface ⭐ NEW
+│   ├── SaveManager.js    # Save/load system (async)
+│   ├── TutorialManager.js # Tutorial system ⭐ NEW
+│   ├── GameController.js # Main game loop
+│   ├── GameState.js      # State management
+│   ├── ProbeManager.js   # Probe logic
+│   └── [other modules]
+├── tests/                # Playwright tests
+│   ├── tutorial-system.spec.js ⭐ NEW
+│   └── storage-system.spec.js  ⭐ NEW
+├── dist/                 # Built web app (Vite)
+├── dist-electron/        # Built Electron files
+├── release/              # Electron installers
+├── vite.config.js        # Vite configuration ⭐ NEW
+├── index.html            # Entry point
+├── game.js               # Legacy game code
+└── package.json          # Dependencies & scripts
+```
+
+### Storage System
+
+**StorageAdapter** provides unified interface:
+```javascript
+// Automatically detects Electron vs web
+const data = await storageAdapter.getItem('key');
+await storageAdapter.setItem('key', value);
+await storageAdapter.removeItem('key');
+```
+
+**Backends:**
+- **Web**: Uses `localStorage` (synchronous, works in browser)
+- **Electron**: Uses `electron-store` (async, file-based)
+
+**Save Locations:**
+- Web: Browser localStorage
+- Windows: `C:\Users\[User]\AppData\Roaming\probetheus\`
+- Mac: `~/Library/Application Support/probetheus/`
+- Linux: `~/.config/probetheus/`
+
+### Tutorial System
+
+**Step-Based Design:**
+```javascript
+steps = [
+  {
+    id: 'deploy_first_probe',
+    title: 'Deploy Your First Probe',
+    message: '...',
+    checkCondition: () => gameState.entities.probes.some(p => p.active)
+  }
+]
+```
+
+**Event-Driven:**
+- Listens to game events (`probe:deployed`, `probe:returned`, etc.)
+- Checks conditions after each event
+- Auto-advances when condition met
+
+**UI Design:**
+- Top banner (non-blocking)
+- Position: `top: 80px`, `width: 90%`, `max-width: 1200px`
+- Dark gradient background with subtle shimmer
+- Stays visible until step completed
+
+### Development Commands
+
+```bash
+# Web development
+npm run dev                 # Vite dev server (hot reload)
+npm run legacy:server       # Node.js server (original)
+
+# Electron development  
+npm start                   # Run Electron app
+npm run dev:electron        # Same as above
+
+# Building
+npm run build               # Build web version
+npm run build:electron      # Build Electron installers
+
+# Testing
+npm test                    # Run all Playwright tests
+npm run test:headed         # Run tests with visible browser
+npm run test:debug          # Debug tests
+```
+
+### Testing
+
+**Test Coverage:**
+- Tutorial system (4 tests)
+- Save/load system (6 tests)
+- Game smoke tests
+- UI interaction tests
+
+**Running Tests:**
+```bash
+npm test                           # All tests
+npm test tests/tutorial-system     # Tutorial only
+npm test tests/storage-system      # Storage only
+```
+
+### Contributing
+
+See `ELECTRON_MIGRATION.md` for details on the Electron setup and migration.
+
+Key areas for contribution:
+1. **New Tutorial Steps**: Add to `TutorialManager.steps` array
+2. **Save System**: All async - use `await` with storage calls
+3. **Electron Features**: Add to `electron/main.js` IPC handlers
+4. **Tests**: Use Playwright for E2E testing
+
+---
+
+## License
+
+MIT
