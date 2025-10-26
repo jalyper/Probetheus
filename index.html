@@ -528,21 +528,36 @@
     
     <!-- Verify all modules loaded -->
     <script>
-        // Check if all required classes are defined
-        const requiredClasses = [
-            'StorageAdapter', 'IntroCutscene', 'NameGenerator', 'EventBus', 
-            'GameState', 'ProbeManager', 'BuildingSystem', 'MiningManager',
-            'ResearchManager', 'SectorManager', 'SaveManager', 'OfflineManager',
-            'TutorialManager', 'CosmeticManager', 'UIManager', 'DetailsPanel', 'GameController'
+        // Check if all required classes/instances are defined
+        // Note: StorageAdapter is exported as 'storageAdapter' instance, not the class
+        const requiredModules = [
+            { name: 'storageAdapter', type: 'instance' }, // Instance, not class
+            { name: 'IntroCutscene', type: 'class' },
+            { name: 'NameGenerator', type: 'class' },
+            { name: 'EventBus', type: 'class' }, 
+            { name: 'GameState', type: 'class' },
+            { name: 'ProbeManager', type: 'class' },
+            { name: 'BuildingSystem', type: 'class' },
+            { name: 'MiningManager', type: 'class' },
+            { name: 'ResearchManager', type: 'class' },
+            { name: 'SectorManager', type: 'class' },
+            { name: 'SaveManager', type: 'class' },
+            { name: 'OfflineManager', type: 'class' },
+            { name: 'TutorialManager', type: 'class' },
+            { name: 'CosmeticManager', type: 'class' },
+            { name: 'UIManager', type: 'class' },
+            { name: 'DetailsPanel', type: 'class' },
+            { name: 'GameController', type: 'class' }
         ];
         
-        const missing = requiredClasses.filter(className => typeof window[className] === 'undefined');
+        const missing = requiredModules.filter(module => typeof window[module.name] === 'undefined');
         
         if (missing.length > 0) {
-            console.error('ERROR: Failed to load game modules:', missing);
-            alert(`Game failed to load. Missing modules: ${missing.join(', ')}\n\nPlease refresh the page.`);
+            console.error('ERROR: Failed to load game modules:', missing.map(m => m.name));
+            alert(`Game failed to load. Missing modules: ${missing.map(m => m.name).join(', ')}\n\nPlease refresh the page.`);
         } else {
             console.log('✓ All game modules loaded successfully');
+            console.log(`  - ${requiredModules.length} modules verified`);
         }
     </script>
     
