@@ -97,8 +97,26 @@ class GameController {
      */
     setupCanvas() {
         const resizeCanvas = () => {
-            this.canvas.width = window.innerWidth;
-            this.canvas.height = window.innerHeight - 100;
+            // Lock to 16:9 aspect ratio
+            const targetAspectRatio = 16 / 9;
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight - 100; // Account for top UI
+            
+            const windowAspectRatio = windowWidth / windowHeight;
+            
+            if (windowAspectRatio > targetAspectRatio) {
+                // Window is wider than 16:9, constrain by height
+                this.canvas.height = windowHeight;
+                this.canvas.width = Math.floor(windowHeight * targetAspectRatio);
+            } else {
+                // Window is taller than 16:9, constrain by width
+                this.canvas.width = windowWidth;
+                this.canvas.height = Math.floor(windowWidth / targetAspectRatio);
+            }
+            
+            // Center the canvas
+            this.canvas.style.display = 'block';
+            this.canvas.style.margin = '0 auto';
             
             this.minimapCanvas.width = 150;
             this.minimapCanvas.height = 100;

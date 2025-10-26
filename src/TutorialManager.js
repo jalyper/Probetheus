@@ -22,9 +22,19 @@ class TutorialManager {
                 completed: false
             },
             {
-                id: 'discover_signals',
-                title: 'Discover Signals',
-                message: 'Your probe will scan for signals as it travels. When you see colored icons appear, click on them to discover what they are!',
+                id: 'wait_for_signals',
+                title: 'Probes Discover Signals',
+                message: 'Your probe will scan the area as it travels. Watch for colored icons to appear - these are signals waiting to be discovered!',
+                checkCondition: () => {
+                    // Check if any signals have appeared (check for any planets in the world)
+                    return this.gameState.world.signals && this.gameState.world.signals.length > 0;
+                },
+                completed: false
+            },
+            {
+                id: 'click_signal',
+                title: 'Identify a Signal',
+                message: 'Click on a signal (colored icon) to identify what it is. Signals reveal planets and resources!',
                 checkCondition: () => {
                     // Check if player has clicked on a signal (discovered any planet)
                     return this.gameState.entities.planets.length > 0;
