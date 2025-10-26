@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Probetheus - Loading Test</title>
+    <base href="./">
+</head>
+<body>
+    <h1>Script Loading Test</h1>
+    <div id="status">Checking...</div>
+    
+    <script src="src/StorageAdapter.js"></script>
+    <script src="src/SaveManager.js"></script>
+    
+    <script>
+        const statusDiv = document.getElementById('status');
+        let messages = [];
+        
+        // Check if StorageAdapter loaded
+        if (typeof storageAdapter !== 'undefined') {
+            messages.push('✓ StorageAdapter loaded');
+        } else {
+            messages.push('✗ StorageAdapter FAILED to load');
+        }
+        
+        // Check if SaveManager loaded
+        if (typeof SaveManager !== 'undefined') {
+            messages.push('✓ SaveManager class defined');
+        } else {
+            messages.push('✗ SaveManager class NOT defined');
+        }
+        
+        statusDiv.innerHTML = messages.join('<br>');
+        console.log(messages.join('\n'));
+    </script>
+</body>
+</html>

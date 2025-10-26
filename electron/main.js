@@ -27,21 +27,35 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false
+      sandbox: false,
+      // Allow file:// protocol to load scripts
+      webSecurity: true
     },
     autoHideMenuBar: true, // Hide menu bar for cleaner look
     title: 'Probetheus'
   });
 
   // Load the app
+  const indexPath = path.join(__dirname, '../index.html');
+  console.log('Loading index.html from:', indexPath);
+  
   if (process.env.NODE_ENV === 'production') {
     // Production mode - load built files
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   } else {
     // Development mode - load source files directly
-    mainWindow.loadFile(path.join(__dirname, '../index.html'));
+    mainWindow.loadFile(indexPath);
     mainWindow.webContents.openDevTools(); // Auto-open DevTools in dev mode
   }
+
+  // Log any errors during load
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+    console.error('Failed to load:', errorCode, errorDescription);
+  });
+  
+  mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+    console.log(`Renderer console [${level}]: ${message}`);
+  });
 
   mainWindow.on('closed', () => {
     mainWindow = null;

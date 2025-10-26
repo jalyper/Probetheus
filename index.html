@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Base URL for proper file loading in Electron -->
+    <base href="./">
     <!-- Content Security Policy for Electron -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';">
     <title>Probetheus</title>
@@ -510,6 +512,26 @@
     <script src="src/DetailsPanel.js"></script>
     <script src="src/GameController.js"></script>
     
+    <!-- Verify all modules loaded -->
+    <script>
+        // Check if all required classes are defined
+        const requiredClasses = [
+            'StorageAdapter', 'IntroCutscene', 'NameGenerator', 'EventBus', 
+            'GameState', 'ProbeManager', 'BuildingSystem', 'MiningManager',
+            'ResearchManager', 'SectorManager', 'SaveManager', 'OfflineManager',
+            'TutorialManager', 'CosmeticManager', 'UIManager', 'DetailsPanel', 'GameController'
+        ];
+        
+        const missing = requiredClasses.filter(className => typeof window[className] === 'undefined');
+        
+        if (missing.length > 0) {
+            console.error('ERROR: Failed to load game modules:', missing);
+            alert(`Game failed to load. Missing modules: ${missing.join(', ')}\n\nPlease refresh the page.`);
+        } else {
+            console.log('✓ All game modules loaded successfully');
+        }
+    </script>
+    
     <!-- Initialize Game -->
     <script>
         // Initialize the start screen when page loads
@@ -518,36 +540,40 @@
         });
 
         async function initializeStartScreen() {
-            // Check if auto-save exists using StorageAdapter
-            const autoSaveExists = await storageAdapter.getItem('csog_save_auto');
-            const continueBtn = document.getElementById('continueGameBtn');
+            try {
+                // Check if auto-save exists using StorageAdapter
+                const autoSaveExists = await storageAdapter.getItem('csog_save_auto');
+                const continueBtn = document.getElementById('continueGameBtn');
             
-            if (autoSaveExists) {
-                continueBtn.style.display = 'block';
-                continueBtn.style.background = 'linear-gradient(135deg, #0a5 0%, #063 100%)';
-                document.getElementById('newGameBtn').style.background = '';
-            }
-
-            // Start screen button handlers
-            document.getElementById('newGameBtn').addEventListener('click', () => {
-                startNewGame();
-            });
-
-            document.getElementById('continueGameBtn').addEventListener('click', () => {
-                continueGame();
-            });
-
-            document.getElementById('loadGameBtn').addEventListener('click', () => {
-                loadSavedGame();
-            });
-            
-            // Debug: Press 'C' on start screen to reset cutscene flag
-            document.addEventListener('keypress', async (e) => {
-                if (e.key === 'c' || e.key === 'C') {
-                    await storageAdapter.removeItem('cutsceneSeen');
-                    console.log('Cutscene reset - will play on next new game');
+                if (autoSaveExists) {
+                    continueBtn.style.display = 'block';
+                    continueBtn.style.background = 'linear-gradient(135deg, #0a5 0%, #063 100%)';
+                    document.getElementById('newGameBtn').style.background = '';
                 }
-            });
+
+                // Start screen button handlers
+                document.getElementById('newGameBtn').addEventListener('click', () => {
+                    startNewGame();
+                });
+
+                document.getElementById('continueGameBtn').addEventListener('click', () => {
+                    continueGame();
+                });
+
+                document.getElementById('loadGameBtn').addEventListener('click', () => {
+                    loadSavedGame();
+                });
+            
+                // Debug: Press 'C' on start screen to reset cutscene flag
+                document.addEventListener('keypress', async (e) => {
+                    if (e.key === 'c' || e.key === 'C') {
+                        await storageAdapter.removeItem('cutsceneSeen');
+                        console.log('Cutscene reset - will play on next new game');
+                    }
+                });
+            } catch (error) {
+                console.error('Error initializing start screen:', error);
+            }
         }
 
         async function startNewGame() {
