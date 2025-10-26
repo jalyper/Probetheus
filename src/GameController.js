@@ -3406,7 +3406,7 @@ class GameController {
     /**
      * Show save/load modal
      */
-    showSaveLoadModal() {
+    async showSaveLoadModal() {
         console.log('showSaveLoadModal called');
         console.log('SaveManager available:', !!this.saveManager);
         const modal = document.getElementById('saveLoadModal');
@@ -3418,7 +3418,7 @@ class GameController {
         slotsContainer.innerHTML = '';
         
         // Get save slot information
-        const slots = this.saveManager.getAllSaveSlots();
+        const slots = await this.saveManager.getAllSaveSlots();
         
         slots.forEach(slotInfo => {
             const slotDiv = document.createElement('div');
@@ -3616,8 +3616,8 @@ class GameController {
      * Check for offline progression on initial game load
      */
     async checkInitialOfflineProgression() {
-        // Check if there's a recent auto-save timestamp in localStorage
-        const lastPlayTime = localStorage.getItem('csog_last_play_time');
+        // Check if there's a recent auto-save timestamp in storage
+        const lastPlayTime = await storageAdapter.getItem('csog_last_play_time');
         if (lastPlayTime) {
             const lastTime = parseInt(lastPlayTime);
             const currentTime = Date.now();
@@ -3640,11 +3640,11 @@ class GameController {
         }
         
         // Update the last play time
-        localStorage.setItem('csog_last_play_time', Date.now().toString());
+        await storageAdapter.setItem('csog_last_play_time', Date.now().toString());
         
         // Update last play time every 30 seconds while playing
-        setInterval(() => {
-            localStorage.setItem('csog_last_play_time', Date.now().toString());
+        setInterval(async () => {
+            await storageAdapter.setItem('csog_last_play_time', Date.now().toString());
         }, 30000);
     }
 
@@ -3655,29 +3655,24 @@ class GameController {
         // Auto-save on page unload (browser close, refresh, navigation)
         window.addEventListener('beforeunload', (event) => {
             try {
-                // Perform immediate synchronous save to slot 1 (auto-save slot)
-                const saveData = this.saveManager.createSaveData();
-                const autoSaveKey = 'csog_save_auto';
-                localStorage.setItem(autoSaveKey, JSON.stringify(saveData));
-                
-                // Also update the last play time
-                localStorage.setItem('csog_last_play_time', Date.now().toString());
-                
-                console.log('Auto-saved on page unload');
-                
-                // Don't show confirmation dialog for normal operation
-                // event.preventDefault() or returning a string would show "Are you sure?" dialog
+                // For web mode, use sync localStorage operations (beforeunload can't be async)
+                // For Electron, the main process handles this before quit
+                if (!storageAdapter.isElectron) {
+                    const saveData = this.saveManager.createSaveData(); // This needs to be synchronous
+                    const autoSaveKey = 'csog_save_auto';
+                    localStorage.setItem(autoSaveKey, JSON.stringify(saveData));
+                    localStorage.setItem('csog_last_play_time', Date.now().toString());
+                    console.log('Auto-saved on page unload (web mode)');
+                }
             } catch (error) {
                 console.error('Auto-save failed:', error);
             }
         });
 
-        // Also setup auto-save every 5 minutes during play
-        setInterval(() => {
+        // Setup auto-save every 5 minutes during play
+        setInterval(async () => {
             try {
-                const saveData = this.saveManager.createSaveData();
-                const autoSaveKey = 'csog_save_auto';
-                localStorage.setItem(autoSaveKey, JSON.stringify(saveData));
+                await this.performAutoSave();
                 console.log('Periodic auto-save completed');
             } catch (error) {
                 console.error('Periodic auto-save failed:', error);
@@ -3691,7 +3686,7 @@ class GameController {
     async loadAutoSave() {
         try {
             const autoSaveKey = 'csog_save_auto';
-            const savedData = localStorage.getItem(autoSaveKey);
+            const savedData = await storageAdapter.getItem(autoSaveKey);
             
             if (!savedData) {
                 console.log('No auto-save data found');
@@ -3699,7 +3694,7 @@ class GameController {
             }
 
             const saveData = JSON.parse(savedData);
-            this.saveManager.restoreGameState(saveData.gameState);
+            await this.saveManager.restoreGameState(saveData.gameState);
             
             // Process offline progression if enough time has passed
             if (saveData.lastSaveTime && this.offlineManager) {
@@ -3774,15 +3769,15 @@ class GameController {
     async performAutoSave() {
         try {
             console.log('performAutoSave: Creating save data...');
-            const saveData = this.saveManager.createSaveData();
+            const saveData = await this.saveManager.createSaveData();
             console.log('performAutoSave: Save data created successfully');
             
             const autoSaveKey = 'csog_save_auto';
-            console.log('performAutoSave: Attempting to save to localStorage with key:', autoSaveKey);
-            localStorage.setItem(autoSaveKey, JSON.stringify(saveData));
-            console.log('performAutoSave: Auto-save written to localStorage');
+            console.log('performAutoSave: Attempting to save to storage with key:', autoSaveKey);
+            await storageAdapter.setItem(autoSaveKey, JSON.stringify(saveData));
+            console.log('performAutoSave: Auto-save written to storage');
             
-            localStorage.setItem('csog_last_play_time', Date.now().toString());
+            await storageAdapter.setItem('csog_last_play_time', Date.now().toString());
             console.log('performAutoSave: Last play time updated');
             
             return true;

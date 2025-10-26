@@ -35,10 +35,10 @@ class SaveManager {
     }
 
     /**
-     * Get current tutorial progress from localStorage
+     * Get current tutorial progress from storage
      */
-    getTutorialProgress() {
-        const saved = localStorage.getItem('tutorialProgress');
+    async getTutorialProgress() {
+        const saved = await storageAdapter.getItem('tutorialProgress');
         if (saved) {
             try {
                 return JSON.parse(saved);
@@ -53,7 +53,7 @@ class SaveManager {
     /**
      * Create a comprehensive save data object
      */
-    createSaveData() {
+    async createSaveData() {
         try {
             console.log('createSaveData: Starting save data creation...');
             
@@ -62,6 +62,9 @@ class SaveManager {
             console.log('createSaveData: Resources obtained:', resources);
             
             console.log('createSaveData: Creating base save data structure...');
+            const tutorialProgress = await this.getTutorialProgress();
+            const tutorialCompleted = await storageAdapter.getItem('tutorialCompleted');
+            
             const saveData = {
             version: this.version,
             timestamp: Date.now(),
@@ -76,8 +79,8 @@ class SaveManager {
                 },
                 researchSystem: this.createResearchSystemSaveData(),
                 tutorial: {
-                    completed: localStorage.getItem('tutorialCompleted') === 'true',
-                    progress: this.getTutorialProgress()
+                    completed: tutorialCompleted === 'true',
+                    progress: tutorialProgress
                 },
                 world: {
                     currentSector: { ...this.gameState.world.currentSector },
@@ -262,9 +265,9 @@ class SaveManager {
             
             const saveKey = `${this.savePrefix}slot_${slotNumber}`;
             
-            console.log('Attempting to save to localStorage with key:', saveKey);
-            localStorage.setItem(saveKey, JSON.stringify(saveData));
-            console.log('Successfully saved to localStorage');
+            console.log('Attempting to save to storage with key:', saveKey);
+            await storageAdapter.setItem(saveKey, JSON.stringify(saveData));
+            console.log('Successfully saved to storage');
             
             // Save metadata for slot display - ensure we save the exact values
             const metadata = {
@@ -277,7 +280,7 @@ class SaveManager {
                 version: saveData.version
             };
             
-            localStorage.setItem(`${this.savePrefix}meta_${slotNumber}`, JSON.stringify(metadata));
+            await storageAdapter.setItem(`${this.savePrefix}meta_${slotNumber}`, JSON.stringify(metadata));
             
             console.log(`Game saved to slot ${slotNumber}`);
             this.eventBus.emit('ui:message', { 
@@ -309,7 +312,7 @@ class SaveManager {
 
         try {
             const saveKey = `${this.savePrefix}slot_${slotNumber}`;
-            const savedData = localStorage.getItem(saveKey);
+            const savedData = await storageAdapter.getItem(saveKey);
             
             if (!savedData) {
                 this.eventBus.emit('ui:message', { 
@@ -395,17 +398,17 @@ class SaveManager {
         // Restore tutorial state
         if (savedState.tutorial) {
             if (savedState.tutorial.completed) {
-                localStorage.setItem('tutorialCompleted', 'true');
+                await storageAdapter.setItem('tutorialCompleted', 'true');
                 console.log('Restored tutorial completion state');
             } else {
-                localStorage.removeItem('tutorialCompleted');
+                await storageAdapter.removeItem('tutorialCompleted');
             }
             
             if (savedState.tutorial.progress) {
-                localStorage.setItem('tutorialProgress', JSON.stringify(savedState.tutorial.progress));
+                await storageAdapter.setItem('tutorialProgress', JSON.stringify(savedState.tutorial.progress));
                 console.log('Restored tutorial progress:', savedState.tutorial.progress);
             } else {
-                localStorage.removeItem('tutorialProgress');
+                await storageAdapter.removeItem('tutorialProgress');
             }
         }
         
@@ -499,9 +502,9 @@ class SaveManager {
     /**
      * Get save slot metadata for UI display
      */
-    getSaveSlotInfo(slotNumber) {
+    async getSaveSlotInfo(slotNumber) {
         const metaKey = `${this.savePrefix}meta_${slotNumber}`;
-        const metadata = localStorage.getItem(metaKey);
+        const metadata = await storageAdapter.getItem(metaKey);
         
         if (!metadata) {
             return {
@@ -535,12 +538,12 @@ class SaveManager {
     /**
      * Delete save from specified slot
      */
-    deleteSave(slotNumber) {
+    async deleteSave(slotNumber) {
         const saveKey = `${this.savePrefix}slot_${slotNumber}`;
         const metaKey = `${this.savePrefix}meta_${slotNumber}`;
         
-        localStorage.removeItem(saveKey);
-        localStorage.removeItem(metaKey);
+        await storageAdapter.removeItem(saveKey);
+        await storageAdapter.removeItem(metaKey);
         
         console.log(`Save slot ${slotNumber} deleted`);
         this.eventBus.emit('ui:message', { 
@@ -559,10 +562,10 @@ class SaveManager {
     /**
      * Get all save slots info
      */
-    getAllSaveSlots() {
+    async getAllSaveSlots() {
         const slots = [];
         for (let i = 1; i <= this.maxSaveSlots; i++) {
-            const slotInfo = this.getSaveSlotInfo(i);
+            const slotInfo = await this.getSaveSlotInfo(i);
             slotInfo.saving = this.isSlotSaving(i);
             slots.push(slotInfo);
         }
@@ -580,7 +583,7 @@ class SaveManager {
             if (slotNumber && slotNumber >= 1 && slotNumber <= this.maxSaveSlots) {
                 // Export specific slot
                 const saveKey = `${this.savePrefix}slot_${slotNumber}`;
-                const savedData = localStorage.getItem(saveKey);
+                const savedData = await storageAdapter.getItem(saveKey);
                 
                 if (!savedData) {
                     this.eventBus.emit('ui:message', { 
@@ -594,7 +597,7 @@ class SaveManager {
                 filename = `probetheus-save-slot${slotNumber}-${this.formatDateForFilename(saveData.timestamp)}.json`;
             } else {
                 // Export current game state
-                saveData = this.createSaveData();
+                saveData = await this.createSaveData();
                 filename = `probetheus-save-${this.formatDateForFilename(new Date())}.json`;
             }
 
