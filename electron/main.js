@@ -1,14 +1,19 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
-const Store = require('electron-store');
-
-// Initialize electron-store
-const store = new Store({
-  name: 'probetheus-saves',
-  cwd: app.getPath('userData')
-});
 
 let mainWindow;
+let store;
+
+// Initialize electron-store (ES module - must use dynamic import)
+async function initStore() {
+  const Store = (await import('electron-store')).default;
+  store = new Store({
+    name: 'probetheus-saves',
+    cwd: app.getPath('userData')
+  });
+  console.log('electron-store initialized');
+  console.log('Save data location:', store.path);
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -44,7 +49,8 @@ function createWindow() {
 }
 
 // App lifecycle
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  await initStore(); // Initialize store before creating window
   createWindow();
 
   app.on('activate', () => {
@@ -63,6 +69,10 @@ app.on('window-all-closed', () => {
 // IPC Handlers for Storage (replacing localStorage)
 ipcMain.handle('storage:get', async (event, key) => {
   try {
+    if (!store) {
+      console.error('Store not initialized');
+      return null;
+    }
     return store.get(key);
   } catch (error) {
     console.error('Storage get error:', error);
@@ -72,6 +82,10 @@ ipcMain.handle('storage:get', async (event, key) => {
 
 ipcMain.handle('storage:set', async (event, key, value) => {
   try {
+    if (!store) {
+      console.error('Store not initialized');
+      return { success: false, error: 'Store not initialized' };
+    }
     store.set(key, value);
     return { success: true };
   } catch (error) {
@@ -82,6 +96,10 @@ ipcMain.handle('storage:set', async (event, key, value) => {
 
 ipcMain.handle('storage:remove', async (event, key) => {
   try {
+    if (!store) {
+      console.error('Store not initialized');
+      return { success: false, error: 'Store not initialized' };
+    }
     store.delete(key);
     return { success: true };
   } catch (error) {
@@ -92,6 +110,10 @@ ipcMain.handle('storage:remove', async (event, key) => {
 
 ipcMain.handle('storage:clear', async () => {
   try {
+    if (!store) {
+      console.error('Store not initialized');
+      return { success: false, error: 'Store not initialized' };
+    }
     store.clear();
     return { success: true };
   } catch (error) {
@@ -102,6 +124,10 @@ ipcMain.handle('storage:clear', async () => {
 
 ipcMain.handle('storage:has', async (event, key) => {
   try {
+    if (!store) {
+      console.error('Store not initialized');
+      return false;
+    }
     return store.has(key);
   } catch (error) {
     console.error('Storage has error:', error);
@@ -112,6 +138,10 @@ ipcMain.handle('storage:has', async (event, key) => {
 // Get all keys (useful for listing save slots)
 ipcMain.handle('storage:keys', async () => {
   try {
+    if (!store) {
+      console.error('Store not initialized');
+      return [];
+    }
     // electron-store doesn't have a keys() method, so we get the entire store
     const allData = store.store;
     return Object.keys(allData);
@@ -123,8 +153,10 @@ ipcMain.handle('storage:keys', async () => {
 
 // Get storage path for debugging
 ipcMain.handle('storage:getPath', async () => {
+  if (!store) {
+    return 'Store not initialized';
+  }
   return store.path;
 });
 
 console.log('Electron main process started');
-console.log('Save data location:', store.path);
