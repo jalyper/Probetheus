@@ -118,6 +118,73 @@ class TutorialManager {
             );
         }, 500);
     }
+    
+    /**
+     * Show a tutorial message with title and content
+     */
+    showTutorialMessage(title, message, autoClose = false) {
+        const tutorialPanel = document.getElementById('tutorialPanel');
+        const tutorialContent = tutorialPanel?.querySelector('div');
+        
+        if (!tutorialPanel || !tutorialContent) {
+            console.error('Tutorial panel not found!');
+            return;
+        }
+        
+        // Update content
+        tutorialContent.innerHTML = `
+            <div style="text-align: center; margin-bottom: 25px;">
+                <div style="font-size: 36px; margin-bottom: 15px;">🎯</div>
+                <h2 id="tutorialTitle" style="color: #0ff; margin: 0 0 10px 0; font-size: 24px; text-shadow: 0 0 15px rgba(0,255,255,0.6);">
+                    ${title}
+                </h2>
+                <div style="color: #888; font-size: 14px;">${this.tutorialActive ? `Step ${this.currentStep + 1} of ${this.steps.length}` : ''}</div>
+            </div>
+            
+            <div style="background: rgba(0, 255, 255, 0.05); border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+                <div id="tutorialMessage" style="color: #fff; font-size: 16px; line-height: 1.8;">
+                    ${message}
+                </div>
+            </div>
+            
+            <div style="text-align: center;">
+                ${autoClose ? 
+                    '<div style="color: #888; font-size: 12px;">Closing automatically...</div>' :
+                    '<div style="color: #0ff; font-size: 14px; animation: pulse 2s infinite;">⏳ Waiting for you to complete this step...</div>'
+                }
+            </div>
+        `;
+        
+        // Show panel with animation
+        tutorialPanel.style.display = 'block';
+        tutorialPanel.style.opacity = '0';
+        setTimeout(() => {
+            tutorialPanel.style.transition = 'opacity 0.3s ease';
+            tutorialPanel.style.opacity = '1';
+        }, 10);
+        
+        // Auto-close if requested
+        if (autoClose) {
+            setTimeout(() => {
+                this.closeTutorial();
+            }, 5000);
+        }
+    }
+    
+    /**
+     * Close the tutorial panel
+     */
+    closeTutorial() {
+        const tutorialPanel = document.getElementById('tutorialPanel');
+        if (tutorialPanel) {
+            tutorialPanel.style.transition = 'opacity 0.3s ease';
+            tutorialPanel.style.opacity = '0';
+            
+            setTimeout(() => {
+                tutorialPanel.style.display = 'none';
+            }, 300);
+        }
+    }
 
     /**
      * Create the tutorial panel HTML structure
