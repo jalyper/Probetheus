@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, globalShortcut } = require('electron');
 const path = require('path');
 
 let mainWindow;
@@ -39,14 +39,13 @@ function createWindow() {
   const indexPath = path.join(__dirname, '../index.html');
   console.log('Loading index.html from:', indexPath);
   
-  if (process.env.NODE_ENV === 'production') {
-    // Production mode - load built files
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
-  } else {
-    // Development mode - load source files directly
-    mainWindow.loadFile(indexPath);
-    mainWindow.webContents.openDevTools(); // Auto-open DevTools in dev mode
-  }
+  // Always load source files (development mode)
+  mainWindow.loadFile(indexPath);
+  
+  // Always open DevTools for debugging
+  mainWindow.webContents.openDevTools();
+  
+  console.log('Running in development mode with DevTools enabled');
 
   // Log any errors during load
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
@@ -66,6 +65,19 @@ function createWindow() {
 app.whenReady().then(async () => {
   await initStore(); // Initialize store before creating window
   createWindow();
+  
+  // Register F12 to toggle DevTools
+  globalShortcut.register('F12', () => {
+    if (mainWindow) {
+      if (mainWindow.webContents.isDevToolsOpened()) {
+        mainWindow.webContents.closeDevTools();
+      } else {
+        mainWindow.webContents.openDevTools();
+      }
+    }
+  });
+  
+  console.log('DevTools toggle registered (F12)');
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -78,6 +90,11 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+app.on('will-quit', () => {
+  // Unregister all shortcuts
+  globalShortcut.unregisterAll();
 });
 
 // IPC Handlers for Storage (replacing localStorage)

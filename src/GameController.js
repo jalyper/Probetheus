@@ -737,13 +737,17 @@ class GameController {
         // Check for hub clicks FIRST (higher priority than probes)
         const clickedHub = this.findHubAt(worldX, worldY);
         if (clickedHub) {
-            console.log('Found hub at click location');
+            console.log('=== HUB CLICKED ===');
+            console.log('Found hub at click location:', clickedHub.id);
+            console.log('Hub position:', clickedHub.x, clickedHub.y);
             
             this.selectHub(clickedHub);
+            console.log('Emitting entity:selected event for hub');
             this.eventBus.emit('entity:selected', { entity: clickedHub, type: 'hub' });
             
             // Emit event for tutorial
             this.eventBus.emit('hub:clicked', { hub: clickedHub });
+            console.log('=== HUB CLICK COMPLETE ===');
             return;
         }
         

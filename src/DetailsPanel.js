@@ -98,14 +98,22 @@ class DetailsPanel {
      * Show details for a selected entity
      */
     showEntityDetails(data) {
+        console.log('DetailsPanel.showEntityDetails called with:', data);
+        
         if (!this.panel || !this.icon || !this.title || !this.content) {
-            console.warn('DetailsPanel: Cannot show details, DOM elements not initialized');
+            console.error('DetailsPanel: Cannot show details, DOM elements not initialized');
+            console.log('Panel exists:', !!this.panel);
+            console.log('Icon exists:', !!this.icon);
+            console.log('Title exists:', !!this.title);
+            console.log('Content exists:', !!this.content);
             return;
         }
         
         const { entity, type } = data;
         this.currentEntity = entity;
         this.currentEntityType = type;
+        
+        console.log('DetailsPanel: Showing', type, 'details for entity:', entity.id || entity);
         
         // Update panel based on entity type
         switch(type) {
@@ -130,6 +138,7 @@ class DetailsPanel {
         }
         
         // Show the panel
+        console.log('DetailsPanel: Setting display to block');
         this.panel.style.display = 'block';
     }
     
