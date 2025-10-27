@@ -398,10 +398,12 @@ class DetailsPanel {
             </div>
             
             ${this.renderCargoSection(probe)}
+            ${this.renderSkinSelector(probe)}
         `;
         
         // Add probe control listeners
         this.setupProbeButtons(probe);
+        this.setupSkinSelectors(probe);
     }
     
     /**
@@ -665,6 +667,64 @@ class DetailsPanel {
     }
     
     /**
+     * Render skin selector for probe customization
+     */
+    renderSkinSelector(probe) {
+        // Get owned skins
+        const ownedSkins = this.gameState.ownedCosmetics?.probeSkins || [];
+        const currentSkin = probe.customSkin || 'default';
+        
+        // Default skin + owned skins
+        const allSkins = [
+            { id: 'default', name: 'Default', color: '#00ffff' },
+            ...ownedSkins
+        ];
+        
+        return `
+            <div style="border: 1px solid #444; border-radius: 5px; padding: 10px; margin-top: 12px; background: rgba(148,0,211,0.02);">
+                <div style="color: #9400d3; font-weight: bold; margin-bottom: 8px; font-size: 12px;">
+                    🎨 PROBE SKIN
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    ${allSkins.map(skin => {
+                        const isSelected = (skin.id === currentSkin);
+                        const isDefault = skin.id === 'default';
+                        
+                        return `
+                            <div 
+                                data-skin-id="${skin.id}"
+                                data-probe-id="${probe.id}"
+                                class="skin-selector-box"
+                                style="
+                                    width: 40px;
+                                    height: 40px;
+                                    border: 2px solid ${isSelected ? '#9400d3' : (isDefault ? '#666' : skin.color)};
+                                    border-radius: 5px;
+                                    background: ${isDefault ? '#222' : skin.color + '22'};
+                                    cursor: pointer;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    position: relative;
+                                    opacity: ${isDefault ? 0.5 : 1};
+                                    box-shadow: ${isSelected ? '0 0 10px ' + (isDefault ? '#9400d3' : skin.color) : 'none'};
+                                "
+                                title="${skin.name}"
+                            >
+                                ${isSelected ? '<div style="color: #fff; font-size: 20px;">✓</div>' : ''}
+                                <div style="position: absolute; bottom: 2px; width: 100%; height: 4px; background: ${isDefault ? '#666' : skin.color}; opacity: 0.5;"></div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+                <div style="color: #888; font-size: 10px; margin-top: 8px;">
+                    Click a color to equip skin
+                </div>
+            </div>
+        `;
+    }
+    
+    /**
      * Setup probe buttons
      */
     setupProbeButtons(probe) {
@@ -687,6 +747,33 @@ class DetailsPanel {
                 });
             });
         }
+    }
+    
+    /**
+     * Setup skin selector click handlers
+     */
+    setupSkinSelectors(probe) {
+        const skinBoxes = document.querySelectorAll('.skin-selector-box');
+        skinBoxes.forEach(box => {
+            box.addEventListener('click', () => {
+                const skinId = box.getAttribute('data-skin-id');
+                const probeId = box.getAttribute('data-probe-id');
+                
+                // Find probe and update skin
+                const targetProbe = this.gameState.entities.probes.find(p => p.id === probeId);
+                if (targetProbe) {
+                    targetProbe.customSkin = skinId;
+                    
+                    // Refresh panel to show updated selection
+                    this.showProbeDetails(targetProbe);
+                    
+                    this.eventBus.emit('ui:message', {
+                        text: `Skin ${skinId === 'default' ? 'Default' : skinId} equipped!`,
+                        type: 'success'
+                    });
+                }
+            });
+        });
     }
     
     /**

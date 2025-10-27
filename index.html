@@ -180,6 +180,14 @@
                     <button id="testAddProbetheum" style="background: rgba(200,150,255,0.1); border: 1px solid #c9f; color: #c9f; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px;">
                         +1.0 Probetheum
                     </button>
+                    
+                    <div style="border-top: 1px solid #333; margin: 8px 0;"></div>
+                    
+                    <div style="color: #f0f; font-size: 12px; font-weight: bold; margin-bottom: 4px;">Dark Market:</div>
+                    
+                    <button id="testSpawnDarkMarket" style="background: rgba(148,0,211,0.1); border: 1px solid #9400d3; color: #9400d3; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                        🌑 Spawn Dark Market
+                    </button>
                 </div>
                 
                 <div style="color: #666; font-size: 9px; margin-top: 12px; text-align: center;">
@@ -490,6 +498,25 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Dark Market Modal -->
+        <div id="darkMarketModal" class="modal" style="background: rgba(0,0,0,0.98);">
+            <div class="modal-content" style="max-width: 800px; border: 3px solid #9400d3; box-shadow: 0 0 50px rgba(148,0,211,0.8); background: linear-gradient(135deg, #0a0015 0%, #15001a 100%);">
+                <button id="closeDarkMarket" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #9400d3; font-size: 24px; cursor: pointer; padding: 5px 10px;">&times;</button>
+                
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <div style="font-size: 48px; margin-bottom: 15px;">🌑</div>
+                    <h1 style="color: #9400d3; margin: 0 0 10px 0; font-size: 28px; text-shadow: 0 0 20px rgba(148,0,211,0.8);">
+                        THE DARK MARKET
+                    </h1>
+                    <div style="color: #888; font-size: 14px;">Rare goods from beyond the void</div>
+                </div>
+                
+                <div id="darkMarketInventory" style="display: grid; gap: 20px;">
+                    <!-- Inventory items will be populated here -->
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Modular Game System -->
@@ -522,6 +549,7 @@
     <script src="src/OfflineManager.js"></script>
     <script src="src/TutorialManager.js"></script>
     <script src="src/CosmeticManager.js"></script>
+    <script src="src/DarkMarketSystem.js"></script>
     <script src="src/UIManager.js"></script>
     <script src="src/DetailsPanel.js"></script>
     <script src="src/GameController.js"></script>
