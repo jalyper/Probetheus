@@ -1352,6 +1352,26 @@ class GameController {
                 };
             }
             
+            // Check cargo capacity
+            const cargoUsed = this.probeManager.getCargoUsed(nearestProbe);
+            const cargoCapacity = this.probeManager.getCargoCapacity(nearestProbe);
+            const totalReward = rewardAmount + (exoticBonus || 0);
+            
+            if (cargoUsed + totalReward > cargoCapacity) {
+                // CARGO FULL - cannot collect
+                console.warn(`Probe ${nearestProbe.id} cargo full! ${cargoUsed}/${cargoCapacity}, needed ${totalReward} more`);
+                
+                this.eventBus.emit('ui:message', {
+                    text: `Probe ${nearestProbe.id} cargo full! (${cargoUsed}/${cargoCapacity})\nCannot collect ${totalReward} units.\nReturn to hub or equip Cargo Expander.`,
+                    type: 'warning',
+                    duration: 5000
+                });
+                
+                // Don't collect - signal remains on map
+                this.showScreen('mapScreen');
+                return;
+            }
+            
             console.log('Cargo before adding rewards:', nearestProbe.cargo);
             
             // Add rewards to probe's cargo
@@ -1362,6 +1382,7 @@ class GameController {
             
             console.log('Cargo after adding rewards:', nearestProbe.cargo);
             console.log(`Added ${rewardAmount} ${primaryReward} to probe ${nearestProbe.id}`);
+            console.log(`Cargo now: ${cargoUsed + totalReward}/${cargoCapacity}`);
             
             // Update Probethium stats
             this.gameState.updateProbethiumStats('signal_identified');

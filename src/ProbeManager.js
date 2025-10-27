@@ -356,11 +356,15 @@ class ProbeManager {
 
         // Move probe along current segment - use return speed when on return journey
         const isOnReturnJourney = probe.outboundWaypointsCount && probe.currentWaypoint >= probe.outboundWaypointsCount - 1;
-        const currentSpeed = isOnReturnJourney ? probe.returnSpeed : probe.speed;
+        let currentSpeed = isOnReturnJourney ? probe.returnSpeed : probe.speed;
+        
+        // Apply cargo penalty to speed
+        const cargoSpeedModifier = this.getCargoSpeedModifier(probe);
+        currentSpeed *= cargoSpeedModifier;
         
         // Debug speed logic occasionally
         if (Math.random() < 0.001) {
-            console.log(`Probe ${probe.id} speed: currentWP=${probe.currentWaypoint}, outboundCount=${probe.outboundWaypointsCount}, isReturn=${isOnReturnJourney}, speed=${currentSpeed}, baseSpeed=${probe.speed}, returnSpeed=${probe.returnSpeed}`);
+            console.log(`Probe ${probe.id} speed: currentWP=${probe.currentWaypoint}, outboundCount=${probe.outboundWaypointsCount}, isReturn=${isOnReturnJourney}, speed=${currentSpeed}, baseSpeed=${probe.speed}, returnSpeed=${probe.returnSpeed}, cargoMod=${cargoSpeedModifier}`);
         }
         
         // Safety check for reasonable deltaTime (max 1 second)
@@ -880,6 +884,63 @@ class ProbeManager {
         
         // Default is common
         return 'common';
+    }
+    
+    /**
+     * Get total cargo weight used by probe
+     */
+    getCargoUsed(probe) {
+        if (!probe.cargo) return 0;
+        return (
+            (probe.cargo.minerals || 0) +
+            (probe.cargo.data || 0) +
+            (probe.cargo.artifacts || 0) +
+            (probe.cargo.exoticMinerals || 0)
+        );
+    }
+    
+    /**
+     * Get maximum cargo capacity for probe
+     */
+    getCargoCapacity(probe) {
+        let capacity = 100; // Base capacity
+        
+        // Check equipment for cargo expanders
+        if (probe.equipment) {
+            probe.equipment.forEach(module => {
+                if (module === 'cargo_expander_mk1') capacity += 50;
+                if (module === 'cargo_expander_mk2') capacity += 100;
+                if (module === 'cargo_expander_mk3') capacity += 200;
+            });
+        }
+        
+        // Check for echo bonus (future)
+        // if (this.gameState.echoBonuses?.cargoCapacity) {
+        //     capacity += this.gameState.echoBonuses.cargoCapacity;
+        // }
+        
+        return capacity;
+    }
+    
+    /**
+     * Get speed modifier based on cargo level
+     */
+    getCargoSpeedModifier(probe) {
+        const cargoUsed = this.getCargoUsed(probe);
+        const cargoCapacity = this.getCargoCapacity(probe);
+        const cargoPercent = cargoUsed / cargoCapacity;
+        
+        if (cargoPercent < 0.5) {
+            return 1.0; // 0-50%: Full speed
+        } else if (cargoPercent < 0.75) {
+            return 0.9; // 50-75%: 10% slower
+        } else if (cargoPercent < 0.9) {
+            return 0.75; // 75-90%: 25% slower
+        } else if (cargoPercent < 1.0) {
+            return 0.6; // 90-100%: 40% slower
+        } else {
+            return 0.5; // 100%: 50% slower (FULL)
+        }
     }
 }
 

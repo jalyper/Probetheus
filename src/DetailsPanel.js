@@ -397,15 +397,7 @@ class DetailsPanel {
                 </label>
             </div>
             
-            ${probe.cargo && Object.keys(probe.cargo).length > 0 ? `
-            <div style="background: rgba(255,255,0,0.05); border: 1px solid rgba(255,255,0,0.2); border-radius: 5px; padding: 10px;">
-                <div style="color: #ff0; font-size: 12px; font-weight: bold; margin-bottom: 6px;">📦 Cargo</div>
-                <div style="color: #ccc; font-size: 11px;">
-                    ${Object.entries(probe.cargo).map(([res, amt]) => 
-                        `<div>• ${res}: ${amt}</div>`
-                    ).join('')}
-                </div>
-            </div>` : ''}
+            ${this.renderCargoSection(probe)}
         `;
         
         // Add probe control listeners
@@ -603,6 +595,73 @@ class DetailsPanel {
             });
         }
         
+    }
+    
+    /**
+     * Render cargo section for probe
+     */
+    renderCargoSection(probe) {
+        if (!probe.cargo) return '';
+        
+        const cargoUsed = (probe.cargo.minerals || 0) + (probe.cargo.data || 0) + 
+                         (probe.cargo.artifacts || 0) + (probe.cargo.exoticMinerals || 0);
+        
+        // Get capacity from ProbeManager
+        const probeManager = this.gameState.probeManager;
+        const cargoCapacity = probeManager ? probeManager.getCargoCapacity(probe) : 100;
+        const cargoPercent = Math.min(100, Math.round((cargoUsed / cargoCapacity) * 100));
+        
+        // Determine status and warning
+        let statusText = '✓ Plenty of space';
+        let statusColor = '#0f0';
+        let warningText = '';
+        let speedMod = 100;
+        
+        if (cargoPercent >= 100) {
+            statusText = '🚨 CARGO FULL!';
+            statusColor = '#f00';
+            warningText = 'Return to hub or cannot collect more signals';
+            speedMod = 50;
+        } else if (cargoPercent >= 90) {
+            statusText = '🔴 Almost full!';
+            statusColor = '#ff4400';
+            warningText = 'May not fit next signal';
+            speedMod = 60;
+        } else if (cargoPercent >= 75) {
+            statusText = '⚠️ Nearly full!';
+            statusColor = '#ffa500';
+            warningText = 'Consider returning soon';
+            speedMod = 75;
+        } else if (cargoPercent >= 50) {
+            statusText = '⚠️ Getting full';
+            statusColor = '#ffaa00';
+            warningText = `Speed reduced to ${speedMod}%`;
+            speedMod = 90;
+        }
+        
+        return `
+            <div style="border: 1px solid #444; border-radius: 5px; padding: 10px; margin-top: 12px; background: rgba(0,255,255,0.02);">
+                <div style="color: #0ff; font-weight: bold; margin-bottom: 8px; font-size: 12px;">
+                    📦 CARGO: ${cargoUsed} / ${cargoCapacity}
+                </div>
+                <div style="background: #222; height: 20px; border-radius: 3px; overflow: hidden; margin-bottom: 10px; border: 1px solid #444;">
+                    <div style="background: linear-gradient(90deg, #0ff, #0aa); height: 100%; width: ${cargoPercent}%; transition: width 0.3s ease;"></div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 11px; color: #aaa; margin-bottom: 10px;">
+                    <div>Minerals: ${probe.cargo.minerals || 0}</div>
+                    <div>Data: ${probe.cargo.data || 0}</div>
+                    <div>Artifacts: ${probe.cargo.artifacts || 0}</div>
+                    <div>Exotic: ${probe.cargo.exoticMinerals || 0}</div>
+                </div>
+                ${cargoPercent >= 50 ? `
+                    <div style="margin-top: 10px; padding: 8px; background: rgba(255,100,0,0.15); border-radius: 3px; border: 1px solid rgba(255,100,0,0.3);">
+                        <div style="color: ${statusColor}; font-weight: bold; font-size: 11px; margin-bottom: 3px;">${statusText}</div>
+                        ${warningText ? `<div style="color: #aaa; font-size: 10px;">${warningText}</div>` : ''}
+                        ${cargoPercent >= 50 ? `<div style="color: #aaa; font-size: 10px; margin-top: 3px;">Speed: ${speedMod}%</div>` : ''}
+                    </div>
+                ` : ''}
+            </div>
+        `;
     }
     
     /**
