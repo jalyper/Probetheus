@@ -739,13 +739,6 @@ class GameController {
         if (clickedHub) {
             console.log('Found hub at click location');
             
-            // Check if tutorial allows hub interaction
-            if (!this.canInteractWithHubs()) {
-                console.log('Tutorial restricting hub interaction');
-                this.showTutorialRestrictedMessage();
-                return;
-            }
-            
             this.selectHub(clickedHub);
             this.eventBus.emit('entity:selected', { entity: clickedHub, type: 'hub' });
             
