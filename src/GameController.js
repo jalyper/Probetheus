@@ -1172,6 +1172,13 @@ class GameController {
         if (targetScreen) {
             console.log(`Showing screen: ${screenId}`);
             targetScreen.classList.add('active');
+            
+            // Check computed style
+            const computedStyle = window.getComputedStyle(targetScreen);
+            console.log(`Screen ${screenId} computed display:`, computedStyle.display);
+            console.log(`Screen ${screenId} computed visibility:`, computedStyle.visibility);
+            console.log(`Screen ${screenId} computed opacity:`, computedStyle.opacity);
+            console.log(`Screen ${screenId} classList:`, Array.from(targetScreen.classList));
         } else {
             console.error(`Screen not found: ${screenId}`);
         }
