@@ -888,18 +888,31 @@ class GameController {
         let nearestProbe = null;
         let minDistance = Infinity;
         
+        console.log('Finding nearest active probe to position:', x, y);
+        console.log('Total probes:', this.gameState.entities.probes.length);
+        
         this.gameState.entities.probes.forEach(probe => {
-            if (probe.active && probe.status === 'exploring') {
+            console.log(`Probe ${probe.id}: active=${probe.active}, status=${probe.status}, has waypoints=${probe.waypoints && probe.waypoints.length > 0}`);
+            
+            // Accept any active probe with waypoints (exploring)
+            if (probe.active && probe.waypoints && probe.waypoints.length > 0) {
                 const distance = Math.sqrt(
                     Math.pow(x - probe.current.x, 2) + 
                     Math.pow(y - probe.current.y, 2)
                 );
+                console.log(`  Distance: ${distance}`);
                 if (distance < minDistance) {
                     minDistance = distance;
                     nearestProbe = probe;
                 }
             }
         });
+        
+        if (nearestProbe) {
+            console.log(`Found nearest probe: ${nearestProbe.id} at distance ${minDistance}`);
+        } else {
+            console.warn('No active probe found to carry rewards!');
+        }
         
         return nearestProbe;
     }
