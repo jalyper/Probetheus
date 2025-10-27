@@ -270,7 +270,11 @@ class BuildingSystem {
             if (probe.status === 'returning' || probe.damage > 0) return;
             
             // Only consider the outbound (exploration) waypoints, not the return path
-            const outboundWaypoints = probe.waypoints.slice(0, probe.outboundWaypointsCount || probe.waypoints.length);
+            const outboundCount = probe.outboundWaypointsCount || Math.ceil(probe.waypoints.length / 2);
+            const outboundWaypoints = probe.waypoints.slice(0, outboundCount);
+            
+            console.log(`Probe ${probe.id}: total waypoints=${probe.waypoints.length}, outboundCount=${outboundCount}, using ${outboundWaypoints.length} waypoints`);
+            
             if (outboundWaypoints.length < 2) {
                 console.log(`Probe skipped: not enough outbound waypoints (${outboundWaypoints.length})`);
                 return; // Need at least 2 points for a path

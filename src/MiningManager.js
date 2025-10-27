@@ -30,6 +30,11 @@ class MiningManager {
         this.eventBus.on('mining:upgradeStation', this.upgradeStation.bind(this));
         this.eventBus.on('mining:deleteStation', this.deleteStation.bind(this));
         this.eventBus.on('mining:deleteShuttle', this.deleteShuttle.bind(this));
+        
+        // Periodic supply check to wake up waiting shuttles
+        this.supplyCheckInterval = setInterval(() => {
+            this.checkStationSupplyNeeds();
+        }, 2000); // Check every 2 seconds
     }
 
     /**
@@ -811,6 +816,43 @@ class MiningManager {
         
         this.eventBus.emit('ui:update');
         return true;
+    }
+    
+    /**
+     * Periodic check to wake up waiting shuttles when resources become available
+     */
+    checkStationSupplyNeeds() {
+        if (!this.gameState.mining || !this.gameState.mining.shuttles) return;
+        
+        this.gameState.mining.shuttles.forEach(shuttle => {
+            // Only check shuttles that are waiting at hub
+            if (shuttle.status !== 'waiting') return;
+            
+            // Find the station this shuttle serves
+            const station = this.gameState.mining.stations.find(s => s.id === shuttle.stationId);
+            if (!station) return;
+            
+            // Check if station needs resources
+            const stationType = this.getStationTypes()[station.type];
+            const progress = this.getStationResourceProgress(station, stationType);
+            
+            // If station needs resources (below 95%)
+            if (progress < 0.95) {
+                // Check if we now have resources available
+                const canLoadAnything = this.canLoadAnyRequiredResources(shuttle, station, stationType);
+                
+                if (canLoadAnything) {
+                    console.log(`Supply check: Waking up shuttle for station ${station.id}, progress: ${(progress * 100).toFixed(1)}%`);
+                    this.loadFromHub(shuttle);
+                    
+                    if (Object.keys(shuttle.cargo).length > 0) {
+                        shuttle.target = 'station';
+                        shuttle.status = 'delivering';
+                        console.log('Shuttle loaded and now delivering');
+                    }
+                }
+            }
+        });
     }
 }
 
