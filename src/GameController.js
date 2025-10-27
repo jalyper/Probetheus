@@ -693,6 +693,7 @@ class GameController {
     handleCanvasClick(worldX, worldY) {
         console.log(`=== CANVAS CLICK HANDLER ===`);
         console.log(`Click at world: (${worldX}, ${worldY})`);
+        console.log(`Available signals: ${this.gameState.entities.signals ? this.gameState.entities.signals.length : 0}`);
         console.log(`Building mode: ${this.buildingSystem.isBuildingMode()}`);
         console.log(`Deploy mode: ${this.gameState.ui.deployMode}`);
         console.log(`Hub placement mode: ${this.gameState.ui.hubPlacementMode}`);
@@ -755,8 +756,10 @@ class GameController {
         // Check for signal clicks
         const clickedSignal = this.findSignalAt(worldX, worldY);
         if (clickedSignal) {
-            console.log('Found signal at click location');
+            console.log('=== SIGNAL CLICKED ===');
+            console.log('Found signal at click location:', clickedSignal);
             this.collectSignal(clickedSignal);
+            console.log('=== SIGNAL CLICK COMPLETE ===');
             return;
         }
 
@@ -932,7 +935,8 @@ class GameController {
     collectSignal(signal) {
         console.log('Signal collected:', signal.rarity);
         
-        // Emit event for tutorial
+        // Emit events for tutorial
+        this.eventBus.emit('signal:clicked');  // For tutorial step 2
         this.eventBus.emit('signal:identified');
         
         // Remove signal from world

@@ -29,8 +29,8 @@ class TutorialManager {
                 title: 'Identify a Signal',
                 message: 'Your probes detect SIGNALS which can be identified by clicking on them. Wait for signals to appear, then click on one!',
                 checkCondition: () => {
-                    // Check if player has any signals available to click
-                    return this.gameState.entities.signals && this.gameState.entities.signals.length > 0;
+                    // This will be triggered by signal:clicked event
+                    return this.signalClicked === true;
                 },
                 completed: false
             },
@@ -80,6 +80,7 @@ class TutorialManager {
         
         // Additional tracking for specific events
         this.explorationActionChosen = false;
+        this.signalClicked = false;
         
         // Listen for relevant events
         this.eventBus.on('probe:deployed', this.checkStepCompletion.bind(this));
@@ -87,6 +88,10 @@ class TutorialManager {
         this.eventBus.on('hub:built', this.checkStepCompletion.bind(this));
         this.eventBus.on('signal:discovered', this.checkStepCompletion.bind(this));
         this.eventBus.on('planet:explored', this.checkStepCompletion.bind(this));
+        this.eventBus.on('signal:clicked', () => {
+            this.signalClicked = true;
+            this.checkStepCompletion();
+        });
         this.eventBus.on('planet:actionChosen', () => {
             this.explorationActionChosen = true;
             this.checkStepCompletion();
