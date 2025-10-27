@@ -1165,6 +1165,20 @@ class GameController {
         allScreens.forEach(screen => {
             console.log(`Hiding screen: ${screen.id}`);
             screen.classList.remove('active');
+            
+            // Reset any inline styles we may have added
+            if (screen.id !== screenId) {
+                screen.style.zIndex = '';
+                screen.style.position = '';
+                screen.style.top = '';
+                screen.style.left = '';
+                screen.style.width = '';
+                screen.style.height = '';
+                screen.style.backgroundColor = '';
+                screen.style.overflow = '';
+                screen.style.padding = '';
+            }
+            
             // Force display none
             const computedAfter = window.getComputedStyle(screen);
             console.log(`  ${screen.id} after hiding - display: ${computedAfter.display}`);
@@ -1176,16 +1190,19 @@ class GameController {
             console.log(`Showing screen: ${screenId}`);
             targetScreen.classList.add('active');
             
-            // Force to front but keep resource bar visible
-            targetScreen.style.zIndex = '10000';
-            targetScreen.style.position = 'fixed';
-            targetScreen.style.top = '80px'; // Below resource bar
-            targetScreen.style.left = '0';
-            targetScreen.style.width = '100vw';
-            targetScreen.style.height = 'calc(100vh - 80px)'; // Account for resource bar
-            targetScreen.style.backgroundColor = '#000'; // Solid black background
-            targetScreen.style.overflow = 'auto'; // Allow scrolling if needed
-            targetScreen.style.padding = '20px'; // Add some padding
+            // Only apply special positioning for exploration screen
+            if (screenId === 'exploreScreen' || screenId === 'researchScreen') {
+                // Force to front but keep resource bar visible
+                targetScreen.style.zIndex = '10000';
+                targetScreen.style.position = 'fixed';
+                targetScreen.style.top = '80px'; // Below resource bar
+                targetScreen.style.left = '0';
+                targetScreen.style.width = '100vw';
+                targetScreen.style.height = 'calc(100vh - 80px)'; // Account for resource bar
+                targetScreen.style.backgroundColor = '#000'; // Solid black background
+                targetScreen.style.overflow = 'auto'; // Allow scrolling if needed
+                targetScreen.style.padding = '20px'; // Add some padding
+            }
             
             // Check computed style
             const computedStyle = window.getComputedStyle(targetScreen);

@@ -127,6 +127,9 @@ class TutorialManager {
         const currentStepData = this.steps[this.currentStep];
         if (!currentStepData) return;
         
+        // Don't check if already completed
+        if (currentStepData.completed) return;
+        
         if (currentStepData.checkCondition()) {
             console.log(`Tutorial step ${this.currentStep} completed: ${currentStepData.id}`);
             currentStepData.completed = true;
@@ -134,7 +137,7 @@ class TutorialManager {
             // Wait a moment to let player see what they did
             setTimeout(() => {
                 this.nextStep();
-            }, 1000);
+            }, 1500); // Increased from 1000ms to give player more time
         }
     }
     
@@ -147,6 +150,11 @@ class TutorialManager {
             this.completeTutorial();
             return;
         }
+        
+        console.log(`=== SHOWING TUTORIAL STEP ${this.currentStep} ===`);
+        console.log(`Step ID: ${stepData.id}`);
+        console.log(`Title: ${stepData.title}`);
+        console.log(`Condition already met: ${stepData.checkCondition()}`);
         
         this.showTutorialMessage(stepData.title, stepData.message);
     }
