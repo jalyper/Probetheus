@@ -1,5 +1,5 @@
 # Probetheus
-**Version 0.7.0-dev**
+**Version 0.7.1-dev**
 
 A space exploration idle game where you deploy probes from Recon Hubs to discover signals, explore planets, and collect resources across an infinite procedural galaxy. Features advanced probe management, cargo delivery systems, research trees, automated collection mechanics, and Probethium mining operations.
 
@@ -40,6 +40,38 @@ A space exploration idle game where you deploy probes from Recon Hubs to discove
    ```bash
    npm run build:electron  # Creates installers in release/ folder
    ```
+
+## New in v0.7.1
+
+### ⚖️ Balance Changes
+- **Shuttle Limit**: Hubs now support max 3 shuttles (upgradeable to 6 in future updates)
+- **Building Placement**: Hubs and mining facilities can only be placed on outbound probe routes (not return journey)
+
+### 🔧 Mining Improvements
+- **Auto-Recovery**: Mining stations automatically retry resource delivery when supplies arrive
+- **Periodic Checks**: System checks every 2 seconds for available resources
+- **Better Feedback**: Clear messages about shuttle capacity and station supply status
+
+### 🎓 Tutorial Polish
+- **Proper Step Gating**: Steps 2, 4, 6 now wait for player actions before advancing
+- **Better Timing**: 1.5s delay between steps for clearer feedback
+- **Fixed Auto-Skip**: Tutorial no longer races ahead of player
+- **Resource Bar**: Stays visible throughout and after tutorial
+
+### 🎨 UI Improvements
+- **Clearer Button Labels**: "Build Hub" and "Build Mining Facility" (was "Recon Hub", "Mining Facility")
+- **Exploration Screen**: Solid black background, proper z-index, preserves resource bar
+- **Screen Transitions**: Fixed style bleeding between map/explore/research screens
+
+### 📋 Future Roadmap
+- **Hub Upgrades** (v0.8.0):
+  - Shuttle capacity: 3 → 6 shuttles
+  - Probe capacity: 5 → 8 probes  
+  - Exploration range: +50% probe travel distance
+- **Extended Tutorial**: Steps 7-11 for mining, research, and upgrades
+- See `DESIGN_NOTES.md` for detailed upgrade plans
+
+---
 
 ## New in v0.7.0
 

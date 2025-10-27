@@ -76,6 +76,35 @@ class TutorialManager {
                 },
                 completed: false
             }
+            
+            /* 
+             * FUTURE TUTORIAL STEPS (v0.8.0+):
+             * 
+             * Step 7: Build Mining Facility
+             * - Title: "Establish Mining Operations"
+             * - Message: "Mining facilities generate Probetheum, the ultimate resource. Select a probe and build a Mining Facility (100M, 50D). Place it along an exploration route with lots of signals nearby!"
+             * - Condition: At least 1 mining station built
+             * 
+             * Step 8: Build Shuttle
+             * - Title: "Supply Your Mining Station"
+             * - Message: "Mining stations need resources to operate. Click on a hub near your mining facility, then build a Shuttle (50M, 25D) to transport resources automatically!"
+             * - Condition: At least 1 shuttle built
+             * 
+             * Step 9: Collect Probetheum
+             * - Title: "Probetheum Production"
+             * - Message: "Once supplied, mining stations produce Probetheum! This rare resource unlocks powerful upgrades and research. Wait for your station to generate 1 Probetheum."
+             * - Condition: totalProbetheum >= 1
+             * 
+             * Step 10: Research Technology
+             * - Title: "Unlock New Capabilities"
+             * - Message: "Use the Research screen to unlock new technologies! Research improves probe efficiency, unlocks new buildings, and expands your capabilities."
+             * - Condition: At least 1 tech researched
+             * 
+             * Step 11: Hub Upgrades
+             * - Title: "Upgrade Your Hub"
+             * - Message: "Hubs can be upgraded to support more probes (up to 8) and shuttles (up to 6). Click on a hub and choose 'Upgrade Hub' to expand its capabilities!"
+             * - Condition: Hub upgrade purchased
+             */
         ];
         
         // Additional tracking for specific events

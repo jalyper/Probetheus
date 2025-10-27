@@ -2,7 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.7.0] - 2025-01-XX (In Development)
+## [0.7.1] - 2025-01-XX (In Development)
+
+### Added
+- **Hub Shuttle Limit**: Hubs now support max 3 shuttles (upgradeable to 6 in future)
+- **Future Tutorial Steps**: Outlined steps 7-11 for mining facility, research, and upgrades
+- **Periodic Supply Check**: Mining stations check for resources every 2 seconds
+- **Hub Upgrade Design**: Documented plans for shuttle capacity, probe capacity, and range upgrades
+
+### Changed
+- **Button Text**: Renamed "Recon Hub" → "Build Hub", "Mining Facility" → "Build Mining Facility"
+- **Hub Placement**: Confirmed hubs can only be placed on outbound segments (not return journey)
+- **Mining Placement**: Mining facilities respect same outbound-only rule as hubs
+- **Tutorial Step Delay**: Increased to 1.5 seconds for better player feedback
+- **Exploration Screen**: Now has solid black background and preserves resource bar visibility
+
+### Fixed
+- **Mining Station Stalls**: Shuttles now wake up when resources become available
+- **Tutorial Auto-Advancing**: Steps 2, 4, 6 no longer skip automatically
+- **Resource Bar**: Stays visible during and after tutorial completion
+- **Screen Positioning**: Exploration/research screens don't override map screen styles
+- **Signal Collection**: Proper cargo assignment to probes when collecting signals
+- **Aspect Ratio**: Disabled 16:9 lock to fix UI panel positioning issues
+
+---
+
+## [0.7.0] - 2025-01-XX
 
 ### Added
 

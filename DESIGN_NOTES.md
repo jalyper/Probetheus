@@ -87,6 +87,52 @@ Advanced Logistics Branch:
 
 ## Other Future Ideas
 
+### Hub Upgrade System
+**Status:** Planned for v0.8.0
+
+**Shuttle Capacity Upgrade**
+- **Current Limit:** 3 shuttles per hub
+- **Tier 1 Upgrade:** Increase to 6 shuttles
+- **Cost:** 500 Minerals, 250 Data
+- **Research Required:** "Advanced Hub Logistics"
+- **Visual:** Expanded docking bays on hub graphic
+
+**Probe Capacity Upgrade**
+- **Current Limit:** 5 probes per hub
+- **Tier 1 Upgrade:** Increase to 8 probes
+- **Cost:** 300 Minerals, 200 Data
+- **Research Required:** "Expanded Fleet Management"
+- **Visual:** Additional antenna arrays on hub
+
+**Exploration Range Upgrade**
+- **Option A - Hub Range:** Increase detection/scan radius from hub
+- **Option B - Probe Range:** Allow probes to venture further before returning
+- **Recommended:** Option B (more engaging, affects all probes from hub)
+- **Tier 1 Upgrade:** +50% probe range
+- **Cost:** 400 Minerals, 300 Data, 50 Artifacts
+- **Research Required:** "Extended Range Operations"
+- **Visual:** Enhanced power core glow on hub
+
+**Hub Upgrade UI**
+- New "Upgrade Hub" button in hub detail panel
+- Shows available upgrades and requirements
+- Displays current tier and next tier benefits
+- Confirmation dialog with resource cost
+
+**Technical Notes:**
+- Add `hub.upgrades` object to store upgrade levels:
+  ```javascript
+  hub.upgrades = {
+    shuttleCapacity: 0,  // 0 = base (3), 1 = upgraded (6)
+    probeCapacity: 0,    // 0 = base (5), 1 = upgraded (8)
+    probeRange: 0        // 0 = base (100%), 1 = extended (150%)
+  }
+  ```
+- Probe range modifier applied in ProbeManager movement calculations
+- UI dynamically shows current/max capacity based on upgrade level
+
+---
+
 ### Advanced Probe Behaviors
 - AI-controlled exploration patterns
 - Swarm tactics (multiple probes coordinate)

@@ -144,6 +144,18 @@ class MiningManager {
     buildShuttle(data) {
         const { hubId, stationId } = data;
         
+        // Check shuttle limit per hub (max 3 shuttles per hub, upgradeable to 6)
+        const maxShuttlesPerHub = 3; // TODO: Make upgradeable to 6
+        const existingShuttles = this.gameState.mining.shuttles.filter(s => s.hubId === hubId);
+        
+        if (existingShuttles.length >= maxShuttlesPerHub) {
+            this.eventBus.emit('ui:message', { 
+                text: `Hub can only support ${maxShuttlesPerHub} shuttles! (Upgrade hub to increase limit)`, 
+                type: 'error' 
+            });
+            return false;
+        }
+        
         const shuttleCost = { minerals: 50, data: 25 };
         const resources = this.gameState.getResources();
         
@@ -187,7 +199,7 @@ class MiningManager {
         this.gameState.mining.shuttles.push(shuttle);
         
         this.eventBus.emit('ui:message', { 
-            text: 'Resource shuttle deployed!', 
+            text: `Resource shuttle deployed! (${existingShuttles.length + 1}/${maxShuttlesPerHub} shuttles at hub)`, 
             type: 'success' 
         });
         
