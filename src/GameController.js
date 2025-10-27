@@ -1165,6 +1165,9 @@ class GameController {
         allScreens.forEach(screen => {
             console.log(`Hiding screen: ${screen.id}`);
             screen.classList.remove('active');
+            // Force display none
+            const computedAfter = window.getComputedStyle(screen);
+            console.log(`  ${screen.id} after hiding - display: ${computedAfter.display}`);
         });
         
         // Show selected screen
@@ -1173,11 +1176,20 @@ class GameController {
             console.log(`Showing screen: ${screenId}`);
             targetScreen.classList.add('active');
             
+            // Force to front
+            targetScreen.style.zIndex = '10000';
+            targetScreen.style.position = 'fixed';
+            targetScreen.style.top = '0';
+            targetScreen.style.left = '0';
+            targetScreen.style.width = '100vw';
+            targetScreen.style.height = '100vh';
+            
             // Check computed style
             const computedStyle = window.getComputedStyle(targetScreen);
             console.log(`Screen ${screenId} computed display:`, computedStyle.display);
             console.log(`Screen ${screenId} computed visibility:`, computedStyle.visibility);
             console.log(`Screen ${screenId} computed opacity:`, computedStyle.opacity);
+            console.log(`Screen ${screenId} computed zIndex:`, computedStyle.zIndex);
             console.log(`Screen ${screenId} classList:`, Array.from(targetScreen.classList));
         } else {
             console.error(`Screen not found: ${screenId}`);
@@ -1188,7 +1200,15 @@ class GameController {
      * Explore planet with chosen method
      */
     explore(mode) {
-        if (!this.currentPlanet || !this.currentSignal) return;
+        console.log('=== EXPLORE CALLED ===');
+        console.log('Mode:', mode);
+        console.log('Current planet:', this.currentPlanet);
+        console.log('Current signal:', this.currentSignal);
+        
+        if (!this.currentPlanet || !this.currentSignal) {
+            console.error('Missing planet or signal data!');
+            return;
+        }
 
         // Emit event for tutorial
         this.eventBus.emit('planet:actionChosen');
@@ -1296,10 +1316,14 @@ class GameController {
         else if (rarity === 'legendary') exoticBonus = 10;
 
         // Find nearest active probe to store the rewards
+        console.log('Finding nearest probe to signal position:', signal.x, signal.y);
         const nearestProbe = this.findNearestActiveProbe(signal.x, signal.y);
+        console.log('Nearest probe found:', nearestProbe ? nearestProbe.id : 'NONE');
+        
         if (nearestProbe) {
             // Initialize cargo if it doesn't exist
             if (!nearestProbe.cargo) {
+                console.log('Initializing cargo for probe:', nearestProbe.id);
                 nearestProbe.cargo = {
                     minerals: 0,
                     data: 0,
@@ -1308,11 +1332,16 @@ class GameController {
                 };
             }
             
+            console.log('Cargo before adding rewards:', nearestProbe.cargo);
+            
             // Add rewards to probe's cargo
             nearestProbe.cargo[primaryReward] += rewardAmount;
             if (exoticBonus > 0) {
                 nearestProbe.cargo.exoticMinerals += exoticBonus;
             }
+            
+            console.log('Cargo after adding rewards:', nearestProbe.cargo);
+            console.log(`Added ${rewardAmount} ${primaryReward} to probe ${nearestProbe.id}`);
             
             // Update Probethium stats
             this.gameState.updateProbethiumStats('signal_identified');
