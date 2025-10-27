@@ -24,6 +24,7 @@ class GameController {
         this.offlineManager = new OfflineManager(this.gameState, this.eventBus);
         this.tutorialManager = new TutorialManager(this.gameState, this.eventBus);
         this.cosmeticManager = new CosmeticManager(this.gameState, this.eventBus);
+        this.darkMarketSystem = new DarkMarketSystem(this.gameState, this.eventBus);
         this.uiManager = new UIManager(this.gameState, this.eventBus, this.probeManager, this.buildingSystem);
         
         // Make cosmetic manager available to gameState for easy access
@@ -609,6 +610,15 @@ class GameController {
             });
         }
 
+        // Dark Market test button
+        const testDarkMarket = document.getElementById('testSpawnDarkMarket');
+        if (testDarkMarket) {
+            testDarkMarket.addEventListener('click', () => {
+                this.spawnDarkMarketSignal();
+                console.log('🌑 Dark Market signal spawned manually');
+            });
+        }
+
         // Toggle test panel
         const toggleBtn = document.getElementById('toggleTestPanel');
         if (toggleBtn) {
@@ -975,6 +985,35 @@ class GameController {
         
         // Show exploration modal
         this.showExplorationModal(signal);
+    }
+
+    /**
+     * Spawn a dark market signal (for testing)
+     */
+    spawnDarkMarketSignal() {
+        // Get a random active probe to spawn near
+        const activeProbes = this.gameState.entities.probes.filter(p => p.active && p.waypoints && p.waypoints.length > 0);
+        if (activeProbes.length === 0) {
+            console.warn('No active probes to spawn dark market near');
+            return;
+        }
+        
+        const probe = activeProbes[Math.floor(Math.random() * activeProbes.length)];
+        const signalX = probe.current.x + (Math.random() - 0.5) * 200;
+        const signalY = probe.current.y + (Math.random() - 0.5) * 200;
+        
+        const signal = {
+            x: signalX,
+            y: signalY,
+            radius: 12,
+            rarity: 'dark_market',
+            signalType: 'dark_market',
+            duration: 10000, // 10 seconds for testing
+            createdAt: Date.now()
+        };
+        
+        this.gameState.entities.signals.push(signal);
+        console.log('🌑 Dark Market signal spawned at', signalX, signalY);
     }
 
     /**
@@ -2335,6 +2374,11 @@ class GameController {
                             legendary: '#eeccff'
                         };
                         color = artifactColors[signal.rarity] || '#aa88ff';
+                        break;
+                        
+                    case 'dark_market':
+                        // Dark purple with pulsing effect for dark market
+                        color = '#9400d3'; // Dark violet
                         break;
                         
                     case 'mixed':

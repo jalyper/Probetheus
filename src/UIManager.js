@@ -461,12 +461,13 @@ class UIManager {
         const resources = this.gameState.getResources();
         const probethium = this.gameState.getProbethium();
         
-        document.getElementById('minerals').textContent = resources.minerals;
-        document.getElementById('data').textContent = resources.data;
-        document.getElementById('artifacts').textContent = resources.artifacts;
-        document.getElementById('exoticMinerals').textContent = resources.exoticMinerals;
+        // Round regular resources to nearest whole number
+        document.getElementById('minerals').textContent = Math.floor(resources.minerals);
+        document.getElementById('data').textContent = Math.floor(resources.data);
+        document.getElementById('artifacts').textContent = Math.floor(resources.artifacts);
+        document.getElementById('exoticMinerals').textContent = Math.floor(resources.exoticMinerals);
         
-        // Update Probethium display with appropriate precision
+        // Update Probethium display with appropriate precision (keep decimals)
         const probethiumElement = document.getElementById('probethium');
         if (probethiumElement) {
             if (probethium.current >= 1) {

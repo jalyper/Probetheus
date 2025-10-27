@@ -467,22 +467,31 @@ class ProbeManager {
                     const currentSector = this.getCurrentSector(probe);
                     const isInAsteroidField = currentSector && currentSector.type.name === 'Asteroid Field';
                     
+                    // Check if this should be a dark market signal (access via window.game)
+                    const darkMarketSystem = window.game?.darkMarketSystem;
+                    const isDarkMarket = darkMarketSystem && darkMarketSystem.shouldSpawnDarkMarket();
+                    
                     // Determine signal type based on sector
-                    const signalType = this.determineSignalType(currentSector);
+                    const signalType = isDarkMarket ? 'dark_market' : this.determineSignalType(currentSector);
                     
                     // Create signal directly since we don't have a signal manager yet
                     const signal = {
                         x: signalX,
                         y: signalY,
-                        radius: 8 + Math.random() * 4,
-                        rarity: this.determineSignalRarity(isInAsteroidField),
+                        radius: isDarkMarket ? 12 : 8 + Math.random() * 4,
+                        rarity: isDarkMarket ? 'dark_market' : this.determineSignalRarity(isInAsteroidField),
                         signalType: signalType,
-                        duration: 2000 + Math.random() * 1000, // 2-3 seconds
+                        duration: isDarkMarket ? 5000 : 2000 + Math.random() * 1000, // Dark market signals last longer
                         createdAt: Date.now()
                     };
                     
                     this.gameState.entities.signals.push(signal);
-                    console.log('Signal created successfully. Total signals:', this.gameState.entities.signals.length);
+                    
+                    if (isDarkMarket) {
+                        console.log('🌑 DARK MARKET signal spawned!');
+                    } else {
+                        console.log('Signal created successfully. Total signals:', this.gameState.entities.signals.length);
+                    }
                 } catch (error) {
                     console.error('Error creating signal:', error);
                 }
