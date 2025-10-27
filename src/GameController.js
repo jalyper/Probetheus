@@ -59,6 +59,13 @@ class GameController {
             }
         });
         
+        // Listen for tutorial hub selection
+        this.eventBus.on('hub:selected', (data) => {
+            if (data.hub) {
+                this.selectHub(data.hub);
+            }
+        });
+        
         // Canvas elements
         this.canvas = document.getElementById('galaxyCanvas');
         this.ctx = this.canvas.getContext('2d');

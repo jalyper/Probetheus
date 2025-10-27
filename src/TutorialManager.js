@@ -185,7 +185,122 @@ class TutorialManager {
         console.log(`Title: ${stepData.title}`);
         console.log(`Condition already met: ${stepData.checkCondition()}`);
         
+        // Handle step-specific actions
+        this.handleStepActions(stepData.id);
+        
         this.showTutorialMessage(stepData.title, stepData.message);
+    }
+    
+    /**
+     * Handle step-specific actions (highlighting, auto-selection, etc.)
+     */
+    handleStepActions(stepId) {
+        // Clear any previous highlights first
+        this.clearAllHighlights();
+        
+        if (stepId === 'place_hub') {
+            // Step 6: Place Hub
+            // 1. Auto-select the starting hub
+            this.autoSelectStartingHub();
+            
+            // 2. Auto-select the first active probe from that hub
+            setTimeout(() => {
+                this.autoSelectProbeFromHub();
+            }, 100);
+            
+            // 3. Wait a moment for UI to update, then highlight the probe building panel
+            setTimeout(() => {
+                this.highlightProbeBuildingPanel();
+            }, 300);
+        }
+        
+        // Future: Add similar handling for mining facility tutorial step
+        // if (stepId === 'build_mining_facility') {
+        //     this.highlightMiningFacilityButton();
+        // }
+    }
+    
+    /**
+     * Auto-select the starting hub (first hub in the list)
+     */
+    autoSelectStartingHub() {
+        if (!this.gameState.entities.reconHubs || this.gameState.entities.reconHubs.length === 0) {
+            console.warn('No hubs available to auto-select');
+            return;
+        }
+        
+        const startingHub = this.gameState.entities.reconHubs[0];
+        
+        // Deselect all hubs
+        this.gameState.entities.reconHubs.forEach(hub => hub.selected = false);
+        
+        // Select the starting hub
+        startingHub.selected = true;
+        
+        // Emit event so GameController can update UI
+        this.eventBus.emit('hub:selected', { hub: startingHub });
+        
+        console.log('Auto-selected starting hub for tutorial');
+    }
+    
+    /**
+     * Auto-select an active probe from the selected hub
+     */
+    autoSelectProbeFromHub() {
+        // Get the selected hub
+        const selectedHub = this.gameState.entities.reconHubs.find(h => h.selected);
+        if (!selectedHub) {
+            console.warn('No hub selected to get probe from');
+            return;
+        }
+        
+        // Find an active probe from this hub that has waypoints
+        const probe = this.gameState.entities.probes.find(p => 
+            p.active && 
+            p.hub && 
+            p.hub.id === selectedHub.id &&
+            p.waypoints && 
+            p.waypoints.length > 0
+        );
+        
+        if (!probe) {
+            console.warn('No active probe with waypoints found for tutorial');
+            return;
+        }
+        
+        // Emit event to select the probe
+        this.eventBus.emit('probe:select', { probe: probe });
+        
+        console.log('Auto-selected probe for tutorial');
+    }
+    
+    /**
+     * Highlight the probe building panel with pulsing yellow border
+     */
+    highlightProbeBuildingPanel() {
+        const panel = document.getElementById('probeBuildingPanel');
+        if (!panel) {
+            console.warn('Probe building panel not found');
+            return;
+        }
+        
+        // Add the highlight class
+        panel.classList.add('tutorial-highlight');
+        
+        console.log('Highlighted probe building panel');
+    }
+    
+    /**
+     * Clear all tutorial highlights
+     */
+    clearAllHighlights() {
+        // Remove highlight from probe building panel
+        const panel = document.getElementById('probeBuildingPanel');
+        if (panel) {
+            panel.classList.remove('tutorial-highlight');
+        }
+        
+        // Future: Remove highlights from other elements as needed
     }
     
     /**
@@ -193,6 +308,9 @@ class TutorialManager {
      */
     nextStep() {
         this.closeTutorial();
+        
+        // Clear highlights from previous step
+        this.clearAllHighlights();
         
         this.currentStep++;
         if (this.currentStep >= this.steps.length) {
@@ -211,6 +329,9 @@ class TutorialManager {
     completeTutorial() {
         console.log('Tutorial completed!');
         this.tutorialActive = false;
+        
+        // Clear any remaining highlights
+        this.clearAllHighlights();
         
         // Clear the periodic check interval
         if (this.checkInterval) {
@@ -383,12 +504,29 @@ class TutorialManager {
                 50% { opacity: 1; transform: scale(1.2); }
             }
             
+            @keyframes tutorialHighlightPulse {
+                0%, 100% { 
+                    border-color: rgba(255, 255, 0, 0.6);
+                    box-shadow: 0 0 10px rgba(255, 255, 0, 0.4);
+                }
+                50% { 
+                    border-color: rgba(255, 255, 0, 1);
+                    box-shadow: 0 0 20px rgba(255, 255, 0, 0.8), 0 0 30px rgba(255, 255, 0, 0.4);
+                }
+            }
+            
             .tutorial-pulse {
                 width: 8px;
                 height: 8px;
                 border-radius: 50%;
                 background: #0ff;
                 animation: tutorialPulse 2s ease-in-out infinite;
+            }
+            
+            .tutorial-highlight {
+                border: 3px solid rgba(255, 255, 0, 0.8) !important;
+                animation: tutorialHighlightPulse 2s ease-in-out infinite;
+                transition: border 0.3s ease, box-shadow 0.3s ease;
             }
         `;
         document.head.appendChild(style);
