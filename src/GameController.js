@@ -1007,15 +1007,35 @@ class GameController {
      * Show exploration screen
      */
     showExplorationScreen(planet, signal) {
+        console.log('=== SHOWING EXPLORATION SCREEN ===');
+        console.log('Planet:', planet);
+        console.log('Signal:', signal);
+        
         // Update planet info - show name and type separately
-        document.getElementById('planetName').textContent = `${planet.name} (${planet.type})`;
-        document.getElementById('planetDesc').textContent = planet.description;
+        const planetNameEl = document.getElementById('planetName');
+        const planetDescEl = document.getElementById('planetDesc');
+        
+        console.log('Planet name element:', planetNameEl);
+        console.log('Planet desc element:', planetDescEl);
+        
+        if (planetNameEl) {
+            planetNameEl.textContent = `${planet.name} (${planet.type})`;
+        } else {
+            console.error('planetName element not found!');
+        }
+        
+        if (planetDescEl) {
+            planetDescEl.textContent = planet.description;
+        } else {
+            console.error('planetDesc element not found!');
+        }
         
         // Store planet data for exploration
         this.currentPlanet = planet;
         this.currentSignal = signal;
         
         // Show exploration screen
+        console.log('Calling showScreen with exploreScreen');
         this.showScreen('exploreScreen');
         
         // Highlight best resource options based on planet type
@@ -1026,6 +1046,8 @@ class GameController {
         
         // Draw planet on canvas
         this.drawPlanet(planet);
+        
+        console.log('=== EXPLORATION SCREEN SETUP COMPLETE ===');
     }
 
     /**
@@ -1135,13 +1157,24 @@ class GameController {
      * Show screen
      */
     showScreen(screenId) {
+        console.log(`showScreen called with: ${screenId}`);
+        
         // Hide all screens
-        document.querySelectorAll('.screen').forEach(screen => {
+        const allScreens = document.querySelectorAll('.screen');
+        console.log(`Found ${allScreens.length} screens`);
+        allScreens.forEach(screen => {
+            console.log(`Hiding screen: ${screen.id}`);
             screen.classList.remove('active');
         });
         
         // Show selected screen
-        document.getElementById(screenId).classList.add('active');
+        const targetScreen = document.getElementById(screenId);
+        if (targetScreen) {
+            console.log(`Showing screen: ${screenId}`);
+            targetScreen.classList.add('active');
+        } else {
+            console.error(`Screen not found: ${screenId}`);
+        }
     }
 
     /**
