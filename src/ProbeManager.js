@@ -906,7 +906,9 @@ class ProbeManager {
         let capacity = 100; // Base capacity
         
         // Check equipment for cargo expanders
-        if (probe.equipment) {
+        // Note: equipment is currently an object for auto_collector, not an array
+        // Future: When equipment becomes an array of modules, this will work
+        if (probe.equipment && Array.isArray(probe.equipment)) {
             probe.equipment.forEach(module => {
                 if (module === 'cargo_expander_mk1') capacity += 50;
                 if (module === 'cargo_expander_mk2') capacity += 100;

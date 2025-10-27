@@ -2457,9 +2457,9 @@ class GameController {
             const pulsePhase = Math.sin(time * 2) * 0.5 + 0.5; // 0 to 1, every 0.5 seconds
             
             // TRON-like color scheme
-            const baseColor = '#aaa'; // Light gray
+            const baseColor = station.active ? '#003333' : '#002222'; // Dark teal/cyan
             const activeGlow = station.active ? '#00ffff' : '#004444'; // Cyan glow when active
-            const strokeColor = station.active ? '#00dddd' : '#666666';
+            const strokeColor = station.active ? '#00cccc' : '#00aaaa'; // Cyan strokes
             
             this.ctx.save();
             this.ctx.translate(screenX, screenY);
@@ -2501,14 +2501,14 @@ class GameController {
                 this.ctx.rotate(rotation);
             }
             
-            // Main octagonal structure
+            // Main hexagonal structure (matching hub style but distinct)
             this.ctx.fillStyle = baseColor;
             this.ctx.strokeStyle = strokeColor;
             this.ctx.lineWidth = 2;
             
             this.ctx.beginPath();
-            for (let i = 0; i < 8; i++) {
-                const angle = (i * Math.PI) / 4;
+            for (let i = 0; i < 6; i++) {
+                const angle = (i * Math.PI) / 3;
                 const x = Math.cos(angle) * size;
                 const y = Math.sin(angle) * size;
                 if (i === 0) {
@@ -2521,25 +2521,36 @@ class GameController {
             this.ctx.fill();
             this.ctx.stroke();
             
-            // Inner geometric details (TRON-style lines)
+            // Inner hexagon (smaller)
             this.ctx.strokeStyle = strokeColor;
-            this.ctx.lineWidth = 1;
-            
-            // Draw inner cross pattern
-            this.ctx.beginPath();
+            this.ctx.lineWidth = 1.5;
             const innerSize = size * 0.6;
-            this.ctx.moveTo(-innerSize, 0);
-            this.ctx.lineTo(innerSize, 0);
-            this.ctx.moveTo(0, -innerSize);
-            this.ctx.lineTo(0, innerSize);
             
-            // Diagonal lines
-            const diagSize = size * 0.4;
-            this.ctx.moveTo(-diagSize, -diagSize);
-            this.ctx.lineTo(diagSize, diagSize);
-            this.ctx.moveTo(-diagSize, diagSize);
-            this.ctx.lineTo(diagSize, -diagSize);
+            this.ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = (i * Math.PI) / 3;
+                const x = Math.cos(angle) * innerSize;
+                const y = Math.sin(angle) * innerSize;
+                if (i === 0) {
+                    this.ctx.moveTo(x, y);
+                } else {
+                    this.ctx.lineTo(x, y);
+                }
+            }
+            this.ctx.closePath();
             this.ctx.stroke();
+            
+            // Connecting lines from center to vertices (like mining drill lines)
+            this.ctx.lineWidth = 1;
+            for (let i = 0; i < 6; i++) {
+                const angle = (i * Math.PI) / 3;
+                const x = Math.cos(angle) * innerSize;
+                const y = Math.sin(angle) * innerSize;
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, 0);
+                this.ctx.lineTo(x, y);
+                this.ctx.stroke();
+            }
             
             // Central energy core
             if (station.active) {
