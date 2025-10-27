@@ -2442,9 +2442,14 @@ class GameController {
             const screenX = station.position.x - this.gameState.world.viewOffset.x;
             const screenY = station.position.y - this.gameState.world.viewOffset.y;
             
-            // Skip if off-screen
-            if (screenX < -50 || screenX > this.canvas.width + 50 || 
-                screenY < -50 || screenY > this.canvas.height + 50) return;
+            // Skip if off-screen (account for zoom level)
+            const cullPadding = 50;
+            const zoomLevel = this.gameState.world.zoomLevel || 1;
+            const viewportWidth = this.canvas.width / zoomLevel;
+            const viewportHeight = this.canvas.height / zoomLevel;
+            
+            if (screenX < -cullPadding || screenX > viewportWidth + cullPadding || 
+                screenY < -cullPadding || screenY > viewportHeight + cullPadding) return;
             
             const stationType = this.miningManager.getStationTypes()[station.type];
             const baseSize = station.type === 'basic' ? 18 : station.type === 'advanced' ? 22 : 26;
@@ -2635,9 +2640,14 @@ class GameController {
             const screenX = shuttle.position.x - this.gameState.world.viewOffset.x;
             const screenY = shuttle.position.y - this.gameState.world.viewOffset.y;
             
-            // Skip if off-screen
-            if (screenX < -20 || screenX > this.canvas.width + 20 || 
-                screenY < -20 || screenY > this.canvas.height + 20) return;
+            // Skip if off-screen (account for zoom level)
+            const cullPadding = 20;
+            const zoomLevel = this.gameState.world.zoomLevel || 1;
+            const viewportWidth = this.canvas.width / zoomLevel;
+            const viewportHeight = this.canvas.height / zoomLevel;
+            
+            if (screenX < -cullPadding || screenX > viewportWidth + cullPadding || 
+                screenY < -cullPadding || screenY > viewportHeight + cullPadding) return;
             
             // Draw shuttle body with status-based colors
             const size = 8 + shuttle.level;
