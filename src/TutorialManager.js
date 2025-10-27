@@ -320,13 +320,13 @@ class TutorialManager {
         tutorialPanel.id = 'tutorialPanel';
         tutorialPanel.style.cssText = `
             display: none;
-            position: absolute;
-            top: 10px;
+            position: fixed;
+            top: 90px;
             left: 50%;
             transform: translateX(-50%);
             width: 90%;
             max-width: 1200px;
-            z-index: 8888;
+            z-index: 10001;
             pointer-events: none;
         `;
         
