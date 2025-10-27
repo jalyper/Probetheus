@@ -1176,13 +1176,16 @@ class GameController {
             console.log(`Showing screen: ${screenId}`);
             targetScreen.classList.add('active');
             
-            // Force to front
+            // Force to front but keep resource bar visible
             targetScreen.style.zIndex = '10000';
             targetScreen.style.position = 'fixed';
-            targetScreen.style.top = '0';
+            targetScreen.style.top = '80px'; // Below resource bar
             targetScreen.style.left = '0';
             targetScreen.style.width = '100vw';
-            targetScreen.style.height = '100vh';
+            targetScreen.style.height = 'calc(100vh - 80px)'; // Account for resource bar
+            targetScreen.style.backgroundColor = '#000'; // Solid black background
+            targetScreen.style.overflow = 'auto'; // Allow scrolling if needed
+            targetScreen.style.padding = '20px'; // Add some padding
             
             // Check computed style
             const computedStyle = window.getComputedStyle(targetScreen);
