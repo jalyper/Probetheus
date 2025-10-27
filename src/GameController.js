@@ -710,6 +710,17 @@ class GameController {
                 document.getElementById('saveLoadModal').classList.remove('active');
             });
         }
+
+        // Close Dark Market modal
+        const closeDarkMarket = document.getElementById('closeDarkMarket');
+        if (closeDarkMarket) {
+            closeDarkMarket.addEventListener('click', () => {
+                const modal = document.getElementById('darkMarketModal');
+                if (modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
     }
 
     /**
@@ -783,6 +794,14 @@ class GameController {
         if (clickedSignal) {
             console.log('=== SIGNAL CLICKED ===');
             console.log('Found signal at click location:', clickedSignal);
+            
+            // Check if this is a dark market signal
+            if (clickedSignal.signalType === 'dark_market' || clickedSignal.rarity === 'dark_market') {
+                console.log('🌑 Dark Market signal clicked - opening shop');
+                this.openDarkMarket(clickedSignal);
+                return;
+            }
+            
             this.collectSignal(clickedSignal);
             console.log('=== SIGNAL CLICK COMPLETE ===');
             return;
@@ -1014,6 +1033,227 @@ class GameController {
         
         this.gameState.entities.signals.push(signal);
         console.log('🌑 Dark Market signal spawned at', signalX, signalY);
+    }
+
+    /**
+     * Open Dark Market shop
+     */
+    openDarkMarket(signal) {
+        console.log('Opening Dark Market...');
+        
+        // Remove signal from world
+        const index = this.gameState.entities.signals.indexOf(signal);
+        if (index > -1) {
+            this.gameState.entities.signals.splice(index, 1);
+        }
+        
+        // Generate inventory
+        this.darkMarketSystem.generateMarketInventory();
+        
+        // Populate UI
+        this.populateDarkMarketUI();
+        
+        // Show modal
+        const modal = document.getElementById('darkMarketModal');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    }
+
+    /**
+     * Populate Dark Market UI with inventory
+     */
+    populateDarkMarketUI() {
+        const container = document.getElementById('darkMarketInventory');
+        if (!container) return;
+        
+        const inventory = this.darkMarketSystem.currentMarketInventory;
+        if (!inventory) return;
+        
+        let html = '';
+        
+        // Special reward
+        const special = inventory.specialReward;
+        html += `
+            <div style="border: 2px solid #ff0; border-radius: 8px; padding: 15px; background: rgba(255,255,0,0.05);">
+                <div style="color: #ff0; font-size: 16px; font-weight: bold; margin-bottom: 10px;">
+                    ⭐ Special Offer
+                </div>
+                <div style="color: #fff; font-size: 14px; margin-bottom: 5px;">${special.name}</div>
+                <div style="color: #aaa; font-size: 12px; margin-bottom: 10px;">${special.description}</div>
+                <button class="dark-market-buy-btn" data-item-id="${special.id}" style="background: #ff0; color: #000; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                    Buy for ${special.cost} Probethium
+                </button>
+            </div>
+        `;
+        
+        // Cosmetics
+        inventory.cosmetics.forEach(cosmetic => {
+            html += `
+                <div style="border: 2px solid ${cosmetic.color}; border-radius: 8px; padding: 15px; background: ${cosmetic.color}11;">
+                    <div style="color: ${cosmetic.color}; font-size: 16px; font-weight: bold; margin-bottom: 10px;">
+                        ${cosmetic.name}
+                    </div>
+                    <div style="width: 80px; height: 80px; margin: 10px auto; display: flex; align-items: center; justify-content: center;">
+                        ${this.renderProbeSkinPreview(cosmetic.color)}
+                    </div>
+                    <div style="color: #aaa; font-size: 12px; margin-bottom: 10px;">${cosmetic.description}</div>
+                    <button class="dark-market-buy-btn" data-item-id="${cosmetic.id}" style="background: ${cosmetic.color}; color: #000; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                        Buy for ${cosmetic.cost} Probethium
+                    </button>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+        
+        // Add purchase event listeners
+        document.querySelectorAll('.dark-market-buy-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const itemId = btn.getAttribute('data-item-id');
+                this.purchaseDarkMarketItem(itemId);
+            });
+        });
+    }
+
+    /**
+     * Render probe skin preview SVG
+     */
+    renderProbeSkinPreview(color) {
+        return `
+            <svg width="60" height="60" viewBox="0 0 60 60" style="transform: rotate(45deg);">
+                <circle cx="30" cy="30" r="10" fill="${color}" stroke="#fff" stroke-width="2"/>
+                <rect x="28" y="10" width="4" height="15" fill="${color}99" stroke="${color}" stroke-width="1"/>
+                <rect x="28" y="45" width="4" height="5" fill="${color}99"/>
+                <polygon points="40,30 50,25 50,35" fill="${color}"/>
+                <line x1="22" y1="27" x2="15" y2="22" stroke="${color}99" stroke-width="2"/>
+                <line x1="22" y1="33" x2="15" y2="38" stroke="${color}99" stroke-width="2"/>
+            </svg>
+        `;
+    }
+
+    /**
+     * Purchase item from Dark Market
+     */
+    purchaseDarkMarketItem(itemId) {
+        const currentProbethium = this.gameState.getProbethium().current;
+        const inventory = this.darkMarketSystem.currentMarketInventory;
+        
+        // Find the item
+        let item = null;
+        let itemCost = 0;
+        
+        if (inventory.specialReward.id === itemId) {
+            item = inventory.specialReward;
+            itemCost = item.cost;
+        } else {
+            item = inventory.cosmetics.find(c => c.id === itemId);
+            if (item) itemCost = item.cost;
+        }
+        
+        if (!item) {
+            console.error('Item not found:', itemId);
+            return;
+        }
+        
+        // Check if player has enough Probethium
+        if (currentProbethium < itemCost) {
+            this.eventBus.emit('ui:message', {
+                text: `Not enough Probethium! Need ${itemCost}, have ${currentProbethium.toFixed(2)}`,
+                type: 'error'
+            });
+            return;
+        }
+        
+        // Deduct Probethium
+        this.gameState.probethium.current -= itemCost;
+        
+        // Add item to player's inventory
+        if (item.type === 'probe_skin') {
+            // Add to cosmetics owned skins
+            if (!this.gameState.cosmetics) {
+                this.gameState.cosmetics = {
+                    ownedSkins: ['default'],
+                    activeSkin: 'default'
+                };
+            }
+            
+            // Check if already owned
+            const skinId = item.id;
+            if (!this.gameState.cosmetics.ownedSkins.includes(skinId)) {
+                this.gameState.cosmetics.ownedSkins.push(skinId);
+                
+                // Add to cosmetic manager's catalog if not already there
+                if (!this.cosmeticManager.skinCatalog[skinId]) {
+                    this.cosmeticManager.skinCatalog[skinId] = {
+                        name: item.name,
+                        description: item.description,
+                        price: item.cost,
+                        unlocked: true,
+                        design: {
+                            bodyColor: item.color,
+                            bodyRadius: 4,
+                            wingColor: item.color,
+                            wingLength: 8,
+                            wingWidth: 2,
+                            wingGap: 2,
+                            frontColor: item.color,
+                            frontSize: 4,
+                            frontHeight: 2.5,
+                            antennaColor: item.color,
+                            antennaLength: 6,
+                            antennaWidth: 1,
+                            antennaAngle: 15,
+                            blinkSpeed: 1500,
+                            trailEnabled: true,
+                            trail: {
+                                length: 15,
+                                color: item.color,
+                                width: 3,
+                                opacity: 0.9
+                            }
+                        }
+                    };
+                }
+                
+                this.eventBus.emit('ui:message', {
+                    text: `Purchased ${item.name}! Equip it from the cosmetics menu.`,
+                    type: 'success'
+                });
+            } else {
+                this.eventBus.emit('ui:message', {
+                    text: `You already own ${item.name}!`,
+                    type: 'info'
+                });
+            }
+        } else if (item.type === 'resources') {
+            const resources = this.gameState.getResources();
+            Object.entries(item.contents).forEach(([resource, amount]) => {
+                resources[resource] = (resources[resource] || 0) + amount;
+            });
+            this.gameState.updateResources(resources, this.eventBus);
+            this.eventBus.emit('ui:message', {
+                text: `Purchased ${item.name}!`,
+                type: 'success'
+            });
+        } else if (item.type === 'equipment') {
+            // For now, just show message - equipment system can be expanded later
+            this.eventBus.emit('ui:message', {
+                text: `Purchased ${item.name}! (Equipment system coming soon)`,
+                type: 'success'
+            });
+        }
+        
+        // Update UI
+        this.uiManager.updateUI();
+        
+        // Close modal after purchase
+        setTimeout(() => {
+            const modal = document.getElementById('darkMarketModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }, 1500);
     }
 
     /**
@@ -2377,8 +2617,11 @@ class GameController {
                         break;
                         
                     case 'dark_market':
-                        // Dark purple with pulsing effect for dark market
+                        // Dark purple with enhanced pulsing effect for dark market
                         color = '#9400d3'; // Dark violet
+                        // Override pulse for dark market to be more dramatic
+                        const darkMarketPulse = Math.sin(age * 0.008) * 0.5 + 1; // Scale between 0.5 and 1.5
+                        signal.radius = 12 * darkMarketPulse; // Apply to radius
                         break;
                         
                     case 'mixed':
