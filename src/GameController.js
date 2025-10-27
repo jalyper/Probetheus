@@ -333,9 +333,17 @@ class GameController {
 
         // Canvas click events
         this.canvas.addEventListener('click', (e) => {
+            console.log('=== CANVAS CLICK EVENT FIRED ===');
+            console.log('Event:', e);
+            console.log('Canvas element:', this.canvas);
+            console.log('Canvas style.pointerEvents:', this.canvas.style.pointerEvents);
+            
             const rect = this.canvas.getBoundingClientRect();
             const x = (e.clientX - rect.left) / this.gameState.world.zoomLevel + this.gameState.world.viewOffset.x;
             const y = (e.clientY - rect.top) / this.gameState.world.zoomLevel + this.gameState.world.viewOffset.y;
+            
+            console.log('Click position - client:', e.clientX, e.clientY);
+            console.log('Click position - world:', x, y);
             
             this.handleCanvasClick(x, y);
         });
