@@ -82,6 +82,23 @@ class GameController {
         this.initializeGame();
         this.setupEventListeners();
         
+        // Add camera change tracker for debugging camera snap issue
+        this.lastViewOffset = { ...this.gameState.world.viewOffset };
+        this.cameraChangeTracker = setInterval(() => {
+            const current = this.gameState.world.viewOffset;
+            if (current.x !== this.lastViewOffset.x || current.y !== this.lastViewOffset.y) {
+                console.log('[CAMERA DEBUG] ViewOffset CHANGED!');
+                console.log('  From:', this.lastViewOffset);
+                console.log('  To:', current);
+                console.log('  Delta:', {
+                    x: current.x - this.lastViewOffset.x,
+                    y: current.y - this.lastViewOffset.y
+                });
+                console.trace();
+                this.lastViewOffset = { ...current };
+            }
+        }, 100); // Check every 100ms
+        
         // Set initial cursor and ensure canvas is interactive
         this.canvas.style.cursor = 'grab';
         this.canvas.style.pointerEvents = 'auto';
@@ -612,16 +629,24 @@ class GameController {
         // Probethium test button
         const testProbethium = document.getElementById('testAddProbetheum');
         if (testProbethium) {
+            console.log('✓ Probethium test button found');
             testProbethium.addEventListener('click', () => {
+                console.log('[TEST] Probethium button clicked!');
+                console.log('[TEST] Current probethium before:', this.gameState.probethium.current);
+                
                 // Add 100 Probethium for testing
                 this.gameState.probethium.current += 100.0;
                 this.gameState.probethium.totalAccumulated += 100.0;
                 
+                console.log('[TEST] Current probethium after:', this.gameState.probethium.current);
+                
                 // Update UI
                 this.uiManager.updateUI();
                 
-                console.log('Added 100.0 Probethium. Current:', this.gameState.probethium.current);
+                console.log('[TEST] UI updated. Check top bar!');
             });
+        } else {
+            console.error('❌ Probethium test button NOT found!');
         }
 
         // Dark Market test button
