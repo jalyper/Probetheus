@@ -404,8 +404,23 @@ class GameController {
                 const deltaX = e.clientX - this.gameState.input.dragStart.x;
                 const deltaY = e.clientY - this.gameState.input.dragStart.y;
                 
-                this.gameState.world.viewOffset.x = this.gameState.input.lastViewOffset.x - deltaX / this.gameState.world.zoomLevel;
-                this.gameState.world.viewOffset.y = this.gameState.input.lastViewOffset.y - deltaY / this.gameState.world.zoomLevel;
+                const newOffsetX = this.gameState.input.lastViewOffset.x - deltaX / this.gameState.world.zoomLevel;
+                const newOffsetY = this.gameState.input.lastViewOffset.y - deltaY / this.gameState.world.zoomLevel;
+                
+                // Log if this is causing a big jump
+                const jumpX = Math.abs(newOffsetX - this.gameState.world.viewOffset.x);
+                const jumpY = Math.abs(newOffsetY - this.gameState.world.viewOffset.y);
+                if (jumpX > 50 || jumpY > 50) {
+                    console.log('[CAMERA DEBUG] Large camera jump during drag!');
+                    console.log('  isDragging:', this.gameState.input.isDragging);
+                    console.log('  dragStart:', this.gameState.input.dragStart);
+                    console.log('  lastViewOffset:', this.gameState.input.lastViewOffset);
+                    console.log('  delta:', deltaX, deltaY);
+                    console.log('  jump size:', jumpX, jumpY);
+                }
+                
+                this.gameState.world.viewOffset.x = newOffsetX;
+                this.gameState.world.viewOffset.y = newOffsetY;
                 return; // Don't update cursor when dragging
             }
             
