@@ -18,21 +18,26 @@ class MusicManager {
         }
         
         // Create audio element
-        // In Electron/Vite, public assets need to be accessed without leading slash in dev
-        // but with leading slash in production. Let's try both approaches.
-        const musicPath = import.meta.env.DEV ? 'music/main-theme.wav' : '/music/main-theme.wav';
-        console.log('Loading music from:', musicPath);
+        // Try multiple path strategies for Electron/Vite compatibility
+        console.log('Initializing music system...');
         
-        this.mainTheme = new Audio(musicPath);
+        // Try relative path first (works in most cases)
+        this.mainTheme = new Audio('music/main-theme.wav');
         this.mainTheme.loop = true;
         this.mainTheme.volume = this.gameState.settings.musicVolume;
         
-        // Add error handler
-        this.mainTheme.onerror = (e) => {
-            console.error('Music loading error:', e);
-            console.log('Attempted path:', musicPath);
-            console.log('Current location:', window.location.href);
-        };
+        // Add error handler to try alternative paths
+        this.mainTheme.addEventListener('error', (e) => {
+            console.warn('First music path failed, trying alternative...');
+            // Try with leading slash
+            this.mainTheme.src = '/music/main-theme.wav';
+            
+            this.mainTheme.addEventListener('error', (e2) => {
+                console.error('Music loading failed with both paths');
+                console.log('Tried paths: music/main-theme.wav and /music/main-theme.wav');
+                console.log('Current location:', window.location.href);
+            }, { once: true });
+        }, { once: true });
         
         // Track if music has started
         this.musicStarted = false;
