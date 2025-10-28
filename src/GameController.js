@@ -598,15 +598,18 @@ class GameController {
             });
         });
 
-        // Probetheum test button
-        const testProbetheum = document.getElementById('testAddProbetheum');
-        if (testProbetheum) {
-            testProbetheum.addEventListener('click', () => {
-                if (this.miningManager && this.miningManager.gameState.mining) {
-                    this.miningManager.gameState.mining.totalProbetheum += 1.0;
-                    this.miningManager.updateProbetheum();
-                    console.log('Added 1.0 Probetheum');
-                }
+        // Probethium test button
+        const testProbethium = document.getElementById('testAddProbetheum');
+        if (testProbethium) {
+            testProbethium.addEventListener('click', () => {
+                // Add 100 Probethium for testing
+                this.gameState.probethium.current += 100.0;
+                this.gameState.probethium.totalAccumulated += 100.0;
+                
+                // Update UI
+                this.uiManager.updateUI();
+                
+                console.log('Added 100.0 Probethium. Current:', this.gameState.probethium.current);
             });
         }
 
@@ -1011,29 +1014,40 @@ class GameController {
      * Spawn a dark market signal (for testing)
      */
     spawnDarkMarketSignal() {
-        // Get a random active probe to spawn near
+        let spawnX, spawnY;
+        
+        // Try to spawn near an active probe first
         const activeProbes = this.gameState.entities.probes.filter(p => p.active && p.waypoints && p.waypoints.length > 0);
-        if (activeProbes.length === 0) {
-            console.warn('No active probes to spawn dark market near');
-            return;
+        
+        if (activeProbes.length > 0) {
+            const probe = activeProbes[Math.floor(Math.random() * activeProbes.length)];
+            spawnX = probe.current.x + (Math.random() - 0.5) * 200;
+            spawnY = probe.current.y + (Math.random() - 0.5) * 200;
+        } else if (this.gameState.entities.reconHubs.length > 0) {
+            // Fallback: spawn near a hub
+            const hub = this.gameState.entities.reconHubs[0];
+            spawnX = hub.x + (Math.random() - 0.5) * 300;
+            spawnY = hub.y + (Math.random() - 0.5) * 300;
+            console.log('No active probes, spawning dark market near hub');
+        } else {
+            // Last resort: spawn at origin
+            spawnX = (Math.random() - 0.5) * 400;
+            spawnY = (Math.random() - 0.5) * 400;
+            console.log('No probes or hubs, spawning dark market near origin');
         }
         
-        const probe = activeProbes[Math.floor(Math.random() * activeProbes.length)];
-        const signalX = probe.current.x + (Math.random() - 0.5) * 200;
-        const signalY = probe.current.y + (Math.random() - 0.5) * 200;
-        
         const signal = {
-            x: signalX,
-            y: signalY,
+            x: spawnX,
+            y: spawnY,
             radius: 12,
             rarity: 'dark_market',
             signalType: 'dark_market',
-            duration: 10000, // 10 seconds for testing
+            duration: 30000, // 30 seconds for better testing
             createdAt: Date.now()
         };
         
         this.gameState.entities.signals.push(signal);
-        console.log('🌑 Dark Market signal spawned at', signalX, signalY);
+        console.log('🌑 Dark Market signal spawned at', spawnX, spawnY);
     }
 
     /**

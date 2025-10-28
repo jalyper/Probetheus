@@ -256,7 +256,8 @@ class SaveManager {
             console.log('Creating save data...');
             const saveData = await this.createSaveData();
             
-            // Debug: Log research data being saved
+            // Debug: Log important data being saved
+            console.log('Probethium being saved:', saveData.gameState.probethium.current);
             console.log('Research data being saved:');
             console.log('- Points:', saveData.gameState.researchSystem.points);
             console.log('- Unlocked:', saveData.gameState.researchSystem.unlocked);
@@ -377,11 +378,13 @@ class SaveManager {
         this.gameState.resources = { ...savedState.resources };
         
         // Restore Probethium system
-        this.gameState.probethium.current = savedState.probethium.current;
-        this.gameState.probethium.totalAccumulated = savedState.probethium.totalAccumulated;
+        this.gameState.probethium.current = savedState.probethium.current || 0;
+        this.gameState.probethium.totalAccumulated = savedState.probethium.totalAccumulated || 0;
         this.gameState.probethium.stats = { ...savedState.probethium.stats };
         this.gameState.probethium.multipliers = { ...savedState.probethium.multipliers };
         this.gameState.probethium.lastUpdateTime = Date.now(); // Reset update time
+        
+        console.log('✓ Probethium restored:', this.gameState.probethium.current);
         
         // Restore research system
         this.gameState.researchSystem.points = savedState.researchSystem.points;
