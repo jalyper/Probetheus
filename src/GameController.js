@@ -466,6 +466,12 @@ class GameController {
                 console.log(`[CAMERA DEBUG] Key pressed: ${e.key}`);
                 console.log(`[CAMERA DEBUG] Current viewOffset:`, this.gameState.world.viewOffset);
                 console.log(`[CAMERA DEBUG] Current zoom:`, this.gameState.world.zoomLevel);
+                console.log(`[CAMERA DEBUG] Event target:`, e.target);
+                console.log(`[CAMERA DEBUG] Active element:`, document.activeElement);
+                console.log(`[CAMERA DEBUG] Mouse position:`, this.gameState.ui.mousePosition);
+                
+                // Try preventing default to see if it's browser behavior
+                e.preventDefault();
             }
             
             if (e.key === '+' || e.key === '=') {
