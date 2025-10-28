@@ -25,6 +25,7 @@ class GameController {
         this.tutorialManager = new TutorialManager(this.gameState, this.eventBus);
         this.cosmeticManager = new CosmeticManager(this.gameState, this.eventBus);
         this.darkMarketSystem = new DarkMarketSystem(this.gameState, this.eventBus);
+        this.musicManager = new MusicManager(this.gameState, this.eventBus);
         this.uiManager = new UIManager(this.gameState, this.eventBus, this.probeManager, this.buildingSystem);
         
         // Make cosmetic manager available to gameState for easy access
@@ -664,6 +665,56 @@ class GameController {
             });
         }
 
+        // Settings button
+        const settingsBtn = document.getElementById('settingsBtn');
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', () => {
+                this.openSettings();
+            });
+        }
+
+        // Close settings button (X)
+        const closeSettings = document.getElementById('closeSettings');
+        if (closeSettings) {
+            closeSettings.addEventListener('click', () => {
+                this.closeSettings();
+            });
+        }
+
+        // Close settings button (Close button)
+        const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+        if (closeSettingsBtn) {
+            closeSettingsBtn.addEventListener('click', () => {
+                this.closeSettings();
+            });
+        }
+
+        // Music toggle
+        const musicToggle = document.getElementById('musicToggle');
+        if (musicToggle) {
+            // Set initial state
+            musicToggle.checked = this.musicManager.isMusicEnabled();
+            
+            musicToggle.addEventListener('change', () => {
+                this.musicManager.toggleMusic();
+            });
+        }
+
+        // Music volume slider
+        const musicVolume = document.getElementById('musicVolume');
+        const musicVolumeLabel = document.getElementById('musicVolumeLabel');
+        if (musicVolume && musicVolumeLabel) {
+            // Set initial value
+            musicVolume.value = this.musicManager.getMusicVolume() * 100;
+            musicVolumeLabel.textContent = Math.round(musicVolume.value) + '%';
+            
+            musicVolume.addEventListener('input', () => {
+                const volume = musicVolume.value / 100;
+                this.musicManager.setMusicVolume(volume);
+                musicVolumeLabel.textContent = Math.round(musicVolume.value) + '%';
+            });
+        }
+
         // Toggle test panel
         const toggleBtn = document.getElementById('toggleTestPanel');
         if (toggleBtn) {
@@ -1114,6 +1165,35 @@ class GameController {
         const modal = document.getElementById('darkMarketModal');
         if (modal) {
             modal.style.display = 'flex';
+        }
+    }
+
+    /**
+     * Open settings modal
+     */
+    openSettings() {
+        const modal = document.getElementById('settingsModal');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    }
+
+    /**
+     * Close settings modal
+     */
+    closeSettings() {
+        const modal = document.getElementById('settingsModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    /**
+     * Start background music
+     */
+    startMusic() {
+        if (this.musicManager) {
+            this.musicManager.startMusic();
         }
     }
 

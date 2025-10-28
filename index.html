@@ -90,6 +90,13 @@
                 </button>
             </div>
             
+            <!-- Settings button -->
+            <div class="stat-item" style="margin-right: 20px;">
+                <button id="settingsBtn" class="power-btn" title="Settings" style="font-size: 20px;">
+                    ⚙️
+                </button>
+            </div>
+            
             <div class="stat-item">
                 <span class="stat-label">Sector:</span>
                 <span id="sectorInfo" style="color: #ff0;">Balanced [0, 0]</span>
@@ -517,6 +524,55 @@
                 </div>
             </div>
         </div>
+
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="modal" style="display: none; background: rgba(0,0,0,0.95);">
+            <div class="modal-content" style="max-width: 600px; border: 3px solid #0ff; box-shadow: 0 0 50px rgba(0,255,255,0.5); background: linear-gradient(135deg, #0a0a15 0%, #0a1520 100%); position: relative;">
+                <button id="closeSettings" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #0ff; font-size: 24px; cursor: pointer; padding: 5px 10px; z-index: 10;">&times;</button>
+                
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <div style="font-size: 48px; margin-bottom: 15px;">⚙️</div>
+                    <h1 style="color: #0ff; margin: 0 0 10px 0; font-size: 28px; text-shadow: 0 0 20px rgba(0,255,255,0.8);">
+                        SETTINGS
+                    </h1>
+                    <div style="color: #888; font-size: 14px;">Configure your experience</div>
+                </div>
+                
+                <!-- Audio Settings -->
+                <div style="margin-bottom: 30px;">
+                    <h2 style="color: #0ff; font-size: 20px; margin-bottom: 15px; border-bottom: 2px solid #0ff; padding-bottom: 10px;">
+                        🔊 Audio
+                    </h2>
+                    
+                    <!-- Music Toggle -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(0,255,255,0.05); border-radius: 8px; margin-bottom: 15px;">
+                        <div>
+                            <div style="color: #fff; font-size: 16px; margin-bottom: 5px;">Background Music</div>
+                            <div style="color: #888; font-size: 12px;">Toggle the main theme on/off</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="musicToggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <!-- Music Volume -->
+                    <div style="padding: 15px; background: rgba(0,255,255,0.05); border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <div style="color: #fff; font-size: 16px;">Music Volume</div>
+                            <div id="musicVolumeLabel" style="color: #0ff; font-size: 16px; font-weight: bold;">30%</div>
+                        </div>
+                        <input type="range" id="musicVolume" min="0" max="100" value="30" 
+                            style="width: 100%; height: 6px; background: linear-gradient(90deg, #0ff 0%, #088 100%); border-radius: 3px; outline: none; cursor: pointer;">
+                    </div>
+                </div>
+                
+                <!-- Close Button -->
+                <button id="closeSettingsBtn" style="width: 100%; padding: 15px; background: #0ff; color: #000; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s;">
+                    Close Settings
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Modular Game System -->
@@ -550,6 +606,7 @@
     <script src="src/TutorialManager.js"></script>
     <script src="src/CosmeticManager.js"></script>
     <script src="src/DarkMarketSystem.js"></script>
+    <script src="src/MusicManager.js"></script>
     <script src="src/UIManager.js"></script>
     <script src="src/DetailsPanel.js"></script>
     <script src="src/GameController.js"></script>
@@ -653,6 +710,13 @@
                 document.getElementById('gameContainer').style.display = 'block';
                 window.game = new GameController();
                 
+                // Start background music
+                setTimeout(() => {
+                    if (window.game && window.game.musicManager) {
+                        window.game.startMusic();
+                    }
+                }, 500);
+                
                 // Start tutorial immediately after initialization
                 setTimeout(() => {
                     if (window.game && window.game.tutorialManager) {
@@ -690,10 +754,17 @@
             // Initialize game
             window.game = new GameController();
             
+            // Start background music
+            setTimeout(() => {
+                if (window.game && window.game.musicManager) {
+                    window.game.startMusic();
+                }
+            }, 500);
+            
             // Show save/load modal after a short delay
             setTimeout(() => {
                 window.game.showSaveLoadModal();
-            }, 500);
+            }, 1000);
         }
     </script>
 </body>
