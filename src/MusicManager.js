@@ -18,24 +18,30 @@ class MusicManager {
         }
         
         // Create audio element
-        // Try multiple path strategies for Electron/Vite compatibility
+        // In Electron file:// protocol, we need to include 'public' folder
         console.log('Initializing music system...');
+        console.log('Current location:', window.location.href);
         
-        // Try relative path first (works in most cases)
-        this.mainTheme = new Audio('music/main-theme.wav');
+        // Try with public folder (for Electron dev mode)
+        this.mainTheme = new Audio('public/music/main-theme.wav');
         this.mainTheme.loop = true;
         this.mainTheme.volume = this.gameState.settings.musicVolume;
         
         // Add error handler to try alternative paths
         this.mainTheme.addEventListener('error', (e) => {
-            console.warn('First music path failed, trying alternative...');
-            // Try with leading slash
-            this.mainTheme.src = '/music/main-theme.wav';
+            console.warn('First music path failed (public/music/...), trying without public folder...');
+            // Try without public folder (for production builds)
+            this.mainTheme.src = 'music/main-theme.wav';
             
             this.mainTheme.addEventListener('error', (e2) => {
-                console.error('Music loading failed with both paths');
-                console.log('Tried paths: music/main-theme.wav and /music/main-theme.wav');
-                console.log('Current location:', window.location.href);
+                console.warn('Second path failed, trying absolute path...');
+                this.mainTheme.src = '/music/main-theme.wav';
+                
+                this.mainTheme.addEventListener('error', (e3) => {
+                    console.error('Music loading failed with all paths');
+                    console.log('Tried paths: public/music/main-theme.wav, music/main-theme.wav, and /music/main-theme.wav');
+                    console.log('Current location:', window.location.href);
+                }, { once: true });
             }, { once: true });
         }, { once: true });
         
