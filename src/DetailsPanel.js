@@ -167,13 +167,18 @@ class DetailsPanel {
         const probeCount = hub.probes ? hub.probes.length : 0;
         const maxProbes = hub.maxProbes || 5;
         
+        // Count available (ready) probes - built but not currently patrolling
+        const availableProbes = this.getAvailableProbeCount(hub);
+        const deployedProbes = probeCount - availableProbes;
+        
         this.content.innerHTML = `
             <div style="background: rgba(0,255,128,0.05); border: 1px solid rgba(0,255,128,0.2); border-radius: 5px; padding: 10px; margin-bottom: 12px;">
                 <div style="color: #0f8; font-size: 12px; font-weight: bold; margin-bottom: 6px;">📍 Hub Status</div>
                 <div style="color: #ccc; font-size: 12px; line-height: 1.6;">
                     <div>ID: ${hub.id || 'Unknown'}</div>
                     <div>Position: (${Math.round(hub.x)}, ${Math.round(hub.y)})</div>
-                    <div>Probes: ${probeCount}/${maxProbes}</div>
+                    <div>Total Probes: ${probeCount}/${maxProbes}</div>
+                    <div style="color: #0ff; font-weight: bold;">Available: ${availableProbes} | Deployed: ${deployedProbes}</div>
                     <div>Sector: [${hub.sectorX || 0}, ${hub.sectorY || 0}]</div>
                 </div>
             </div>
@@ -456,6 +461,24 @@ class DetailsPanel {
     updateButtonStates(hub) {
         const resources = this.gameState.getResources();
         
+        // Deploy Probe button (needs at least one available probe)
+        const deployBtn = document.getElementById('deployFromHub');
+        if (deployBtn) {
+            const availableProbes = this.getAvailableProbeCount(hub);
+            const hasAvailableProbes = availableProbes > 0;
+            
+            deployBtn.classList.toggle('insufficient', !hasAvailableProbes);
+            deployBtn.disabled = !hasAvailableProbes;
+            
+            // Update button text to show count
+            const btnText = deployBtn.querySelector('span') || deployBtn;
+            if (hasAvailableProbes) {
+                deployBtn.title = `Deploy one of ${availableProbes} available probe(s)`;
+            } else {
+                deployBtn.title = 'No probes available - build a probe first!';
+            }
+        }
+        
         // Build Probe button (25 minerals)
         const buildProbeBtn = document.getElementById('buildProbeForHub');
         if (buildProbeBtn) {
@@ -485,6 +508,26 @@ class DetailsPanel {
         return this.gameState.entities.probes.filter(probe => 
             probe.hubId === hub.id && probe.status !== 'destroyed'
         ).length;
+    }
+    
+    /**
+     * Get available probe count for hub
+     * Available = built but not currently deployed (no waypoints or status is 'ready')
+     */
+    getAvailableProbeCount(hub) {
+        return this.gameState.entities.probes.filter(probe => {
+            // Must belong to this hub and not be destroyed
+            if (probe.hubId !== hub.id || probe.status === 'destroyed') {
+                return false;
+            }
+            
+            // Check if probe is available (not patrolling)
+            const isPatrolling = probe.waypoints && probe.waypoints.length > 0;
+            const isActive = probe.active === true;
+            
+            // Probe is available if it's NOT patrolling (no waypoints or not active)
+            return !isPatrolling || !isActive;
+        }).length;
     }
     
     /**
