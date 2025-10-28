@@ -556,6 +556,23 @@
                         </label>
                     </div>
                     
+                    <!-- Music Mode -->
+                    <div style="padding: 15px; background: rgba(0,255,255,0.05); border-radius: 8px; margin-bottom: 15px;">
+                        <div style="color: #fff; font-size: 16px; margin-bottom: 10px;">Playback Mode</div>
+                        <select id="musicMode" style="width: 100%; padding: 10px; background: #1a1a2e; border: 2px solid #0ff; border-radius: 5px; color: #fff; font-size: 14px; cursor: pointer;">
+                            <option value="sequential">🔀 Sequential (All Tracks)</option>
+                            <option value="single">🔂 Single Track Loop</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Track Selection (shown when single mode) -->
+                    <div id="trackSelectionContainer" style="padding: 15px; background: rgba(0,255,255,0.05); border-radius: 8px; margin-bottom: 15px; display: none;">
+                        <div style="color: #fff; font-size: 16px; margin-bottom: 10px;">Select Track</div>
+                        <select id="trackSelector" style="width: 100%; padding: 10px; background: #1a1a2e; border: 2px solid #0ff; border-radius: 5px; color: #fff; font-size: 14px; cursor: pointer;">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    
                     <!-- Music Volume -->
                     <div style="padding: 15px; background: rgba(0,255,255,0.05); border-radius: 8px;">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">

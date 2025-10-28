@@ -719,6 +719,47 @@ class GameController {
             });
         }
 
+        // Music mode selector
+        const musicMode = document.getElementById('musicMode');
+        if (musicMode) {
+            // Set initial value
+            musicMode.value = this.gameState.settings.musicMode || 'sequential';
+            
+            // Show/hide track selector based on mode
+            const updateTrackSelectorVisibility = () => {
+                const container = document.getElementById('trackSelectionContainer');
+                if (container) {
+                    container.style.display = musicMode.value === 'single' ? 'block' : 'none';
+                }
+            };
+            updateTrackSelectorVisibility();
+            
+            musicMode.addEventListener('change', () => {
+                this.musicManager.setMusicMode(musicMode.value);
+                updateTrackSelectorVisibility();
+            });
+        }
+
+        // Track selector
+        const trackSelector = document.getElementById('trackSelector');
+        if (trackSelector) {
+            // Populate with available tracks
+            const tracks = this.musicManager.getTracks();
+            tracks.forEach(track => {
+                const option = document.createElement('option');
+                option.value = track.id;
+                option.textContent = track.name;
+                trackSelector.appendChild(option);
+            });
+            
+            // Set initial value
+            trackSelector.value = this.gameState.settings.selectedTrack || 'main-theme';
+            
+            trackSelector.addEventListener('change', () => {
+                this.musicManager.selectTrack(trackSelector.value);
+            });
+        }
+
         // Music volume slider
         const musicVolume = document.getElementById('musicVolume');
         const musicVolumeLabel = document.getElementById('musicVolumeLabel');

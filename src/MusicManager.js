@@ -7,52 +7,59 @@ class MusicManager {
         this.gameState = gameState;
         this.eventBus = eventBus;
         
+        // Music track library
+        this.tracks = [
+            { id: 'main-theme', name: 'Main Theme', file: 'public/music/main-theme.wav' },
+            { id: '404sight', name: '404 Sight', file: 'public/music/404sight-ingame.wav' },
+            { id: 'title-music', name: 'Title Music', file: 'public/music/title-music.wav' },
+            { id: 'ready-or-not', name: 'Ready Or Not', file: 'public/music/ready-or-not.wav' }
+        ];
+        
         // Initialize settings
         if (!this.gameState.settings) {
             this.gameState.settings = {
                 musicEnabled: true,
-                musicVolume: 0.3, // 30% volume by default
+                musicVolume: 0.3,
+                musicMode: 'sequential', // 'sequential' or 'single'
+                selectedTrack: 'main-theme',
                 sfxEnabled: true,
                 sfxVolume: 0.5
             };
         }
         
+        // Ensure music settings exist
+        if (!this.gameState.settings.musicMode) {
+            this.gameState.settings.musicMode = 'sequential';
+        }
+        if (!this.gameState.settings.selectedTrack) {
+            this.gameState.settings.selectedTrack = 'main-theme';
+        }
+        
         // Create audio element
-        // In Electron file:// protocol, we need to include 'public' folder
         console.log('Initializing music system...');
         console.log('Current location:', window.location.href);
         
-        // Try with public folder (for Electron dev mode)
-        this.mainTheme = new Audio('public/music/main-theme.wav');
-        this.mainTheme.loop = true;
+        this.mainTheme = new Audio();
         this.mainTheme.volume = this.gameState.settings.musicVolume;
         
-        // Add error handler to try alternative paths
-        this.mainTheme.addEventListener('error', (e) => {
-            console.warn('First music path failed (public/music/...), trying without public folder...');
-            // Try without public folder (for production builds)
-            this.mainTheme.src = 'music/main-theme.wav';
-            
-            this.mainTheme.addEventListener('error', (e2) => {
-                console.warn('Second path failed, trying absolute path...');
-                this.mainTheme.src = '/music/main-theme.wav';
-                
-                this.mainTheme.addEventListener('error', (e3) => {
-                    console.error('Music loading failed with all paths');
-                    console.log('Tried paths: public/music/main-theme.wav, music/main-theme.wav, and /music/main-theme.wav');
-                    console.log('Current location:', window.location.href);
-                }, { once: true });
-            }, { once: true });
-        }, { once: true });
+        // Track current index for sequential playback
+        this.currentTrackIndex = 0;
         
         // Track if music has started
         this.musicStarted = false;
         
+        // Handle track ending
+        this.mainTheme.addEventListener('ended', () => {
+            this.onTrackEnded();
+        });
+        
         // Listen for settings changes
         this.eventBus.on('settings:musicToggle', this.toggleMusic.bind(this));
         this.eventBus.on('settings:musicVolume', this.setMusicVolume.bind(this));
+        this.eventBus.on('settings:musicMode', this.setMusicMode.bind(this));
+        this.eventBus.on('settings:selectTrack', this.selectTrack.bind(this));
         
-        console.log('MusicManager initialized');
+        console.log('MusicManager initialized with', this.tracks.length, 'tracks');
     }
     
     /**
@@ -69,10 +76,13 @@ class MusicManager {
             return;
         }
         
+        // Load initial track
+        this.loadTrack();
+        
         try {
             await this.mainTheme.play();
             this.musicStarted = true;
-            console.log('Music started playing');
+            console.log('Music started playing:', this.getCurrentTrack().name);
         } catch (error) {
             console.warn('Could not auto-play music (browser restriction):', error.message);
             console.log('Music will start on user interaction');
@@ -82,7 +92,7 @@ class MusicManager {
                 try {
                     await this.mainTheme.play();
                     this.musicStarted = true;
-                    console.log('Music started after user interaction');
+                    console.log('Music started after user interaction:', this.getCurrentTrack().name);
                     document.removeEventListener('click', startOnInteraction);
                     document.removeEventListener('keydown', startOnInteraction);
                 } catch (e) {
@@ -92,6 +102,57 @@ class MusicManager {
             
             document.addEventListener('click', startOnInteraction, { once: true });
             document.addEventListener('keydown', startOnInteraction, { once: true });
+        }
+    }
+    
+    /**
+     * Load a track into the audio element
+     */
+    loadTrack() {
+        const track = this.getCurrentTrack();
+        console.log('Loading track:', track.name);
+        
+        // Try primary path (Electron dev)
+        this.mainTheme.src = track.file;
+        
+        // Fallback paths in error handlers
+        this.mainTheme.addEventListener('error', (e) => {
+            console.warn('Failed to load:', track.file, '- trying alternative...');
+            this.mainTheme.src = track.file.replace('public/', '');
+            
+            this.mainTheme.addEventListener('error', (e2) => {
+                console.warn('Failed alternative, trying absolute...');
+                this.mainTheme.src = '/' + track.file.replace('public/', '');
+            }, { once: true });
+        }, { once: true });
+    }
+    
+    /**
+     * Get current track based on mode
+     */
+    getCurrentTrack() {
+        if (this.gameState.settings.musicMode === 'single') {
+            // Single track mode - play selected track
+            return this.tracks.find(t => t.id === this.gameState.settings.selectedTrack) || this.tracks[0];
+        } else {
+            // Sequential mode - play tracks in order
+            return this.tracks[this.currentTrackIndex];
+        }
+    }
+    
+    /**
+     * Handle track ending
+     */
+    onTrackEnded() {
+        if (this.gameState.settings.musicMode === 'single') {
+            // Loop the same track
+            this.mainTheme.play();
+        } else {
+            // Sequential mode - go to next track
+            this.currentTrackIndex = (this.currentTrackIndex + 1) % this.tracks.length;
+            console.log('Next track:', this.getCurrentTrack().name);
+            this.loadTrack();
+            this.mainTheme.play();
         }
     }
     
@@ -128,6 +189,41 @@ class MusicManager {
         this.gameState.settings.musicVolume = Math.max(0, Math.min(1, volume));
         this.mainTheme.volume = this.gameState.settings.musicVolume;
         console.log('Music volume set to', (this.gameState.settings.musicVolume * 100).toFixed(0) + '%');
+    }
+    
+    /**
+     * Set music playback mode
+     */
+    setMusicMode(mode) {
+        this.gameState.settings.musicMode = mode;
+        console.log('Music mode set to:', mode);
+        
+        // If switching to single track mode, load the selected track
+        if (mode === 'single' && this.musicStarted) {
+            this.stopMusic();
+            this.startMusic();
+        }
+    }
+    
+    /**
+     * Select a specific track (for single track mode)
+     */
+    selectTrack(trackId) {
+        this.gameState.settings.selectedTrack = trackId;
+        console.log('Selected track:', trackId);
+        
+        // If in single track mode and music is playing, switch to new track
+        if (this.gameState.settings.musicMode === 'single' && this.musicStarted) {
+            this.stopMusic();
+            this.startMusic();
+        }
+    }
+    
+    /**
+     * Get available tracks
+     */
+    getTracks() {
+        return this.tracks;
     }
     
     /**
