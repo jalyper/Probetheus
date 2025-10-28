@@ -500,9 +500,9 @@
         </div>
         
         <!-- Dark Market Modal -->
-        <div id="darkMarketModal" class="modal" style="background: rgba(0,0,0,0.98);">
-            <div class="modal-content" style="max-width: 800px; border: 3px solid #9400d3; box-shadow: 0 0 50px rgba(148,0,211,0.8); background: linear-gradient(135deg, #0a0015 0%, #15001a 100%);">
-                <button id="closeDarkMarket" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #9400d3; font-size: 24px; cursor: pointer; padding: 5px 10px;">&times;</button>
+        <div id="darkMarketModal" class="modal" style="display: none; background: rgba(0,0,0,0.98);">
+            <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto; border: 3px solid #9400d3; box-shadow: 0 0 50px rgba(148,0,211,0.8); background: linear-gradient(135deg, #0a0015 0%, #15001a 100%); position: relative;">
+                <button id="closeDarkMarket" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #9400d3; font-size: 24px; cursor: pointer; padding: 5px 10px; z-index: 10;">&times;</button>
                 
                 <div style="text-align: center; margin-bottom: 30px;">
                     <div style="font-size: 48px; margin-bottom: 15px;">🌑</div>
@@ -512,7 +512,7 @@
                     <div style="color: #888; font-size: 14px;">Rare goods from beyond the void</div>
                 </div>
                 
-                <div id="darkMarketInventory" style="display: grid; gap: 20px;">
+                <div id="darkMarketInventory" style="display: grid; gap: 20px; grid-template-columns: 1fr; max-width: 100%;">
                     <!-- Inventory items will be populated here -->
                 </div>
             </div>

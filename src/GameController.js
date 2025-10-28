@@ -884,7 +884,8 @@ class GameController {
                 Math.pow(x - hub.x, 2) + 
                 Math.pow(y - hub.y, 2)
             );
-            return distance <= 60; // Large hitbox for easy selection
+            // Hub visual size is 12px, make hitbox slightly bigger at 18px
+            return distance <= 18;
         });
         
         if (clickedHub) {
@@ -1075,13 +1076,13 @@ class GameController {
         // Special reward
         const special = inventory.specialReward;
         html += `
-            <div style="border: 2px solid #ff0; border-radius: 8px; padding: 15px; background: rgba(255,255,0,0.05);">
+            <div style="border: 2px solid #ff0; border-radius: 8px; padding: 15px; background: rgba(255,255,0,0.05); max-width: 100%;">
                 <div style="color: #ff0; font-size: 16px; font-weight: bold; margin-bottom: 10px;">
                     ⭐ Special Offer
                 </div>
-                <div style="color: #fff; font-size: 14px; margin-bottom: 5px;">${special.name}</div>
-                <div style="color: #aaa; font-size: 12px; margin-bottom: 10px;">${special.description}</div>
-                <button class="dark-market-buy-btn" data-item-id="${special.id}" style="background: #ff0; color: #000; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                <div style="color: #fff; font-size: 14px; margin-bottom: 5px; word-wrap: break-word;">${special.name}</div>
+                <div style="color: #aaa; font-size: 12px; margin-bottom: 10px; word-wrap: break-word;">${special.description}</div>
+                <button class="dark-market-buy-btn" data-item-id="${special.id}" style="background: #ff0; color: #000; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%;">
                     Buy for ${special.cost} Probethium
                 </button>
             </div>
@@ -1090,15 +1091,15 @@ class GameController {
         // Cosmetics
         inventory.cosmetics.forEach(cosmetic => {
             html += `
-                <div style="border: 2px solid ${cosmetic.color}; border-radius: 8px; padding: 15px; background: ${cosmetic.color}11;">
-                    <div style="color: ${cosmetic.color}; font-size: 16px; font-weight: bold; margin-bottom: 10px;">
+                <div style="border: 2px solid ${cosmetic.color}; border-radius: 8px; padding: 15px; background: ${cosmetic.color}11; max-width: 100%;">
+                    <div style="color: ${cosmetic.color}; font-size: 16px; font-weight: bold; margin-bottom: 10px; word-wrap: break-word;">
                         ${cosmetic.name}
                     </div>
                     <div style="width: 80px; height: 80px; margin: 10px auto; display: flex; align-items: center; justify-content: center;">
                         ${this.renderProbeSkinPreview(cosmetic.color)}
                     </div>
-                    <div style="color: #aaa; font-size: 12px; margin-bottom: 10px;">${cosmetic.description}</div>
-                    <button class="dark-market-buy-btn" data-item-id="${cosmetic.id}" style="background: ${cosmetic.color}; color: #000; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                    <div style="color: #aaa; font-size: 12px; margin-bottom: 10px; word-wrap: break-word;">${cosmetic.description}</div>
+                    <button class="dark-market-buy-btn" data-item-id="${cosmetic.id}" style="background: ${cosmetic.color}; color: #000; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%;">
                         Buy for ${cosmetic.cost} Probethium
                     </button>
                 </div>
