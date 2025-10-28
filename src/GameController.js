@@ -436,9 +436,9 @@ class GameController {
         // Add mouseup for dragging and signal selection
         this.canvas.addEventListener('mouseup', () => {
             if (this.gameState.input.isDragging) {
-                console.log('Stopped camera dragging');
                 this.gameState.input.isDragging = false;
                 this.canvas.style.cursor = 'grab';
+                console.log('[CAMERA DEBUG] Stopped camera dragging - isDragging set to FALSE');
             }
         });
 

@@ -505,9 +505,11 @@ class DetailsPanel {
      * Get active probe count for hub (helper method)
      */
     getActiveProbeCount(hub) {
-        return this.gameState.entities.probes.filter(probe => 
-            probe.hubId === hub.id && probe.status !== 'destroyed'
-        ).length;
+        return this.gameState.entities.probes.filter(probe => {
+            // Check hubId or hub.id for compatibility with old and new probe formats
+            const probeHubId = probe.hubId || (probe.hub && probe.hub.id);
+            return probeHubId === hub.id && probe.status !== 'destroyed';
+        }).length;
     }
     
     /**
@@ -516,8 +518,11 @@ class DetailsPanel {
      */
     getAvailableProbeCount(hub) {
         return this.gameState.entities.probes.filter(probe => {
+            // Check hubId or hub.id for compatibility with old and new probe formats
+            const probeHubId = probe.hubId || (probe.hub && probe.hub.id);
+            
             // Must belong to this hub and not be destroyed
-            if (probe.hubId !== hub.id || probe.status === 'destroyed') {
+            if (probeHubId !== hub.id || probe.status === 'destroyed') {
                 return false;
             }
             
