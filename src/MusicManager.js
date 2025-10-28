@@ -18,7 +18,7 @@ class MusicManager {
         }
         
         // Create audio element
-        this.mainTheme = new Audio('music/main-theme.wav');
+        this.mainTheme = new Audio('/music/main-theme.wav');
         this.mainTheme.loop = true;
         this.mainTheme.volume = this.gameState.settings.musicVolume;
         

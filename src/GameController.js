@@ -462,6 +462,13 @@ class GameController {
 
         // Add keyboard controls for zooming
         document.addEventListener('keydown', (e) => {
+            // Prevent default behavior for game keys to stop browser scrolling/actions
+            const gameKeys = ['d', 'D', 'F12', '+', '=', '-', '_', 'Escape'];
+            if (gameKeys.includes(e.key)) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
             // Debug camera snapping issue
             if (e.key === 'd' || e.key === 'D' || e.key === 'F12') {
                 console.log(`[CAMERA DEBUG] Key pressed: ${e.key}`);
@@ -470,9 +477,6 @@ class GameController {
                 console.log(`[CAMERA DEBUG] Event target:`, e.target);
                 console.log(`[CAMERA DEBUG] Active element:`, document.activeElement);
                 console.log(`[CAMERA DEBUG] Mouse position:`, this.gameState.ui.mousePosition);
-                
-                // Try preventing default to see if it's browser behavior
-                e.preventDefault();
             }
             
             if (e.key === '+' || e.key === '=') {
