@@ -77,6 +77,13 @@ class SaveManager {
                     stats: { ...this.gameState.probethium.stats },
                     multipliers: { ...this.gameState.probethium.multipliers }
                 },
+                mining: this.gameState.mining ? {
+                    stations: [...(this.gameState.mining.stations || [])],
+                    shuttles: [...(this.gameState.mining.shuttles || [])],
+                    totalProbetheum: this.gameState.mining.totalProbetheum || 0,
+                    efficiencyBonus: this.gameState.mining.efficiencyBonus || 1.0,
+                    lastUpdateTime: this.gameState.mining.lastUpdateTime || Date.now()
+                } : null,
                 researchSystem: this.createResearchSystemSaveData(),
                 tutorial: {
                     completed: tutorialCompleted === 'true',
@@ -258,6 +265,8 @@ class SaveManager {
             
             // Debug: Log important data being saved
             console.log('Probethium being saved:', saveData.gameState.probethium.current);
+            console.log('Mining stations being saved:', saveData.gameState.mining?.stations?.length || 0);
+            console.log('Mining shuttles being saved:', saveData.gameState.mining?.shuttles?.length || 0);
             console.log('Research data being saved:');
             console.log('- Points:', saveData.gameState.researchSystem.points);
             console.log('- Unlocked:', saveData.gameState.researchSystem.unlocked);
@@ -491,6 +500,18 @@ class SaveManager {
         this.gameState.entities.miningOutposts = [...savedState.entities.miningOutposts];
         this.gameState.entities.miningFacilities = [...savedState.entities.miningFacilities];
         this.gameState.entities.signals = []; // Start fresh with no signals
+        
+        // Restore mining system
+        if (savedState.mining) {
+            this.gameState.mining = {
+                stations: [...(savedState.mining.stations || [])],
+                shuttles: [...(savedState.mining.shuttles || [])],
+                totalProbetheum: savedState.mining.totalProbetheum || 0,
+                efficiencyBonus: savedState.mining.efficiencyBonus || 1.0,
+                lastUpdateTime: Date.now() // Reset to current time
+            };
+            console.log('✓ Mining system restored:', this.gameState.mining.stations.length, 'stations,', this.gameState.mining.shuttles.length, 'shuttles');
+        }
         
         // Clear UI state
         this.gameState.ui.selectedHub = null;

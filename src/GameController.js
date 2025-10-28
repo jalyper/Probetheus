@@ -444,6 +444,13 @@ class GameController {
 
         // Add keyboard controls for zooming
         document.addEventListener('keydown', (e) => {
+            // Debug camera snapping issue
+            if (e.key === 'd' || e.key === 'D' || e.key === 'F12') {
+                console.log(`[CAMERA DEBUG] Key pressed: ${e.key}`);
+                console.log(`[CAMERA DEBUG] Current viewOffset:`, this.gameState.world.viewOffset);
+                console.log(`[CAMERA DEBUG] Current zoom:`, this.gameState.world.zoomLevel);
+            }
+            
             if (e.key === '+' || e.key === '=') {
                 // Zoom in (center of screen)
                 const centerX = this.canvas.width / 2;
@@ -458,6 +465,8 @@ class GameController {
                 
                 this.gameState.world.viewOffset.x = worldX - centerX / newZoom;
                 this.gameState.world.viewOffset.y = worldY - centerY / newZoom;
+                
+                console.log('[CAMERA DEBUG] After zoom in, viewOffset:', this.gameState.world.viewOffset);
             } else if (e.key === '-' || e.key === '_') {
                 // Zoom out (center of screen)
                 const centerX = this.canvas.width / 2;
@@ -472,6 +481,8 @@ class GameController {
                 
                 this.gameState.world.viewOffset.x = worldX - centerX / newZoom;
                 this.gameState.world.viewOffset.y = worldY - centerY / newZoom;
+                
+                console.log('[CAMERA DEBUG] After zoom out, viewOffset:', this.gameState.world.viewOffset);
             } else if (e.key === 'Escape') {
                 // ESC to close hub panel
                 if (this.gameState.ui.selectedHub) {
