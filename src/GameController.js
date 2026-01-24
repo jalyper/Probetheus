@@ -1487,6 +1487,20 @@ class GameController {
     }
 
     /**
+     * Get color for rarity level
+     */
+    getRarityColor(rarity) {
+        const rarityColors = {
+            common: '#aaaaaa',
+            uncommon: '#00ff00',
+            rare: '#0088ff',
+            epic: '#ff00ff',
+            legendary: '#ffd700'
+        };
+        return rarityColors[rarity] || '#ffffff';
+    }
+
+    /**
      * Show exploration screen
      */
     showExplorationScreen(planet, signal) {
@@ -1508,7 +1522,13 @@ class GameController {
         }
         
         if (planetDescEl) {
-            planetDescEl.textContent = planet.description;
+            // Color-code the rarity text in the description
+            const rarityColor = this.getRarityColor(planet.rarity);
+            const coloredDescription = planet.description.replace(
+                planet.rarity,
+                `<span style="color: ${rarityColor}; font-weight: bold;">${planet.rarity}</span>`
+            );
+            planetDescEl.innerHTML = coloredDescription;
         } else {
             console.error('planetDesc element not found!');
         }
