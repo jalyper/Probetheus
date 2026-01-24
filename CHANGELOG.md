@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.2] - 2026-01-23
+
+### Added
+- **Rarity Color Coding**: Planet descriptions now show rarity text in color (gray/green/blue/magenta/gold)
+- **Rarity Display Tests**: New test file `tests/rarity-display.spec.js` with 3 tests
+
+### Fixed
+- **Smoke Tests**: Updated for current UI structure (16/25 tests now passing)
+- **Tutorial Panel Blocking**: Tests now dismiss tutorial panel to prevent UI blocking
+- **Test Selectors**: Updated to use `#mainMenuBtn`, `#deployFromHub`, `entity:selected` event
+
+---
+
 ## [0.7.1] - 2025-01-XX (In Development)
 
 ### Added
