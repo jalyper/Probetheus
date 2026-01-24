@@ -14,8 +14,8 @@
 
 ## Current Priority Tasks
 1. Update automated integration tests to reflect recent UI/tutorial changes
-2. Add color coding for rarity text in planet descriptions
-3. Finish building out the tutorial system  
+2. ~~Add color coding for rarity text in planet descriptions~~ ✓ DONE
+3. Finish building out the tutorial system
 4. Add ability to turn off tips/tutorial from main menu
 5. Implement new signal distribution system
 
