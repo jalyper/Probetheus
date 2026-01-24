@@ -18,22 +18,30 @@ test.describe('Save System Integrity', () => {
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
-    
+
     // Wait for page to fully load
     await page.waitForLoadState('networkidle');
-    
+
     // Wait for game to initialize
     await page.locator('#newGameBtn').click();
     await page.waitForSelector('#galaxyCanvas');
-    
+
     // Wait for game systems to be ready
     await page.waitForTimeout(2000);
-    
+
+    // Dismiss tutorial panel to prevent it from blocking interactions
+    await page.evaluate(() => {
+      const tutorialPanel = document.getElementById('tutorialPanel');
+      if (tutorialPanel) {
+        tutorialPanel.style.display = 'none';
+      }
+    });
+
     // Ensure all core systems are loaded
     await page.waitForFunction(() => {
-      return typeof window.game !== 'undefined' && 
-             window.game.gameState && 
-             window.game.saveManager && 
+      return typeof window.game !== 'undefined' &&
+             window.game.gameState &&
+             window.game.saveManager &&
              window.uiManager;
     }, { timeout: 10000 });
   });
