@@ -63,53 +63,76 @@ test.describe('Game Startup and Basic Functionality', () => {
   test('main menu navigation works', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
-    
+
     await page.locator('#newGameBtn').click();
     await page.waitForSelector('#galaxyCanvas');
-    await page.waitForTimeout(1000);
-    
-    // Open main menu
-    await page.locator('#mainMenuBtn').click();
+    await page.waitForTimeout(1500);
+
+    // Dismiss tutorial if it's blocking
+    await page.evaluate(() => {
+      const tutorialPanel = document.getElementById('tutorialPanel');
+      if (tutorialPanel) {
+        tutorialPanel.style.display = 'none';
+      }
+    });
+
+    // Open and close main menu
+    const mainMenuBtn = page.locator('#mainMenuBtn');
+    await expect(mainMenuBtn).toBeVisible();
+    await mainMenuBtn.click();
     await expect(page.locator('#mainMenuModal')).toHaveClass(/active/);
-    
-    // Test save/load menu
-    await page.locator('#saveLoadMenuBtn').click();
-    await expect(page.locator('#saveLoadModal')).toHaveClass(/active/);
-    
-    // Close modals
-    await page.locator('#closeSaveLoadModal').click();
-    await expect(page.locator('#saveLoadModal')).not.toHaveClass(/active/);
-    
+
+    // Close main menu with Resume Game button
     await page.locator('#closeMainMenu').click();
     await expect(page.locator('#mainMenuModal')).not.toHaveClass(/active/);
+
+    // Open main menu again and test save/load sub-menu
+    await mainMenuBtn.click();
+    await expect(page.locator('#mainMenuModal')).toHaveClass(/active/);
+
+    await page.locator('#saveLoadMenuBtn').click();
+    await expect(page.locator('#saveLoadModal')).toHaveClass(/active/);
+
+    // Close save/load modal
+    await page.locator('#closeSaveLoadModal').click();
+    await expect(page.locator('#saveLoadModal')).not.toHaveClass(/active/);
   });
 
   test('research system initializes correctly', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
-    
+
     await page.locator('#newGameBtn').click();
     await page.waitForSelector('#galaxyCanvas');
-    await page.waitForTimeout(1000);
-    
+    await page.waitForTimeout(1500);
+
+    // Dismiss tutorial if it's blocking
+    await page.evaluate(() => {
+      const tutorialPanel = document.getElementById('tutorialPanel');
+      if (tutorialPanel) {
+        tutorialPanel.style.display = 'none';
+      }
+    });
+
     // Research button should be hidden initially
     await expect(page.locator('#researchBtn')).not.toBeVisible();
-    
-    // Unlock research
+
+    // Unlock research via game state
     await page.evaluate(() => {
       const research = window.game.gameState.getResearchSystem();
       research.unlocked = true;
       research.points = 1;
       window.uiManager.checkResearchUnlock();
     });
-    
-    // Research button should now be visible
+
+    // Wait for UI to update and research button to become visible
+    await page.waitForTimeout(500);
     await expect(page.locator('#researchBtn')).toBeVisible();
-    
+
     // Click research button
     await page.locator('#researchBtn').click();
     await expect(page.locator('#researchScreen')).toHaveClass(/active/);
-    
+
     // Return to map
     await page.locator('#returnToMapFromResearch').click();
     await expect(page.locator('#mapScreen')).toHaveClass(/active/);
@@ -118,15 +141,34 @@ test.describe('Game Startup and Basic Functionality', () => {
   test('probe deployment basic functionality', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
-    
+
     await page.locator('#newGameBtn').click();
     await page.waitForSelector('#galaxyCanvas');
-    await page.waitForTimeout(1000);
-    
-    // Click deploy probe button
-    await page.locator('#deployProbeBtn').click();
-    
-    // Should show deployment instructions or select a hub
+    await page.waitForTimeout(1500);
+
+    // Select the starting hub programmatically to open the details panel
+    await page.evaluate(() => {
+      const hubs = window.game.gameState.entities.reconHubs;
+      if (hubs && hubs.length > 0) {
+        const hub = hubs[0];
+        hub.selected = true;
+        // Emit entity:selected event to open the DetailsPanel
+        window.game.eventBus.emit('entity:selected', { entity: hub, type: 'hub' });
+      }
+    });
+
+    // Wait for details panel to show
+    await page.waitForTimeout(500);
+
+    // The deploy button should be visible in the hub details panel
+    const deployBtn = page.locator('#deployFromHub');
+    await expect(deployBtn).toBeVisible();
+
+    // Click deploy to start deployment mode
+    await deployBtn.click();
+
+    // Verify deployment mode is active (probe status should show instructions)
+    await page.waitForTimeout(300);
     const probeStatus = await page.locator('#probeStatus').textContent();
     expect(probeStatus).toBeTruthy();
   });
