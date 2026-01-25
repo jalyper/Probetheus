@@ -99,30 +99,52 @@ class UIManager {
     updateConnectorLine(probe) {
         if (!this.connectorLine || !probe || !this.elements.probeDetailPanel) return;
 
-        const world = this.gameState.getWorld();
         const line = document.getElementById('connectorLineElement');
         const circle = document.getElementById('connectorCircle');
 
         if (!line || !circle) return;
 
-        // Get probe screen position
-        const probeScreenX = probe.current.x - world.viewOffset.x;
-        const probeScreenY = probe.current.y - world.viewOffset.y;
+        // Get probe screen position (accounting for canvas position)
+        const probeScreenPos = this.getProbeScreenPosition(probe);
+        if (!probeScreenPos) return;
 
-        // Get panel position
+        // Get panel position (left edge, slightly below top)
         const panelRect = this.elements.probeDetailPanel.getBoundingClientRect();
         const panelLeftX = panelRect.left;
-        const panelTopY = panelRect.top + 20;
+        const panelCenterY = panelRect.top + 30;
 
-        // Update line coordinates
-        line.setAttribute('x1', probeScreenX);
-        line.setAttribute('y1', probeScreenY);
+        // Line goes from probe to panel
+        line.setAttribute('x1', probeScreenPos.x);
+        line.setAttribute('y1', probeScreenPos.y);
         line.setAttribute('x2', panelLeftX);
-        line.setAttribute('y2', panelTopY);
+        line.setAttribute('y2', panelCenterY);
 
-        // Update circle position at probe end
-        circle.setAttribute('cx', probeScreenX);
-        circle.setAttribute('cy', probeScreenY);
+        // Circle is centered directly on the probe
+        circle.setAttribute('cx', probeScreenPos.x);
+        circle.setAttribute('cy', probeScreenPos.y);
+    }
+
+    /**
+     * Get probe's screen position (accounting for canvas offset)
+     */
+    getProbeScreenPosition(probe) {
+        if (!probe) return null;
+
+        const canvas = document.getElementById('galaxyCanvas');
+        if (!canvas) return null;
+
+        const canvasRect = canvas.getBoundingClientRect();
+        const world = this.gameState.getWorld();
+
+        // Probe position relative to canvas
+        const probeCanvasX = probe.current.x - world.viewOffset.x;
+        const probeCanvasY = probe.current.y - world.viewOffset.y;
+
+        // Convert to screen position
+        return {
+            x: canvasRect.left + probeCanvasX,
+            y: canvasRect.top + probeCanvasY
+        };
     }
 
     /**
@@ -450,18 +472,16 @@ class UIManager {
     updateProbeDetailPanelPosition(probe) {
         if (!probe || !this.elements.probeDetailPanel) return;
 
-        const world = this.gameState.getWorld();
-
-        // Convert world coordinates to screen coordinates
-        const probeScreenX = probe.current.x - world.viewOffset.x;
-        const probeScreenY = probe.current.y - world.viewOffset.y;
+        // Get probe's actual screen position
+        const probeScreenPos = this.getProbeScreenPosition(probe);
+        if (!probeScreenPos) return;
 
         // Position panel 100px to the right of the probe
         const panelWidth = 280;
         const panelHeight = this.elements.probeDetailPanel.offsetHeight || 400;
 
-        let panelX = probeScreenX + 100;
-        let panelY = probeScreenY - (panelHeight / 2);
+        let panelX = probeScreenPos.x + 100;
+        let panelY = probeScreenPos.y - (panelHeight / 2);
 
         // Keep panel on screen
         panelX = Math.min(panelX, window.innerWidth - panelWidth - 20);
@@ -469,10 +489,11 @@ class UIManager {
         panelY = Math.min(panelY, window.innerHeight - panelHeight - 20);
         panelY = Math.max(80, panelY);
 
-        // Apply position
+        // Apply position using fixed positioning
         this.elements.probeDetailPanel.style.position = 'fixed';
         this.elements.probeDetailPanel.style.left = panelX + 'px';
         this.elements.probeDetailPanel.style.top = panelY + 'px';
+        this.elements.probeDetailPanel.style.right = 'auto'; // Ensure right doesn't interfere
         this.elements.probeDetailPanel.style.right = 'auto';
     }
 
