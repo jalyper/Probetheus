@@ -688,6 +688,19 @@ class GameController {
             });
         }
 
+        // Remnant NPC test button
+        const testRemnant = document.getElementById('testSpawnRemnant');
+        if (testRemnant) {
+            testRemnant.addEventListener('click', () => {
+                if (this.remnantManager) {
+                    this.remnantManager.forceSpawn('keth_varn');
+                    console.log('👁️ Remnant NPC spawned manually');
+                } else {
+                    console.error('RemnantManager not available');
+                }
+            });
+        }
+
         // Settings button
         const settingsBtn = document.getElementById('settingsBtn');
         if (settingsBtn) {
