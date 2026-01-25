@@ -17,8 +17,14 @@ class UIManager {
             patrolModeCheckbox: document.getElementById('patrolModeCheckbox'),
             cameraLockCheckbox: document.getElementById('cameraLockCheckbox'),
             closeProbeDetail: document.getElementById('closeProbeDetail'),
-            buildPathHubBtnProbe: document.getElementById('buildPathHubBtnProbe')
+            buildPathHubBtnProbe: document.getElementById('buildPathHubBtnProbe'),
+            equipmentSlotBoxes: document.getElementById('equipmentSlotBoxes')
         };
+
+        // For animated connector line
+        this.connectorLine = null;
+        this.probeTrackingInterval = null;
+        this.createConnectorLine();
 
         this.setupEventListeners();
         
@@ -31,6 +37,129 @@ class UIManager {
         this.eventBus.on('ui:probeDestroyed', this.onProbeDestroyed.bind(this));
         this.eventBus.on('research:milestone', this.onMilestoneAchieved.bind(this));
         this.eventBus.on('research:pointAwarded', this.onResearchPointAwarded.bind(this));
+        // Listen for tutorial system to trigger research unlock check
+        this.eventBus.on('tutorial:checkResearchUnlock', this.checkResearchUnlock.bind(this));
+    }
+
+    /**
+     * Create the SVG connector line element
+     */
+    createConnectorLine() {
+        // Remove existing if present
+        const existing = document.getElementById('probeConnectorLine');
+        if (existing) existing.remove();
+
+        // Create SVG element for the connector line
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.id = 'probeConnectorLine';
+        svg.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+            display: none;
+        `;
+
+        // Create the line element
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.id = 'connectorLineElement';
+        line.setAttribute('stroke', '#0ff');
+        line.setAttribute('stroke-width', '2');
+        line.setAttribute('stroke-dasharray', '5,5');
+        line.style.filter = 'drop-shadow(0 0 4px #0ff)';
+
+        // Create animated pulse circle at probe end
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.id = 'connectorCircle';
+        circle.setAttribute('r', '4');
+        circle.setAttribute('fill', '#0ff');
+        circle.style.filter = 'drop-shadow(0 0 6px #0ff)';
+
+        // Add animation
+        const animate = document.createElementNS('http://www.w3.org/2000/svg', 'animate');
+        animate.setAttribute('attributeName', 'r');
+        animate.setAttribute('values', '3;6;3');
+        animate.setAttribute('dur', '1.5s');
+        animate.setAttribute('repeatCount', 'indefinite');
+        circle.appendChild(animate);
+
+        svg.appendChild(line);
+        svg.appendChild(circle);
+        document.body.appendChild(svg);
+
+        this.connectorLine = svg;
+    }
+
+    /**
+     * Update connector line position between panel and probe
+     */
+    updateConnectorLine(probe) {
+        if (!this.connectorLine || !probe || !this.elements.probeDetailPanel) return;
+
+        const world = this.gameState.getWorld();
+        const line = document.getElementById('connectorLineElement');
+        const circle = document.getElementById('connectorCircle');
+
+        if (!line || !circle) return;
+
+        // Get probe screen position
+        const probeScreenX = probe.current.x - world.viewOffset.x;
+        const probeScreenY = probe.current.y - world.viewOffset.y;
+
+        // Get panel position
+        const panelRect = this.elements.probeDetailPanel.getBoundingClientRect();
+        const panelLeftX = panelRect.left;
+        const panelTopY = panelRect.top + 20;
+
+        // Update line coordinates
+        line.setAttribute('x1', probeScreenX);
+        line.setAttribute('y1', probeScreenY);
+        line.setAttribute('x2', panelLeftX);
+        line.setAttribute('y2', panelTopY);
+
+        // Update circle position at probe end
+        circle.setAttribute('cx', probeScreenX);
+        circle.setAttribute('cy', probeScreenY);
+    }
+
+    /**
+     * Start tracking probe position for panel updates
+     */
+    startProbeTracking(probe) {
+        this.stopProbeTracking();
+
+        // Show connector line
+        if (this.connectorLine) {
+            this.connectorLine.style.display = 'block';
+        }
+
+        // Update position immediately
+        this.updateProbeDetailPanelPosition(probe);
+
+        // Update position every frame
+        this.probeTrackingInterval = setInterval(() => {
+            if (this.gameState.ui.selectedProbe) {
+                this.updateProbeDetailPanelPosition(this.gameState.ui.selectedProbe);
+                this.updateConnectorLine(this.gameState.ui.selectedProbe);
+            }
+        }, 50);
+    }
+
+    /**
+     * Stop tracking probe position
+     */
+    stopProbeTracking() {
+        if (this.probeTrackingInterval) {
+            clearInterval(this.probeTrackingInterval);
+            this.probeTrackingInterval = null;
+        }
+
+        if (this.connectorLine) {
+            this.connectorLine.style.display = 'none';
+        }
     }
 
     /**
@@ -38,42 +167,61 @@ class UIManager {
      */
     setupEventListeners() {
         // Close probe detail panel
-        this.elements.closeProbeDetail.addEventListener('click', () => {
-            this.hideProbeDetails();
-        });
+        if (this.elements.closeProbeDetail) {
+            this.elements.closeProbeDetail.addEventListener('click', () => {
+                this.hideProbeDetails();
+            });
+        }
 
         // Patrol mode toggle
-        this.elements.patrolModeCheckbox.addEventListener('change', (e) => {
-            const selectedProbe = this.gameState.ui.selectedProbe;
-            if (selectedProbe) {
-                selectedProbe.patrolMode = e.target.checked;
-                this.eventBus.emit('ui:update');
-            }
-        });
+        if (this.elements.patrolModeCheckbox) {
+            this.elements.patrolModeCheckbox.addEventListener('change', (e) => {
+                const selectedProbe = this.gameState.ui.selectedProbe;
+                if (selectedProbe) {
+                    selectedProbe.patrolMode = e.target.checked;
+                    this.eventBus.emit('ui:update');
+                }
+            });
+        }
 
         // Camera lock toggle
-        this.elements.cameraLockCheckbox.addEventListener('change', (e) => {
-            const selectedProbe = this.gameState.ui.selectedProbe;
-            if (selectedProbe) {
-                this.gameState.ui.cameraLocked = e.target.checked;
-                this.gameState.ui.lockedProbe = e.target.checked ? selectedProbe : null;
-                this.eventBus.emit('camera:lockToggled', {
-                    locked: e.target.checked,
-                    probe: selectedProbe
-                });
-            }
-        });
+        if (this.elements.cameraLockCheckbox) {
+            this.elements.cameraLockCheckbox.addEventListener('change', (e) => {
+                const selectedProbe = this.gameState.ui.selectedProbe;
+                if (selectedProbe) {
+                    this.gameState.ui.cameraLocked = e.target.checked;
+                    this.gameState.ui.lockedProbe = e.target.checked ? selectedProbe : null;
+                    this.eventBus.emit('camera:lockToggled', {
+                        locked: e.target.checked,
+                        probe: selectedProbe
+                    });
+                }
+            });
+        }
 
         // Building buttons in probe detail panel
-        this.elements.buildPathHubBtnProbe.addEventListener('click', () => {
-            this.startBuildingForProbe('reconHub');
-        });
-        
+        if (this.elements.buildPathHubBtnProbe) {
+            this.elements.buildPathHubBtnProbe.addEventListener('click', () => {
+                this.startBuildingForProbe('reconHub');
+            });
+        }
+
         // Add mining facility button handler
         const buildPathMiningBtn = document.getElementById('buildPathMiningBtnProbe');
         if (buildPathMiningBtn) {
             buildPathMiningBtn.addEventListener('click', () => {
                 this.startBuildingForProbe('miningFacility');
+            });
+        }
+
+        // Manage Equipment button - opens equipment modal via DetailsPanel
+        const manageEquipmentBtn = document.getElementById('manageEquipmentBtnOld');
+        if (manageEquipmentBtn) {
+            manageEquipmentBtn.addEventListener('click', () => {
+                const selectedProbe = this.gameState.ui.selectedProbe;
+                if (selectedProbe && window.game && window.game.detailsPanel) {
+                    window.game.detailsPanel.showEquipmentModal(selectedProbe);
+                }
             });
         }
     }
@@ -95,13 +243,18 @@ class UIManager {
 
         // Update probe detail content
         this.updateProbeDetailContent(probe);
-        
+
+        // Update equipment slots display
+        this.updateEquipmentSlots(probe);
+
         // Show the panel
-        this.elements.probeDetailPanel.style.display = 'block';
-        
-        // Update panel position
-        this.updateProbeDetailPanelPosition(probe);
-        
+        if (this.elements.probeDetailPanel) {
+            this.elements.probeDetailPanel.style.display = 'block';
+        }
+
+        // Start tracking probe position
+        this.startProbeTracking(probe);
+
         // Show building panel if probe has a path
         this.updateBuildingPanel(probe);
     }
@@ -110,9 +263,16 @@ class UIManager {
      * Hide probe details panel
      */
     hideProbeDetails() {
-        this.elements.probeDetailPanel.style.display = 'none';
+        // Stop tracking
+        this.stopProbeTracking();
+
+        // Hide panel
+        if (this.elements.probeDetailPanel) {
+            this.elements.probeDetailPanel.style.display = 'none';
+        }
+
         this.gameState.ui.selectedProbe = null;
-        
+
         // Unlock camera when closing probe details
         this.gameState.ui.cameraLocked = false;
         this.gameState.ui.lockedProbe = null;
@@ -120,9 +280,9 @@ class UIManager {
             locked: false,
             probe: null
         });
-        
+
         // Exit building mode if active
-        if (this.buildingSystem.isBuildingMode()) {
+        if (this.buildingSystem && this.buildingSystem.isBuildingMode()) {
             this.buildingSystem.exitBuildingMode();
         }
     }
@@ -138,15 +298,99 @@ class UIManager {
         }
 
         // Update patrol mode checkbox (defaults to true if not set)
-        this.elements.patrolModeCheckbox.checked = probe.patrolMode !== false;
-        
-        // Update camera lock checkbox
-        this.elements.cameraLockCheckbox.checked = 
-            this.gameState.ui.cameraLocked && 
-            this.gameState.ui.lockedProbe === probe;
+        if (this.elements.patrolModeCheckbox) {
+            this.elements.patrolModeCheckbox.checked = probe.patrolMode !== false;
+        }
 
-        // Update equipment display
-        this.updateEquipmentDisplay(probe);
+        // Update camera lock checkbox
+        if (this.elements.cameraLockCheckbox) {
+            this.elements.cameraLockCheckbox.checked =
+                this.gameState.ui.cameraLocked &&
+                this.gameState.ui.lockedProbe === probe;
+        }
+    }
+
+    /**
+     * Update equipment slots visualization (2 available + 1 greyed/locked)
+     */
+    updateEquipmentSlots(probe) {
+        const container = this.elements.equipmentSlotBoxes;
+        if (!container) return;
+
+        const equipmentArray = Array.isArray(probe.equipment) ? probe.equipment :
+                              (probe.equipment ? [probe.equipment] : []);
+        const maxSlots = probe.maxEquipmentSlots || 2;
+        const usedSlots = equipmentArray.length;
+
+        const icons = {
+            'mineral_collector': '⛏️',
+            'data_collector': '💾',
+            'artifact_collector': '🏺',
+            'universal_collector': '🌟'
+        };
+
+        let slotsHtml = '';
+
+        // Render available slots (maxSlots)
+        for (let i = 0; i < maxSlots; i++) {
+            const isEquipped = i < usedSlots;
+            const equipment = isEquipped ? equipmentArray[i] : null;
+            const icon = equipment ? (icons[equipment.type] || '❓') : '';
+
+            if (isEquipped) {
+                // Filled slot with equipment icon
+                slotsHtml += `
+                    <div style="
+                        width: 44px;
+                        height: 44px;
+                        border: 2px solid #0f8;
+                        border-radius: 6px;
+                        background: rgba(0,255,128,0.15);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        box-shadow: 0 0 8px rgba(0,255,128,0.3);
+                    " title="${equipment.name || 'Equipment'}">
+                        <span style="font-size: 22px;">${icon}</span>
+                    </div>
+                `;
+            } else {
+                // Empty available slot
+                slotsHtml += `
+                    <div style="
+                        width: 44px;
+                        height: 44px;
+                        border: 2px dashed #0f8;
+                        border-radius: 6px;
+                        background: rgba(0,255,128,0.05);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    " title="Empty slot">
+                        <span style="color: #0f8; font-size: 18px; opacity: 0.5;">+</span>
+                    </div>
+                `;
+            }
+        }
+
+        // Add locked 3rd slot (greyed out)
+        slotsHtml += `
+            <div style="
+                width: 44px;
+                height: 44px;
+                border: 2px dashed #333;
+                border-radius: 6px;
+                background: rgba(50,50,50,0.3);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                opacity: 0.5;
+            " title="Locked - Upgrade via research">
+                <span style="color: #666; font-size: 14px;">🔒</span>
+            </div>
+        `;
+
+        container.innerHTML = slotsHtml;
     }
 
     /**
@@ -154,12 +398,14 @@ class UIManager {
      */
     updateBuildingPanel(probe) {
         const hasPath = probe.waypoints && probe.waypoints.length > 0;
-        
-        if (hasPath) {
-            this.elements.probeBuildingPanel.style.display = 'block';
-            this.updateBuildingButtons();
-        } else {
-            this.elements.probeBuildingPanel.style.display = 'none';
+
+        if (this.elements.probeBuildingPanel) {
+            if (hasPath) {
+                this.elements.probeBuildingPanel.style.display = 'block';
+                this.updateBuildingButtons();
+            } else {
+                this.elements.probeBuildingPanel.style.display = 'none';
+            }
         }
     }
 
@@ -168,13 +414,15 @@ class UIManager {
      */
     updateBuildingButtons() {
         const resources = this.gameState.getResources();
-        
+
         // Hub button
-        const canBuildHub = resources.minerals >= 100;
-        this.elements.buildPathHubBtnProbe.disabled = !canBuildHub;
-        this.elements.buildPathHubBtnProbe.classList.toggle('disabled', !canBuildHub);
-        
-        // Mining facility button  
+        if (this.elements.buildPathHubBtnProbe) {
+            const canBuildHub = resources.minerals >= 100;
+            this.elements.buildPathHubBtnProbe.disabled = !canBuildHub;
+            this.elements.buildPathHubBtnProbe.classList.toggle('disabled', !canBuildHub);
+        }
+
+        // Mining facility button
         const buildPathMiningBtn = document.getElementById('buildPathMiningBtnProbe');
         if (buildPathMiningBtn) {
             const canBuildMining = resources.minerals >= 100 && resources.data >= 50;
@@ -197,24 +445,35 @@ class UIManager {
     }
 
     /**
-     * Update probe detail panel position
+     * Update probe detail panel position (100px to right of probe)
      */
     updateProbeDetailPanelPosition(probe) {
         if (!probe || !this.elements.probeDetailPanel) return;
 
         const world = this.gameState.getWorld();
-        
+
         // Convert world coordinates to screen coordinates
-        const screenX = probe.current.x - world.viewOffset.x;
-        const screenY = probe.current.y - world.viewOffset.y;
-        
-        // Position panel to the right of the probe
+        const probeScreenX = probe.current.x - world.viewOffset.x;
+        const probeScreenY = probe.current.y - world.viewOffset.y;
+
+        // Position panel 100px to the right of the probe
         const panelWidth = 280;
-        const panelX = Math.min(screenX + 50, window.innerWidth - panelWidth - 20);
-        const panelY = Math.max(20, Math.min(screenY - 100, window.innerHeight - 400));
-        
+        const panelHeight = this.elements.probeDetailPanel.offsetHeight || 400;
+
+        let panelX = probeScreenX + 100;
+        let panelY = probeScreenY - (panelHeight / 2);
+
+        // Keep panel on screen
+        panelX = Math.min(panelX, window.innerWidth - panelWidth - 20);
+        panelX = Math.max(20, panelX);
+        panelY = Math.min(panelY, window.innerHeight - panelHeight - 20);
+        panelY = Math.max(80, panelY);
+
+        // Apply position
+        this.elements.probeDetailPanel.style.position = 'fixed';
         this.elements.probeDetailPanel.style.left = panelX + 'px';
         this.elements.probeDetailPanel.style.top = panelY + 'px';
+        this.elements.probeDetailPanel.style.right = 'auto';
     }
 
     /**
@@ -241,34 +500,54 @@ class UIManager {
 
     /**
      * Update equipment display
+     * Note: Equipment elements may not exist if using the new Manage Equipment modal
+     * Supports both array-based equipment (new system) and single-object (legacy)
      */
     updateEquipmentDisplay(probe) {
         const equipmentSlot = document.getElementById('equipmentSlot');
         const equipmentInfo = document.getElementById('equipmentInfo');
         const equipmentActions = document.getElementById('equipmentActions');
-        
-        if (probe.equipment) {
-            // Show equipped auto-collector
+
+        // Early return if equipment elements don't exist (using new modal system)
+        if (!equipmentSlot) return;
+
+        // Normalize equipment to array format
+        const equipmentArray = Array.isArray(probe.equipment) ? probe.equipment :
+                              (probe.equipment ? [probe.equipment] : []);
+        const hasEquipment = equipmentArray.length > 0;
+        const maxSlots = probe.maxEquipmentSlots || 2;
+
+        if (hasEquipment) {
+            // Show equipped items summary
             equipmentSlot.innerHTML = '<span style="color: #0ff; font-size: 16px;">🤖</span>';
             equipmentSlot.style.borderColor = '#0ff';
             equipmentSlot.style.background = 'rgba(0,255,255,0.1)';
-            equipmentSlot.title = probe.equipment.name;
-            
+            equipmentSlot.title = `${equipmentArray.length}/${maxSlots} slots used`;
+
             if (equipmentInfo) {
-                const collectionIcons = this.getCollectionTypeIcons(probe.equipment.collectionTypes);
+                // Combine all collection types from equipped items
+                const allCollectionTypes = new Set();
+                equipmentArray.forEach(eq => {
+                    if (eq.collectionTypes) {
+                        eq.collectionTypes.forEach(t => allCollectionTypes.add(t));
+                    }
+                });
+                const collectionIcons = this.getCollectionTypeIcons(Array.from(allCollectionTypes));
+
+                const equipmentNames = equipmentArray.map(eq => eq.name || eq.type).join(', ');
                 equipmentInfo.innerHTML = `
-                    <div style="color: #0ff; font-weight: bold; margin-bottom: 4px;">${probe.equipment.name}</div>
+                    <div style="color: #0ff; font-weight: bold; margin-bottom: 4px;">${equipmentArray.length} item(s)</div>
                     <div style="color: #aaa; font-size: 10px; margin-bottom: 4px;">Collecting: ${collectionIcons}</div>
-                    ${probe.equipment.availableTypes.length > 1 ? '<div style="color: #888; font-size: 9px;">Click icons to toggle</div>' : ''}
+                    <div style="color: #888; font-size: 9px;">${equipmentNames}</div>
                 `;
             }
-            
+
             if (equipmentActions) {
                 equipmentActions.innerHTML = `
-                    <button class="control-btn" style="font-size: 11px; padding: 6px 12px; background: #822;" 
-                            onclick="game.removeEquipment('${probe.id}')" 
-                            title="Remove this equipment from the probe">
-                        🗑️ Remove Equipment
+                    <button class="control-btn" style="font-size: 11px; padding: 6px 12px;"
+                            onclick="window.game.detailsPanel.showEquipmentModal(window.game.gameState.entities.probes.find(p => p.id === '${probe.id}'))"
+                            title="Manage probe equipment">
+                        🔧 Manage Equipment
                     </button>
                 `;
             }
@@ -277,29 +556,26 @@ class UIManager {
             equipmentSlot.innerHTML = '<span style="color: #444; font-size: 12px;">Empty</span>';
             equipmentSlot.style.borderColor = '#444';
             equipmentSlot.style.background = 'rgba(0,0,0,0.3)';
-            equipmentSlot.title = 'No equipment installed';
-            
+            equipmentSlot.title = `0/${maxSlots} slots used`;
+
             if (equipmentInfo) {
                 equipmentInfo.textContent = 'No equipment installed';
             }
-            
+
             if (equipmentActions) {
                 // Check if auto-collection research is unlocked
                 const research = this.gameState.getResearchSystem();
-                const hasAutoCollection = research.researched.has('auto_minerals') || 
-                                        research.researched.has('auto_data') || 
-                                        research.researched.has('auto_artifacts');
-                
+                const hasAutoCollection = research.researched.has('auto_minerals') ||
+                                        research.researched.has('auto_data') ||
+                                        research.researched.has('auto_artifacts') ||
+                                        research.researched.has('auto_all');
+
                 if (hasAutoCollection) {
-                    const resources = this.gameState.getResources();
-                    const canAfford = resources.minerals >= 25;
-                    
                     equipmentActions.innerHTML = `
-                        <button class="control-btn" style="font-size: 11px; padding: 6px 12px; ${!canAfford ? 'opacity: 0.5; cursor: not-allowed; background: #333; color: #666;' : ''}" 
-                                onclick="window.uiManager.equipAutoCollector('${probe.id}')" 
-                                ${!canAfford ? 'disabled' : ''}
-                                title="${canAfford ? 'Craft and equip Auto-Collector for automatic signal collection' : 'Need 25 Minerals to craft'}">
-                            🤖 Craft Auto-Collector (25M)
+                        <button class="control-btn" style="font-size: 11px; padding: 6px 12px;"
+                                onclick="window.game.detailsPanel.showEquipmentModal(window.game.gameState.entities.probes.find(p => p.id === '${probe.id}'))"
+                                title="Open equipment management">
+                            🔧 Manage Equipment
                         </button>
                     `;
                 } else {
@@ -401,9 +677,12 @@ class UIManager {
         this.updateSectorInfo();
         this.updateProbePanel();
         this.checkResearchUnlock();
-        
-        // Update building buttons if probe detail panel is open
-        if (this.elements.probeDetailPanel.style.display === 'block') {
+
+        // Update equipment slots if probe panel is visible
+        if (this.elements.probeDetailPanel &&
+            this.elements.probeDetailPanel.style.display === 'block' &&
+            this.gameState.ui.selectedProbe) {
+            this.updateEquipmentSlots(this.gameState.ui.selectedProbe);
             this.updateBuildingButtons();
         }
     }
@@ -710,23 +989,28 @@ class UIManager {
 
     /**
      * Check if research should be unlocked based on having research points
+     * Research is gated by the tutorial system - it can only unlock after certain tutorial progress
      */
     checkResearchUnlock() {
         const research = this.gameState.getResearchSystem();
-        
-        // Always ensure unlocked trees are set if research is unlocked
+
+        // Always ensure unlocked trees are set if research is already unlocked
         if (research.unlocked && research.unlockedTrees.length === 0) {
             console.log('Research is unlocked but trees are not set, fixing...');
             research.unlockedTrees = ['collection', 'probe', 'alien'];
         }
-        
-        // Check if research should be unlocked (player has at least 1 research point)
-        if (!research.unlocked && research.points > 0) {
+
+        // Check if tutorial allows research access
+        const tutorialManager = this.gameState.tutorialManager;
+        const researchAccessAllowed = !tutorialManager || tutorialManager.isResearchAccessAllowed();
+
+        // Check if research should be unlocked (player has points AND tutorial allows it)
+        if (!research.unlocked && research.points > 0 && researchAccessAllowed) {
             research.unlocked = true;
-            
+
             // Unlock ALL three trees at once
             research.unlockedTrees = ['collection', 'probe', 'alien'];
-            
+
             // Auto-research all three root nodes
             const rootNodes = ['collection', 'probe_tech', 'alien_tech'];
             rootNodes.forEach(rootId => {
@@ -734,7 +1018,7 @@ class UIManager {
                 if (rootNode && !rootNode.researched) {
                     rootNode.researched = true;
                     research.researched.add(rootId);
-                    
+
                     // Unlock children
                     if (rootNode.children) {
                         rootNode.children.forEach(childId => {
@@ -745,24 +1029,27 @@ class UIManager {
                     console.log(`Auto-researched root node: ${rootId}`);
                 }
             });
-            
+
             // Show research button
             const researchBtn = document.getElementById('researchBtn');
             if (researchBtn) {
                 researchBtn.style.display = 'inline-block';
             }
-            
+
+            // Emit event for tutorial system
+            this.eventBus.emit('research:unlocked');
+
             // Show research unlocked message and automatically open research modal
             this.showResearchUnlockModal();
             console.log('Research system unlocked! All three trees and root nodes are now available.');
         }
-        
+
         // Ensure research button is visible if research is already unlocked (e.g., after loading save)
-        if (research.unlocked) {
+        // But only if tutorial allows access
+        if (research.unlocked && researchAccessAllowed) {
             const researchBtn = document.getElementById('researchBtn');
             if (researchBtn) {
                 researchBtn.style.display = 'inline-block';
-                console.log('Research already unlocked, ensuring button is visible');
             }
         }
     }
@@ -1085,64 +1372,41 @@ class UIManager {
     }
 
     /**
-     * Equip auto-collector to probe
+     * Equip auto-collector to probe (legacy method - redirects to modal)
+     * Kept for backwards compatibility with old UI elements
      */
     equipAutoCollector(probeId) {
         const probe = this.gameState.entities.probes.find(p => p.id.toString() === probeId);
         if (!probe) return;
-        
-        const resources = this.gameState.getResources();
-        if (resources.minerals < 25 || probe.equipment) return;
-        
-        // Spend resources
-        this.gameState.updateResources({ minerals: resources.minerals - 25 }, this.eventBus);
-        
-        // Determine what collection types are available
-        const research = this.gameState.getResearchSystem();
-        console.log('Research status:', Array.from(research.researched));
-        
-        const availableTypes = [];
-        if (research.researched.has('auto_minerals')) availableTypes.push('minerals');
-        if (research.researched.has('auto_data')) availableTypes.push('data');
-        if (research.researched.has('auto_artifacts')) availableTypes.push('artifacts');
-        
-        console.log('Available collection types:', availableTypes);
-        
-        // Start with all available types if universal collection is researched
-        let collectionTypes = [...availableTypes];
-        if (research.researched.has('auto_all')) {
-            collectionTypes = ['all'];
+
+        // Open the equipment modal instead of directly equipping
+        if (window.game && window.game.detailsPanel) {
+            window.game.detailsPanel.showEquipmentModal(probe);
         }
-        
-        // Create equipment
-        probe.equipment = {
-            type: 'auto_collector',
-            name: 'Auto-Collector',
-            collectionTypes: collectionTypes,
-            availableTypes: availableTypes
-        };
-        
-        console.log('Equipment created for probe', probe.id, ':', probe.equipment);
-        
-        // Update UI
-        this.updateEquipmentDisplay(probe);
-        this.eventBus.emit('ui:update');
-        
-        this.showMessage({ text: 'Auto-Collector equipped! This probe will now collect signals automatically.', type: 'success' });
     }
 
     /**
-     * Remove equipment from probe
+     * Remove equipment from probe (legacy method)
+     * Supports both array-based and object-based equipment
      */
     removeEquipment(probeId) {
         const probe = this.gameState.entities.probes.find(p => p.id.toString() === probeId);
         if (!probe || !probe.equipment) return;
-        
-        const equipmentName = probe.equipment.name;
-        probe.equipment = null;
-        
-        this.updateEquipmentDisplay(probe);
-        this.showMessage({ text: `${equipmentName} removed from probe.`, type: 'info' });
+
+        // Handle array-based equipment (new system)
+        if (Array.isArray(probe.equipment)) {
+            if (probe.equipment.length === 0) return;
+            const equipmentName = probe.equipment[0].name || 'Equipment';
+            probe.equipment.shift();
+            this.updateEquipmentDisplay(probe);
+            this.showMessage({ text: `${equipmentName} removed from probe.`, type: 'info' });
+        } else {
+            // Legacy single-object equipment
+            const equipmentName = probe.equipment.name;
+            probe.equipment = [];
+            this.updateEquipmentDisplay(probe);
+            this.showMessage({ text: `${equipmentName} removed from probe.`, type: 'info' });
+        }
     }
 
     /**
@@ -1150,12 +1414,13 @@ class UIManager {
      */
     onProbeDestroyed(data) {
         const { probe } = data;
-        
-        // Hide probe detail panel if destroyed probe was selected
+
+        // Close details panel if destroyed probe was selected
         if (this.gameState.ui.selectedProbe === probe) {
             this.hideProbeDetails();
+            this.eventBus.emit('details:close');
         }
-        
+
         // Update UI to reflect probe removal
         this.updateUI();
     }

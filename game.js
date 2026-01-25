@@ -588,15 +588,21 @@ class SpaceIdleGame {
             this.startBuildingMode('hub');
         });
         
-        document.getElementById('closeProbeDetail').addEventListener('click', () => {
-            document.getElementById('probeDetailPanel').style.display = 'none';
-            this.selectedProbe = null;
-            this.cameraLocked = false;
-            this.lockedProbe = null;
-            this.updateProbePanel();
-        });
-        
-        document.getElementById('patrolModeCheckbox').addEventListener('change', (e) => {
+        // Old probe detail panel elements removed - now handled by DetailsPanel.js
+        const closeProbeDetailBtn = document.getElementById('closeProbeDetail');
+        if (closeProbeDetailBtn) {
+            closeProbeDetailBtn.addEventListener('click', () => {
+                const probeDetailPanel = document.getElementById('probeDetailPanel');
+                if (probeDetailPanel) probeDetailPanel.style.display = 'none';
+                this.selectedProbe = null;
+                this.cameraLocked = false;
+                this.lockedProbe = null;
+                this.updateProbePanel();
+            });
+        }
+
+        const patrolModeCheckbox = document.getElementById('patrolModeCheckbox');
+        if (patrolModeCheckbox) patrolModeCheckbox.addEventListener('change', (e) => {
             if (this.selectedProbe) {
                 this.selectedProbe.patrolMode = e.target.checked;
                 this.updateProbePanel();
@@ -2106,110 +2112,14 @@ class SpaceIdleGame {
     
     showProbeDetailPanel(probe) {
         console.log('showProbeDetailPanel called for probe:', probe.id);
-        const panel = document.getElementById('probeDetailPanel');
-        const statusText = document.getElementById('probeStatusText');
-        const patrolCheckbox = document.getElementById('patrolModeCheckbox');
-        const probeIcon = document.querySelector('#probeIcon > div');
-        
-        if (!panel || !statusText || !patrolCheckbox || !probeIcon) {
-            console.log('Probe detail panel elements not found');
-            return;
+        // Emit event for UIManager to handle
+        if (this.eventBus) {
+            this.eventBus.emit('ui:probeSelected', { probe: probe });
         }
-        
-        // Update status display
-        let status, color;
-        if (probe.status === 'ready') {
-            status = 'Ready at Hub';
-            color = '#0f0';
-        } else if (probe.status === 'returning') {
-            status = 'Returning to Hub';
-            color = '#ffa500';
-        } else {
-            status = 'Exploring';
-            color = '#0ff';
-        }
-        
-        if (probe.patrolMode && probe.status !== 'ready') {
-            status += ' (Patrol Mode)';
-        }
-        
-        statusText.textContent = status;
-        statusText.style.color = color;
-        
-        // Update probe icon color
-        probeIcon.style.borderColor = color;
-        probeIcon.style.background = `rgba(${color === '#0f0' ? '0,255,0' : color === '#ffa500' ? '255,165,0' : '0,255,255'}, 0.1)`;
-        
-        // Set patrol checkbox
-        patrolCheckbox.checked = probe.patrolMode;
-        
-        // Set camera lock checkbox
-        const cameraLockCheckbox = document.getElementById('cameraLockCheckbox');
-        if (cameraLockCheckbox) {
-            cameraLockCheckbox.checked = this.cameraLocked && this.lockedProbe === probe;
-        }
-        
-        // Update equipment slot
-        this.updateEquipmentSlot(probe);
-        
-        // Position panel near probe
-        this.updateProbeDetailPanelPosition(probe);
-        
-        // Show panel
-        panel.style.display = 'block';
-        console.log('Probe detail panel set to visible');
     }
     
     updateProbeDetailPanelPosition(probe) {
-        const panel = document.getElementById('probeDetailPanel');
-        if (!panel || !probe) return;
-        
-        // Since camera is locked on probe, probe should be at center of canvas
-        // Get canvas center position on screen
-        const canvasRect = this.canvas.getBoundingClientRect();
-        const canvasCenterX = canvasRect.left + (this.canvas.width / 2);
-        const canvasCenterY = canvasRect.top + (this.canvas.height / 2);
-        
-        // Calculate probe position on canvas relative to center
-        const probeCanvasX = probe.current.x - this.viewOffset.x;
-        const probeCanvasY = probe.current.y - this.viewOffset.y;
-        
-        // Calculate screen position from canvas center
-        const probeScreenX = canvasCenterX + (probeCanvasX - this.canvas.width / 2);
-        const probeScreenY = canvasCenterY + (probeCanvasY - this.canvas.height / 2);
-        
-        // Position panel to the right of probe
-        const offsetX = 100;
-        const offsetY = -50;
-        const panelWidth = 280;
-        
-        let panelX = probeScreenX + offsetX;
-        let panelY = probeScreenY + offsetY;
-        
-        // If panel would go off right side, put it on the left
-        if (panelX + panelWidth > window.innerWidth - 20) {
-            panelX = probeScreenX - offsetX - panelWidth;
-        }
-        
-        // Keep panel on screen vertically
-        panelY = Math.max(20, Math.min(panelY, window.innerHeight - 380));
-        panelX = Math.max(20, Math.min(panelX, window.innerWidth - panelWidth - 20));
-        
-        // Force positioning properties to ensure no CSS interference
-        panel.style.position = 'fixed';
-        panel.style.left = `${panelX}px`;
-        panel.style.top = `${panelY}px`;
-        panel.style.transform = 'none'; // Clear any transforms
-        panel.style.margin = '0';
-        panel.style.display = 'block';
-        
-        // Calculate actual distance between panel and probe
-        const distanceX = Math.abs(panelX - probeScreenX);
-        const distanceY = Math.abs(panelY - probeScreenY);
-        const totalDistance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
-        
-        // Debug positioning (commented out now that it's working)
-        // console.log(`Panel positioned at (${panelX}, ${panelY}), distance from probe: ${totalDistance.toFixed(1)}px`);
+        // Panel positioning now handled by DetailsPanel.js
     }
     
     
@@ -2790,12 +2700,9 @@ class SpaceIdleGame {
     render() {
         // Update camera lock before rendering
         this.updateCameraLock();
-        
-        // Update selected probe detail panel position continuously
-        if (this.selectedProbe && document.getElementById('probeDetailPanel').style.display === 'block') {
-            this.updateProbeDetailPanelPosition(this.selectedProbe);
-        }
-        
+
+        // Panel positioning now handled by DetailsPanel.js
+
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
         this.ctx.fillStyle = '#000';
@@ -3153,28 +3060,7 @@ class SpaceIdleGame {
             this.ctx.stroke();
         });
         
-        // Draw probe detail panel connection line
-        if (this.selectedProbe && document.getElementById('probeDetailPanel').style.display === 'block') {
-            const panel = document.getElementById('probeDetailPanel');
-            const probeScreenX = this.selectedProbe.current.x - this.viewOffset.x;
-            const probeScreenY = this.selectedProbe.current.y - this.viewOffset.y;
-            const panelRect = panel.getBoundingClientRect();
-            const canvasRect = this.canvas.getBoundingClientRect();
-            
-            // Calculate panel position relative to canvas
-            const panelCenterX = panelRect.left + panelRect.width / 2 - canvasRect.left;
-            const panelCenterY = panelRect.top + panelRect.height / 2 - canvasRect.top;
-            
-            // Draw connection line
-            this.ctx.strokeStyle = this.cameraLocked ? 'rgba(255, 215, 0, 0.6)' : 'rgba(0, 255, 255, 0.4)';
-            this.ctx.lineWidth = 2;
-            this.ctx.setLineDash([10, 5]);
-            this.ctx.beginPath();
-            this.ctx.moveTo(probeScreenX, probeScreenY);
-            this.ctx.lineTo(panelCenterX, panelCenterY);
-            this.ctx.stroke();
-            this.ctx.setLineDash([]);
-        }
+        // Probe detail panel connection line now handled by DetailsPanel.js
         
         // Draw version number in bottom right
         this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';

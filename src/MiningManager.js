@@ -356,8 +356,9 @@ class MiningManager {
             if (shuttle.status === 'delivering' && shuttle.target === 'station') {
                 const stationType = this.getStationTypes()[station.type];
                 const progress = this.getStationResourceProgress(station, stationType);
-                
-                if (progress >= 0.95) {
+
+                // Use same threshold as "needs resources" check (0.999) for consistency
+                if (progress >= 0.999) {
                     console.log('Station became full during delivery, returning to hub');
                     // Station is full, abort delivery and return home
                     shuttle.target = 'hub';
@@ -397,8 +398,8 @@ class MiningManager {
                 // Check if station needs resources
                 const stationType = this.getStationTypes()[station.type];
                 const progress = this.getStationResourceProgress(station, stationType);
-                const needsResources = progress < 0.95; // Station needs resources if below 95%
-                
+                const needsResources = progress < 0.999; // Station needs resources until 100% full
+
                 console.log('Station progress:', progress.toFixed(3), 'needs resources:', needsResources);
                 
                 if (needsResources) {
@@ -446,10 +447,10 @@ class MiningManager {
                     shuttle.status = 'waiting';
                 }
             } else if (shuttle.status === 'waiting') {
-                // Check if station needs resources again (when critically low)
+                // Check if station needs resources again
                 const stationType = this.getStationTypes()[station.type];
                 const progress = this.getStationResourceProgress(station, stationType);
-                const shouldResume = progress < 0.3; // Resume deliveries when station is critically low
+                const shouldResume = progress < 0.999; // Resume deliveries when station drops below 100%
                 
                 if (shouldResume) {
                     // Check if we have resources available before attempting to load
@@ -579,13 +580,18 @@ class MiningManager {
      */
     checkStationHasRequirements(station, stationType) {
         if (!station.stationInventory) return false;
-        
+
+        // Use small tolerance for floating point comparison
+        const TOLERANCE = 0.001;
+
         for (const [resource, required] of Object.entries(stationType.requirements)) {
-            if ((station.stationInventory[resource] || 0) < required) {
+            const currentAmount = station.stationInventory[resource] || 0;
+            // Check if we have at least (required - tolerance) to handle floating point precision
+            if (currentAmount < required - TOLERANCE) {
                 return false;
             }
         }
-        
+
         return true;
     }
     

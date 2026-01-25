@@ -268,18 +268,18 @@
 
                 
             </div>
-        
-        <!-- Probe Detail Panel (moved outside probeControls to avoid positioning conflicts) -->
+
+        <!-- Probe Detail Panel (floating near probe) -->
         <div id="probeDetailPanel" style="display: none; position: fixed; top: 780px; right: 15px; z-index: 1000; width: 280px; padding: 15px; background: rgba(0,0,0,0.95); border: 2px solid #0ff; border-radius: 8px; box-shadow: 0 0 20px rgba(0,255,255,0.3); backdrop-filter: blur(5px);">
             <div style="color: #0ff; font-size: 16px; margin-bottom: 12px; text-align: center;">Probe Details</div>
-            
+
             <div id="probeIcon" style="text-align: center; margin-bottom: 15px;">
                 <div style="width: 60px; height: 60px; margin: 0 auto; border: 2px solid #0ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(0,255,255,0.1);">
                     <span style="color: #0ff; font-size: 24px;">🛸</span>
                 </div>
                 <div id="probeStatusText" style="color: #0ff; font-size: 12px; margin-top: 5px;">Exploring</div>
             </div>
-            
+
             <div style="border-top: 1px solid #333; padding-top: 12px; margin-bottom: 12px;">
                 <label style="color: #888; font-size: 12px; display: flex; align-items: center; cursor: pointer; margin-bottom: 8px;">
                     <input type="checkbox" id="patrolModeCheckbox" style="margin-right: 8px; cursor: pointer;">
@@ -290,31 +290,27 @@
                     <span>🔒 Lock Camera to Probe</span>
                 </label>
             </div>
-            
-            <div style="border-top: 1px solid #333; padding-top: 12px;">
-                <div style="color: #888; font-size: 12px; margin-bottom: 8px;">Equipment:</div>
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                    <div id="equipmentSlot" style="width: 50px; height: 50px; border: 2px dashed #444; border-radius: 5px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); flex-shrink: 0;">
-                        <span style="color: #444; font-size: 12px;">Empty</span>
-                    </div>
-                    <div id="equipmentInfo" style="flex: 1; color: #888; font-size: 11px;">
-                        No equipment installed
-                    </div>
+
+            <!-- Equipment Slots Section -->
+            <div id="equipmentSlotsSection" style="border-top: 1px solid #333; padding-top: 12px; margin-bottom: 12px;">
+                <div style="color: #0f8; font-weight: bold; font-size: 12px; margin-bottom: 8px; text-align: center;">🔧 EQUIPMENT SLOTS</div>
+                <div id="equipmentSlotBoxes" style="display: flex; gap: 8px; justify-content: center; margin-bottom: 10px;">
+                    <!-- Slot boxes will be dynamically rendered -->
                 </div>
-                <div id="equipmentActions" style="color: #666; font-size: 10px;">
-                    Research technologies to unlock equipment
-                </div>
+                <button id="manageEquipmentBtnOld" class="control-btn" style="width: 100%; font-size: 11px; padding: 8px;">
+                    🔧 Manage Equipment
+                </button>
             </div>
-            
+
             <div id="probeBuildingPanel" style="display: none; border-top: 1px solid #333; padding-top: 12px; margin-top: 12px;">
                 <div style="color: #888; font-size: 12px; margin-bottom: 8px;">Build along probe path:</div>
                 <div style="display: flex; flex-direction: column; gap: 6px;">
                     <button id="buildPathHubBtnProbe" class="control-btn" style="font-size: 11px; padding: 6px 10px;">🏠 Build Hub (100M)</button>
-                    <button id="buildPathMiningBtnProbe" class="control-btn" style="font-size: 11px; padding: 6px 10px;">⛏️ Build Mining Facility (100M, 50D)</button>
+                    <button id="buildPathMiningBtnProbe" class="control-btn" style="font-size: 11px; padding: 6px 10px;">⛏️ Build Mining Station (100M, 50D)</button>
                 </div>
                 <div id="probeBuildingStatus" style="color: #888; font-size: 10px; margin-top: 8px; text-align: center;"></div>
             </div>
-            
+
             <button id="closeProbeDetail" class="control-btn" style="width: 100%; margin-top: 15px; font-size: 12px; padding: 8px;">Close</button>
         </div>
         </div>
@@ -324,13 +320,13 @@
             <div style="padding: 15px 15px 25px 15px; height: 100vh; display: flex; flex-direction: column; box-sizing: border-box;">
                 <!-- Header -->
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-shrink: 0; min-height: 60px;">
-                    <h2 style="color: #0ff; margin: 0;">Research Laboratory</h2>
                     <div style="display: flex; align-items: center; gap: 20px;">
-                        <div style="color: #0ff;">
-                            <span style="color: #888;">Research Points:</span>
-                            <span id="researchPoints" style="font-size: 18px; font-weight: bold;">0</span>
-                        </div>
                         <button id="returnToMapFromResearch" class="control-btn">Return to Galaxy</button>
+                        <h2 style="color: #0ff; margin: 0;">Research Laboratory</h2>
+                    </div>
+                    <div style="color: #0ff;">
+                        <span style="color: #888;">Research Points:</span>
+                        <span id="researchPoints" style="font-size: 18px; font-weight: bold;">0</span>
                     </div>
                 </div>
                 
@@ -384,15 +380,15 @@
                 <div id="explorationOptions">
                     <button class="explore-btn" data-mode="excavate">
                         <h3>Excavate</h3>
-                        <p>Mine for precious minerals and rare elements</p>
+                        <p>Mine for precious minerals and rare elements. <strong>Yields Minerals.</strong></p>
                     </button>
                     <button class="explore-btn" data-mode="exterminate">
                         <h3>Exterminate</h3>
-                        <p>Hunt dangerous creatures or study alien species</p>
+                        <p>Hunt dangerous creatures or study alien species. <strong>Yields Data.</strong></p>
                     </button>
                     <button class="explore-btn" data-mode="expedition">
                         <h3>Expedition</h3>
-                        <p>Search for ancient ruins and exotic lifeforms</p>
+                        <p>Search for ancient ruins and exotic lifeforms. <strong>Yields Artifacts.</strong></p>
                     </button>
                 </div>
             </div>
@@ -584,6 +580,25 @@
                     </div>
                 </div>
                 
+                <!-- Gameplay Settings -->
+                <div style="margin-bottom: 30px;">
+                    <h2 style="color: #0ff; font-size: 20px; margin-bottom: 15px; border-bottom: 2px solid #0ff; padding-bottom: 10px;">
+                        🎮 Gameplay
+                    </h2>
+
+                    <!-- Tutorial Toggle -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(0,255,255,0.05); border-radius: 8px; margin-bottom: 15px;">
+                        <div>
+                            <div style="color: #fff; font-size: 16px; margin-bottom: 5px;">Tutorial Tips</div>
+                            <div style="color: #888; font-size: 12px;">Show tutorial guidance and tips</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="tutorialToggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
                 <!-- Close Button -->
                 <button id="closeSettingsBtn" style="width: 100%; padding: 15px; background: #0ff; color: #000; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s;">
                     Close Settings
@@ -613,6 +628,7 @@
     <script src="src/NameGenerator.js"></script>
     <script src="src/EventBus.js"></script>
     <script src="src/GameState.js"></script>
+    <script src="src/EquipmentSystem.js"></script>
     <script src="src/ProbeManager.js"></script>
     <script src="src/BuildingSystem.js"></script>
     <script src="src/MiningManager.js"></script>
@@ -623,6 +639,8 @@
     <script src="src/TutorialManager.js"></script>
     <script src="src/CosmeticManager.js"></script>
     <script src="src/DarkMarketSystem.js"></script>
+    <script src="src/RemnantManager.js"></script>
+    <script src="src/DialogueSystem.js"></script>
     <script src="src/MusicManager.js"></script>
     <script src="src/UIManager.js"></script>
     <script src="src/DetailsPanel.js"></script>
@@ -647,6 +665,8 @@
             { name: 'OfflineManager', type: 'class' },
             { name: 'TutorialManager', type: 'class' },
             { name: 'CosmeticManager', type: 'class' },
+            { name: 'RemnantManager', type: 'class' },
+            { name: 'DialogueSystem', type: 'class' },
             { name: 'UIManager', type: 'class' },
             { name: 'DetailsPanel', type: 'class' },
             { name: 'GameController', type: 'class' }
@@ -716,6 +736,7 @@
             await storageAdapter.removeItem('csog_last_play_time');
             await storageAdapter.removeItem('tutorialCompleted');
             await storageAdapter.removeItem('tutorialProgress');
+            await storageAdapter.removeItem('cutsceneSeen');  // Ensure intro plays on every New Game
             
             // Hide start screen
             document.getElementById('startScreen').style.display = 'none';

@@ -8,23 +8,23 @@ class DetailsPanel {
         this.eventBus = eventBus;
         this.currentEntity = null;
         this.currentEntityType = null;
-        
+
         // Cache DOM elements (with error checking)
         this.panel = document.getElementById('detailsPanel');
         this.icon = document.getElementById('detailsIcon');
         this.title = document.getElementById('detailsTitle');
         this.content = document.getElementById('detailsContent');
         this.closeBtn = document.getElementById('closeDetailsBtn');
-        
+
         // Check if elements exist
         if (!this.panel || !this.icon || !this.title || !this.content) {
             console.warn('DetailsPanel: Some DOM elements not found during initialization');
             return;
         }
-        
+
         // Set up event listeners
         this.setupEventListeners();
-        
+
         // Listen for entity selection events
         this.eventBus.on('entity:selected', this.showEntityDetails.bind(this));
         this.eventBus.on('details:close', this.hide.bind(this));
@@ -114,14 +114,17 @@ class DetailsPanel {
         this.currentEntityType = type;
         
         console.log('DetailsPanel: Showing', type, 'details for entity:', entity.id || entity);
-        
+
+        // Probes are handled by UIManager's probeDetailPanel, skip DetailsPanel for probes
+        if (type === 'probe') {
+            console.log('DetailsPanel: Probes handled by probeDetailPanel, skipping');
+            return;
+        }
+
         // Update panel based on entity type
         switch(type) {
             case 'hub':
                 this.showHubDetails(entity);
-                break;
-            case 'probe':
-                this.showProbeDetails(entity);
                 break;
             case 'miningStation':
                 this.showMiningStationDetails(entity);
@@ -136,7 +139,7 @@ class DetailsPanel {
                 console.warn('Unknown entity type:', type);
                 return;
         }
-        
+
         // Show the panel
         console.log('DetailsPanel: Setting display to block');
         this.panel.style.display = 'block';
@@ -402,13 +405,15 @@ class DetailsPanel {
                 </label>
             </div>
             
+            ${this.renderEquipmentSection(probe)}
             ${this.renderCargoSection(probe)}
             ${this.renderSkinSelector(probe)}
         `;
-        
+
         // Add probe control listeners
         this.setupProbeButtons(probe);
         this.setupSkinSelectors(probe);
+        this.setupEquipmentButtons(probe);
     }
     
     /**
@@ -563,6 +568,13 @@ class DetailsPanel {
         this.panel.style.display = 'none';
         this.currentEntity = null;
         this.currentEntityType = null;
+
+        // Also close equipment modal if open
+        const equipmentModal = document.getElementById('equipmentModal');
+        if (equipmentModal) {
+            equipmentModal.remove();
+        }
+
         this.eventBus.emit('details:hidden');
     }
     
@@ -647,6 +659,423 @@ class DetailsPanel {
         
     }
     
+    /**
+     * Render equipment section for probe
+     */
+    renderEquipmentSection(probe) {
+        const research = this.gameState.getResearchSystem();
+        const hasAnyAutoCollector = research.researched.has('auto_minerals') ||
+                                    research.researched.has('auto_data') ||
+                                    research.researched.has('auto_artifacts') ||
+                                    research.researched.has('auto_all');
+
+        // Get equipment array (handle both array and legacy object formats)
+        const equipmentArray = Array.isArray(probe.equipment) ? probe.equipment :
+                              (probe.equipment ? [probe.equipment] : []);
+        const maxSlots = probe.maxEquipmentSlots || 2;
+        const usedSlots = equipmentArray.length;
+
+        const icons = {
+            'minerals': '⛏️',
+            'mineral_collector': '⛏️',
+            'data': '💾',
+            'data_collector': '💾',
+            'artifacts': '🏺',
+            'artifact_collector': '🏺',
+            'all': '🌟',
+            'universal_collector': '🌟'
+        };
+
+        // Build visual slot boxes (2 available + 1 greyed/locked)
+        const renderSlotBoxes = () => {
+            let slotsHtml = '<div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 10px;">';
+
+            // Render available slots (maxSlots)
+            for (let i = 0; i < maxSlots; i++) {
+                const isEquipped = i < usedSlots;
+                const equipment = isEquipped ? equipmentArray[i] : null;
+                const icon = equipment ? (icons[equipment.type] || '❓') : '';
+
+                if (isEquipped) {
+                    // Filled slot with equipment icon
+                    slotsHtml += `
+                        <div style="
+                            width: 44px;
+                            height: 44px;
+                            border: 2px solid #0f8;
+                            border-radius: 6px;
+                            background: rgba(0,255,128,0.15);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            box-shadow: 0 0 8px rgba(0,255,128,0.3);
+                        " title="${equipment.name || 'Equipment'}">
+                            <span style="font-size: 22px;">${icon}</span>
+                        </div>
+                    `;
+                } else {
+                    // Empty available slot
+                    slotsHtml += `
+                        <div style="
+                            width: 44px;
+                            height: 44px;
+                            border: 2px dashed #0f8;
+                            border-radius: 6px;
+                            background: rgba(0,255,128,0.05);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        " title="Empty slot">
+                            <span style="color: #0f8; font-size: 18px; opacity: 0.5;">+</span>
+                        </div>
+                    `;
+                }
+            }
+
+            // Add locked 3rd slot (greyed out)
+            slotsHtml += `
+                <div style="
+                    width: 44px;
+                    height: 44px;
+                    border: 2px dashed #333;
+                    border-radius: 6px;
+                    background: rgba(50,50,50,0.3);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    opacity: 0.5;
+                " title="Locked - Upgrade via research">
+                    <span style="color: #666; font-size: 14px;">🔒</span>
+                </div>
+            `;
+
+            slotsHtml += '</div>';
+            return slotsHtml;
+        };
+
+        // If no auto-collector research, show locked message but still display slots
+        if (!hasAnyAutoCollector) {
+            return `
+                <div style="border: 1px solid #444; border-radius: 5px; padding: 10px; margin-top: 12px; background: rgba(100,100,100,0.1);">
+                    <div style="color: #666; font-weight: bold; font-size: 12px; margin-bottom: 8px; text-align: center;">
+                        🔧 EQUIPMENT SLOTS
+                    </div>
+                    ${renderSlotBoxes()}
+                    <div style="color: #888; font-size: 11px; text-align: center; padding: 5px;">
+                        🔒 Research auto-collection technology to unlock equipment
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div style="border: 1px solid #444; border-radius: 5px; padding: 10px; margin-top: 12px; background: rgba(0,255,128,0.02);">
+                <div style="color: #0f8; font-weight: bold; font-size: 12px; margin-bottom: 8px; text-align: center;">
+                    🔧 EQUIPMENT SLOTS
+                </div>
+                ${renderSlotBoxes()}
+                <button id="manageEquipmentBtn" class="control-btn" style="font-size: 10px; padding: 6px 10px; width: 100%;">
+                    Manage Equipment
+                </button>
+            </div>
+        `;
+    }
+
+    /**
+     * Setup equipment button handlers
+     */
+    setupEquipmentButtons(probe) {
+        const manageBtn = document.getElementById('manageEquipmentBtn');
+        if (manageBtn) {
+            manageBtn.addEventListener('click', () => {
+                this.showEquipmentModal(probe);
+            });
+        }
+
+        const removeBtn = document.getElementById('removeEquipmentBtn');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', () => {
+                this.removeEquipment(probe);
+            });
+        }
+    }
+
+    /**
+     * Show equipment management modal
+     */
+    showEquipmentModal(probe) {
+        // Remove existing modal if present
+        const existingModal = document.getElementById('equipmentModal');
+        if (existingModal) existingModal.remove();
+
+        const research = this.gameState.getResearchSystem();
+        const resources = this.gameState.getResources();
+
+        // Build available equipment list from EQUIPMENT_TYPES
+        const equipmentTypes = [];
+        const equipmentIcons = {
+            'mineral_collector': '⛏️',
+            'data_collector': '💾',
+            'artifact_collector': '🏺',
+            'universal_collector': '🌟'
+        };
+
+        if (typeof EQUIPMENT_TYPES !== 'undefined') {
+            Object.values(EQUIPMENT_TYPES).forEach(eq => {
+                if (research.researched.has(eq.requiredResearch)) {
+                    equipmentTypes.push({
+                        ...eq,
+                        icon: equipmentIcons[eq.id] || '❓'
+                    });
+                }
+            });
+        }
+
+        const modal = document.createElement('div');
+        modal.id = 'equipmentModal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        `;
+
+        // Calculate slots
+        const equippedItems = Array.isArray(probe.equipment) ? probe.equipment : [];
+        const usedSlots = equippedItems.length;
+        const maxSlots = probe.maxEquipmentSlots || 2;
+        const slotsAvailable = maxSlots - usedSlots;
+
+        // Check which equipment is already installed
+        const equippedTypes = new Set(equippedItems.map(eq => eq.type));
+
+        // Build slot visualization
+        const slotIndicators = [];
+        for (let i = 0; i < maxSlots; i++) {
+            if (i < usedSlots) {
+                slotIndicators.push('<span style="color: #0f8;">[X]</span>');
+            } else {
+                slotIndicators.push('<span style="color: #444;">[ ]</span>');
+            }
+        }
+
+        modal.innerHTML = `
+            <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border: 2px solid #0f8; border-radius: 10px; padding: 20px; max-width: 450px; width: 90%;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 style="color: #0f8; margin: 0;">🔧 Manage Equipment</h3>
+                    <button id="closeEquipmentModal" style="background: none; border: none; color: #888; font-size: 20px; cursor: pointer;">&times;</button>
+                </div>
+
+                <div style="color: #888; font-size: 12px; margin-bottom: 15px;">
+                    Probe ${probe.id} | Slots: ${slotIndicators.join(' ')} (${usedSlots}/${maxSlots}) | Minerals: ${resources.minerals}
+                </div>
+
+                ${usedSlots > 0 ? `
+                    <div style="background: rgba(0,255,128,0.1); border: 1px solid rgba(0,255,128,0.3); border-radius: 5px; padding: 12px; margin-bottom: 15px;">
+                        <div style="color: #0f8; font-weight: bold; margin-bottom: 8px;">Currently Equipped:</div>
+                        ${equippedItems.map(eq => {
+                            const icon = equipmentIcons[eq.type] || '❓';
+                            return `
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(0,255,128,0.2);">
+                                    <div style="color: #fff;">
+                                        <span style="font-size: 16px;">${icon}</span>
+                                        <span style="margin-left: 8px;">${eq.name || eq.type}</span>
+                                    </div>
+                                    <button class="control-btn remove-equipment-btn" data-equipment-type="${eq.type}" style="font-size: 10px; padding: 4px 8px; background: rgba(255,68,68,0.2); border-color: #f44;">
+                                        Remove
+                                    </button>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                ` : ''}
+
+                <div style="color: #0ff; font-weight: bold; margin-bottom: 10px;">Available Equipment:</div>
+
+                <div style="max-height: 250px; overflow-y: auto;">
+                    ${equipmentTypes.map(eq => {
+                        const canAfford = resources.minerals >= eq.cost;
+                        const alreadyEquipped = equippedTypes.has(eq.id);
+                        const hasSlots = slotsAvailable >= eq.slotsRequired;
+                        const canEquip = canAfford && !alreadyEquipped && hasSlots;
+
+                        let statusMessage = '';
+                        if (alreadyEquipped) {
+                            statusMessage = '<div style="color: #0f8; font-size: 10px; margin-top: 3px;">Already equipped</div>';
+                        } else if (!canAfford) {
+                            statusMessage = '<div style="color: #f44; font-size: 10px; margin-top: 3px;">Insufficient minerals</div>';
+                        } else if (!hasSlots) {
+                            statusMessage = '<div style="color: #ff0; font-size: 10px; margin-top: 3px;">No slots available</div>';
+                        }
+
+                        return `
+                            <div style="background: rgba(0,255,255,0.05); border: 1px solid ${canEquip ? 'rgba(0,255,255,0.3)' : 'rgba(100,100,100,0.3)'}; border-radius: 5px; padding: 10px; margin-bottom: 8px; opacity: ${canEquip ? 1 : 0.6};">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <span style="font-size: 18px;">${eq.icon}</span>
+                                        <span style="color: ${canEquip ? '#0ff' : '#888'}; font-weight: bold; margin-left: 8px;">${eq.name}</span>
+                                        <span style="color: #666; font-size: 10px; margin-left: 5px;">(${eq.slotsRequired} slot)</span>
+                                    </div>
+                                    <button
+                                        class="control-btn equip-btn"
+                                        data-equipment-id="${eq.id}"
+                                        style="font-size: 11px; padding: 5px 12px;"
+                                        ${!canEquip ? 'disabled' : ''}
+                                    >
+                                        Equip (${eq.cost}M)
+                                    </button>
+                                </div>
+                                <div style="color: #888; font-size: 11px; margin-top: 5px;">${eq.description}</div>
+                                ${statusMessage}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+
+                ${equipmentTypes.length === 0 ? `
+                    <div style="color: #888; text-align: center; padding: 20px;">
+                        No equipment available. Research auto-collection technologies first.
+                    </div>
+                ` : ''}
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Store reference to this for callbacks
+        const self = this;
+
+        // Setup modal event handlers
+        document.getElementById('closeEquipmentModal').addEventListener('click', () => {
+            modal.remove();
+        });
+
+        // Close on background click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.remove();
+        });
+
+        // Setup equip buttons
+        const equipBtns = modal.querySelectorAll('.equip-btn');
+        equipBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const equipmentId = btn.getAttribute('data-equipment-id');
+                self.equipEquipment(probe, equipmentId, equipmentTypes);
+                modal.remove();
+                // Refresh probe details panel
+                self.showProbeDetails(probe);
+            });
+        });
+
+        // Setup remove buttons for equipped items
+        const removeBtns = modal.querySelectorAll('.remove-equipment-btn');
+        removeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const equipmentType = btn.getAttribute('data-equipment-type');
+                self.removeEquipmentByType(probe, equipmentType);
+                modal.remove();
+                // Refresh probe details panel
+                self.showProbeDetails(probe);
+            });
+        });
+    }
+
+    /**
+     * Equip equipment to probe (array-based equipment system)
+     */
+    equipEquipment(probe, equipmentId, equipmentTypes) {
+        const equipment = equipmentTypes.find(e => e.id === equipmentId);
+        if (!equipment) return;
+
+        const resources = this.gameState.getResources();
+        if (resources.minerals < equipment.cost) {
+            this.eventBus.emit('ui:message', { text: 'Insufficient minerals!', type: 'error' });
+            return;
+        }
+
+        // Initialize equipment array if needed
+        if (!Array.isArray(probe.equipment)) {
+            probe.equipment = [];
+        }
+
+        // Check slot availability
+        const usedSlots = probe.equipment.length;
+        const maxSlots = probe.maxEquipmentSlots || 2;
+        const slotsRequired = equipment.slotsRequired || 1;
+
+        if (usedSlots + slotsRequired > maxSlots) {
+            this.eventBus.emit('ui:message', { text: 'Not enough equipment slots!', type: 'error' });
+            return;
+        }
+
+        // Check if already equipped (no stacking)
+        if (probe.equipment.some(eq => eq.type === equipmentId)) {
+            this.eventBus.emit('ui:message', { text: 'Already equipped!', type: 'error' });
+            return;
+        }
+
+        // Deduct resources
+        this.gameState.resources.minerals -= equipment.cost;
+
+        // Add equipment to array
+        probe.equipment.push({
+            type: equipment.id,
+            name: equipment.name,
+            collectionTypes: equipment.collectionTypes || [equipment.type],
+            installedAt: Date.now()
+        });
+
+        this.eventBus.emit('ui:message', { text: `${equipment.name} equipped!`, type: 'success' });
+        this.eventBus.emit('ui:update');
+    }
+
+    /**
+     * Remove equipment from probe (by type for array-based system)
+     */
+    removeEquipmentByType(probe, equipmentType) {
+        if (!Array.isArray(probe.equipment)) return;
+
+        const index = probe.equipment.findIndex(eq => eq.type === equipmentType);
+        if (index === -1) return;
+
+        const equipmentName = probe.equipment[index].name || equipmentType;
+        probe.equipment.splice(index, 1);
+
+        this.eventBus.emit('ui:message', { text: `${equipmentName} removed.`, type: 'info' });
+        this.eventBus.emit('ui:update');
+    }
+
+    /**
+     * Remove equipment from probe (legacy support - removes first item)
+     */
+    removeEquipment(probe) {
+        if (!probe.equipment) return;
+
+        // Handle array-based equipment
+        if (Array.isArray(probe.equipment)) {
+            if (probe.equipment.length === 0) return;
+            const equipmentName = probe.equipment[0].name || 'Equipment';
+            probe.equipment.shift();
+            this.eventBus.emit('ui:message', { text: `${equipmentName} removed.`, type: 'info' });
+        } else {
+            // Legacy object-based equipment
+            const equipmentName = probe.equipment.name;
+            probe.equipment = [];
+            this.eventBus.emit('ui:message', { text: `${equipmentName} removed.`, type: 'info' });
+        }
+
+        this.eventBus.emit('ui:update');
+
+        // Refresh the panel
+        this.showProbeDetails(probe);
+    }
+
     /**
      * Render cargo section for probe
      */

@@ -25,11 +25,14 @@ class GameController {
         this.tutorialManager = new TutorialManager(this.gameState, this.eventBus);
         this.cosmeticManager = new CosmeticManager(this.gameState, this.eventBus);
         this.darkMarketSystem = new DarkMarketSystem(this.gameState, this.eventBus);
+        this.remnantManager = new RemnantManager(this.gameState, this.eventBus);
+        this.dialogueSystem = new DialogueSystem(this.gameState, this.eventBus);
         this.musicManager = new MusicManager(this.gameState, this.eventBus);
         this.uiManager = new UIManager(this.gameState, this.eventBus, this.probeManager, this.buildingSystem);
         
-        // Make cosmetic manager available to gameState for easy access
+        // Make managers available to gameState for easy access
         this.gameState.cosmeticManager = this.cosmeticManager;
+        this.gameState.tutorialManager = this.tutorialManager;
         
         // Initialize details panel after a brief delay to ensure DOM is ready
         setTimeout(() => {
@@ -326,7 +329,8 @@ class GameController {
                         outboundWaypointsCount: 0,
                         returnSpeed: 0.0003,
                         patrolMode: true,
-                        equipment: null,
+                        equipment: [],
+                        maxEquipmentSlots: 2,
                         status: 'ready',
                         returnedToHub: false,
                         // Apply active cosmetic skin (if CosmeticManager exists)
@@ -775,6 +779,17 @@ class GameController {
             });
         }
 
+        // Tutorial toggle
+        const tutorialToggle = document.getElementById('tutorialToggle');
+        if (tutorialToggle) {
+            // Set initial state from TutorialManager
+            tutorialToggle.checked = this.tutorialManager.isTutorialEnabled();
+
+            tutorialToggle.addEventListener('change', () => {
+                this.tutorialManager.setTutorialEnabled(tutorialToggle.checked);
+            });
+        }
+
         // Toggle test panel
         const toggleBtn = document.getElementById('toggleTestPanel');
         if (toggleBtn) {
@@ -941,7 +956,13 @@ class GameController {
         if (clickedProbe) {
             console.log('Found probe at click location');
             this.eventBus.emit('probe:select', { probe: clickedProbe });
-            this.eventBus.emit('entity:selected', { entity: clickedProbe, type: 'probe' });
+            // Probes use the compact probeDetailPanel via UIManager
+            return;
+        }
+
+        // Check for remnant NPC clicks
+        if (this.remnantManager && this.remnantManager.checkClick(worldX, worldY)) {
+            console.log('Remnant NPC clicked');
             return;
         }
 
@@ -2220,11 +2241,7 @@ class GameController {
             this.centerCameraOnProbe(this.gameState.ui.lockedProbe);
         }
 
-        // Update selected probe detail panel position continuously
-        if (this.gameState.ui.selectedProbe && 
-            document.getElementById('probeDetailPanel').style.display === 'block') {
-            this.uiManager.updateProbeDetailPanelPosition(this.gameState.ui.selectedProbe);
-        }
+        // Probe detail panel positioning now handled by DetailsPanel.js
 
         // Render
         this.render();
@@ -2269,7 +2286,12 @@ class GameController {
         this.renderBuildings();
         this.renderMiningStations();
         this.renderShuttles();
-        
+
+        // Render Remnant NPCs
+        if (this.remnantManager) {
+            this.remnantManager.render(this.ctx);
+        }
+
         // Render building preview
         if (this.buildingSystem.getBuildingPreview()) {
             this.renderBuildingPreview(this.buildingSystem.getBuildingPreview());
