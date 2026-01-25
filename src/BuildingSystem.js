@@ -103,9 +103,15 @@ class BuildingSystem {
             }
         } else {
             if (!this.selectedProbe) return;
+
+            // For reconHub, only allow placement on outbound path (not return journey)
+            const probe = this.selectedProbe;
+            const outboundCount = probe.outboundWaypointsCount || Math.ceil(probe.waypoints.length / 2);
+            const outboundWaypoints = probe.waypoints.slice(0, outboundCount);
+
             closestPoint = this.findClosestPointOnPath(
-                this.selectedProbe.waypoints, 
-                mouseX, 
+                outboundWaypoints,
+                mouseX,
                 mouseY
             );
         }

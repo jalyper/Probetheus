@@ -97,7 +97,8 @@ class ProbeManager {
                 outboundWaypointsCount: 0,
                 returnSpeed: 0.0003,
                 patrolMode: true,
-                equipment: null,
+                equipment: [],
+                maxEquipmentSlots: 2,
                 status: 'ready',
                 returnedToHub: false,
                 damage: 0,
@@ -167,8 +168,8 @@ class ProbeManager {
                 // Handle asteroid field damage
                 this.checkAsteroidFieldDamage(probe, deltaTime);
                 
-                // Handle auto-collection if equipped
-                if (probe.equipment && probe.equipment.type === 'auto_collector') {
+                // Handle auto-collection if any collector equipment is equipped
+                if (probe.equipment && Array.isArray(probe.equipment) && probe.equipment.length > 0) {
                     try {
                         this.autoCollectSignals(probe);
                     } catch (error) {
@@ -233,7 +234,8 @@ class ProbeManager {
             outboundWaypointsCount: outboundWaypoints.length,
             returnSpeed: returnSpeed,
             patrolMode: true,
-            equipment: null,
+            equipment: [],
+            maxEquipmentSlots: 2,
             status: 'exploring',
             returnedToHub: false,
             damage: 0,
@@ -622,27 +624,37 @@ class ProbeManager {
      * Auto-collect signals within range of equipped probe
      */
     autoCollectSignals(probe) {
-        const equipment = probe.equipment;
-        if (!equipment || !equipment.collectionTypes) return;
-        
+        // Get combined collection types from all equipment
+        if (!probe.equipment || !Array.isArray(probe.equipment) || probe.equipment.length === 0) return;
+
+        // Combine collection types from all equipped items
+        const collectionTypes = new Set();
+        probe.equipment.forEach(eq => {
+            if (eq.collectionTypes) {
+                eq.collectionTypes.forEach(t => collectionTypes.add(t));
+            }
+        });
+
+        if (collectionTypes.size === 0) return;
+
         // Add auto-collection cooldown to prevent excessive collection
         if (!probe.lastAutoCollectionTime) {
             probe.lastAutoCollectionTime = 0;
         }
-        
+
         const currentTime = Date.now();
         const cooldownTime = 500; // 0.5 second cooldown
-        
+
         if (currentTime - probe.lastAutoCollectionTime < cooldownTime) {
             return; // Still in cooldown
         }
-        
+
         probe.lastAutoCollectionTime = currentTime;
-        
-        const canCollectMinerals = equipment.collectionTypes.includes('minerals') || equipment.collectionTypes.includes('all');
-        const canCollectData = equipment.collectionTypes.includes('data') || equipment.collectionTypes.includes('all');
-        const canCollectArtifacts = equipment.collectionTypes.includes('artifacts') || equipment.collectionTypes.includes('all');
-        const hasUniversal = equipment.collectionTypes.includes('all');
+
+        const canCollectMinerals = collectionTypes.has('minerals') || collectionTypes.has('all');
+        const canCollectData = collectionTypes.has('data') || collectionTypes.has('all');
+        const canCollectArtifacts = collectionTypes.has('artifacts') || collectionTypes.has('all');
+        const hasUniversal = collectionTypes.has('all');
         
         // Check for signals within auto-collection range (80 pixels)
         const collectionRange = 80;
@@ -661,26 +673,49 @@ class ProbeManager {
         }
         
         signalsInRange.forEach(signal => {
-            // Determine if we can collect based on rarity and research
-            let canCollect = false;
-            
+            // Determine what can be collected based on rarity and research
             console.log(`Signal found: rarity=${signal.rarity}, hasUniversal=${hasUniversal}`);
-            
-            // Check maximum rarity that can be collected
-            const maxRarity = this.getMaxCollectableRarity();
+
             const rarityOrder = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
             const signalRarityIndex = rarityOrder.indexOf(signal.rarity);
-            const maxRarityIndex = rarityOrder.indexOf(maxRarity);
-            
+
+            // Check type-specific rarity limits for each collector type
+            let canCollectMineralsAtRarity = false;
+            let canCollectDataAtRarity = false;
+            let canCollectArtifactsAtRarity = false;
+
             if (hasUniversal) {
-                // Universal collection respects rarity progression
-                canCollect = signalRarityIndex <= maxRarityIndex;
+                // Universal collection uses universal rarity progression for ALL types
+                const universalMaxRarity = this.getMaxCollectableRarity('universal');
+                const universalMaxIndex = rarityOrder.indexOf(universalMaxRarity);
+                const universalCanCollect = signalRarityIndex <= universalMaxIndex;
+
+                canCollectMineralsAtRarity = canCollectMinerals && universalCanCollect;
+                canCollectDataAtRarity = canCollectData && universalCanCollect;
+                canCollectArtifactsAtRarity = canCollectArtifacts && universalCanCollect;
             } else {
-                // Regular collection only works on common signals (base level)
-                canCollect = signal.rarity === 'common';
+                // Individual collectors use type-specific rarity progression
+                if (canCollectMinerals) {
+                    const mineralsMaxRarity = this.getMaxCollectableRarity('minerals');
+                    const mineralsMaxIndex = rarityOrder.indexOf(mineralsMaxRarity);
+                    canCollectMineralsAtRarity = signalRarityIndex <= mineralsMaxIndex;
+                }
+                if (canCollectData) {
+                    const dataMaxRarity = this.getMaxCollectableRarity('data');
+                    const dataMaxIndex = rarityOrder.indexOf(dataMaxRarity);
+                    canCollectDataAtRarity = signalRarityIndex <= dataMaxIndex;
+                }
+                if (canCollectArtifacts) {
+                    const artifactsMaxRarity = this.getMaxCollectableRarity('artifacts');
+                    const artifactsMaxIndex = rarityOrder.indexOf(artifactsMaxRarity);
+                    canCollectArtifactsAtRarity = signalRarityIndex <= artifactsMaxIndex;
+                }
             }
-            
-            console.log(`Can collect signal: ${canCollect}`);
+
+            // Can collect if ANY resource type can be collected at this rarity
+            const canCollect = canCollectMineralsAtRarity || canCollectDataAtRarity || canCollectArtifactsAtRarity;
+
+            console.log(`Can collect signal: ${canCollect} (minerals: ${canCollectMineralsAtRarity}, data: ${canCollectDataAtRarity}, artifacts: ${canCollectArtifactsAtRarity})`);
             
             if (canCollect) {
                 // Calculate rewards based on signal rarity
@@ -709,7 +744,8 @@ class ProbeManager {
                 let primaryResourceType = '';
                 let primaryResourceAmount = 0;
                 
-                if (canCollectMinerals) {
+                // Use rarity-checked flags to determine what to actually collect
+                if (canCollectMineralsAtRarity) {
                     probe.cargo.minerals += rewards.minerals;
                     if (rewards.minerals > primaryResourceAmount) {
                         primaryResourceAmount = rewards.minerals;
@@ -717,7 +753,7 @@ class ProbeManager {
                     }
                     totalResourcesGained += rewards.minerals;
                 }
-                if (canCollectData) {
+                if (canCollectDataAtRarity) {
                     probe.cargo.data += rewards.data;
                     if (rewards.data > primaryResourceAmount) {
                         primaryResourceAmount = rewards.data;
@@ -725,7 +761,7 @@ class ProbeManager {
                     }
                     totalResourcesGained += rewards.data;
                 }
-                if (canCollectArtifacts) {
+                if (canCollectArtifactsAtRarity) {
                     probe.cargo.artifacts += rewards.artifacts;
                     if (rewards.artifacts > primaryResourceAmount) {
                         primaryResourceAmount = rewards.artifacts;
@@ -874,24 +910,39 @@ class ProbeManager {
     /**
      * Get maximum rarity that can be collected based on research
      */
-    getMaxCollectableRarity() {
+    getMaxCollectableRarity(resourceType = 'universal') {
         const research = this.gameState.getResearchSystem();
-        
-        // Check rarity progression research
-        if (research.researched.has('rarity_legendary')) {
-            return 'legendary';
+
+        // Check type-specific rarity progression
+        if (resourceType === 'minerals') {
+            if (research.researched.has('minerals_legendary')) return 'legendary';
+            if (research.researched.has('minerals_epic')) return 'epic';
+            if (research.researched.has('minerals_rare')) return 'rare';
+            if (research.researched.has('minerals_uncommon')) return 'uncommon';
+            return 'common';
         }
-        if (research.researched.has('rarity_epic')) {
-            return 'epic';
+
+        if (resourceType === 'data') {
+            if (research.researched.has('data_legendary')) return 'legendary';
+            if (research.researched.has('data_epic')) return 'epic';
+            if (research.researched.has('data_rare')) return 'rare';
+            if (research.researched.has('data_uncommon')) return 'uncommon';
+            return 'common';
         }
-        if (research.researched.has('rarity_rare')) {
-            return 'rare';
+
+        if (resourceType === 'artifacts') {
+            if (research.researched.has('artifacts_legendary')) return 'legendary';
+            if (research.researched.has('artifacts_epic')) return 'epic';
+            if (research.researched.has('artifacts_rare')) return 'rare';
+            if (research.researched.has('artifacts_uncommon')) return 'uncommon';
+            return 'common';
         }
-        if (research.researched.has('rarity_uncommon')) {
-            return 'uncommon';
-        }
-        
-        // Default is common
+
+        // Universal collector uses global rarity research
+        if (research.researched.has('rarity_legendary')) return 'legendary';
+        if (research.researched.has('rarity_epic')) return 'epic';
+        if (research.researched.has('rarity_rare')) return 'rare';
+        if (research.researched.has('rarity_uncommon')) return 'uncommon';
         return 'common';
     }
     

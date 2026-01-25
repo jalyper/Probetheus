@@ -118,10 +118,15 @@ test.describe('Game Startup and Basic Functionality', () => {
     await expect(page.locator('#researchBtn')).not.toBeVisible();
 
     // Unlock research via game state
+    // Must also allow research access through tutorial gate
     await page.evaluate(() => {
       const research = window.game.gameState.getResearchSystem();
       research.unlocked = true;
       research.points = 1;
+      // Allow research access (bypass tutorial gate for this test)
+      if (window.game.tutorialManager) {
+        window.game.tutorialManager.researchAccessAllowed = true;
+      }
       window.uiManager.checkResearchUnlock();
     });
 

@@ -1,1 +1,182 @@
-"use strict";var f=Object.create;var d=Object.defineProperty;var w=Object.getOwnPropertyDescriptor;var m=Object.getOwnPropertyNames;var S=Object.getPrototypeOf,y=Object.prototype.hasOwnProperty;var p=(e,r,o,s)=>{if(r&&typeof r=="object"||typeof r=="function")for(let i of m(r))!y.call(e,i)&&i!==o&&d(e,i,{get:()=>r[i],enumerable:!(s=w(r,i))||s.enumerable});return e};var v=(e,r,o)=>(o=e!=null?f(S(e)):{},p(r||!e||!e.__esModule?d(o,"default",{value:e,enumerable:!0}):o,e));const{app:l,BrowserWindow:g,ipcMain:a,globalShortcut:h}=require("electron"),c=require("path");let n,t;async function b(){const e=(await import("electron-store")).default;t=new e({name:"probetheus-saves",cwd:l.getPath("userData")}),console.log("electron-store initialized"),console.log("Save data location:",t.path)}function u(){n=new g({width:1920,height:1080,minWidth:1280,minHeight:720,backgroundColor:"#000511",icon:c.join(__dirname,"../images/icon.png"),webPreferences:{preload:c.join(__dirname,"preload.js"),contextIsolation:!0,nodeIntegration:!1,sandbox:!1,webSecurity:!0},autoHideMenuBar:!0,title:"Probetheus"});const e=c.join(__dirname,"../index.html");console.log("Loading index.html from:",e),n.loadFile(e),n.webContents.openDevTools(),console.log("Running in development mode with DevTools enabled"),n.webContents.on("did-fail-load",(r,o,s)=>{console.error("Failed to load:",o,s)}),n.webContents.on("console-message",(r,o,s,i,z)=>{console.log(`Renderer console [${o}]: ${s}`)}),n.on("closed",()=>{n=null})}l.whenReady().then(async()=>{await b(),u(),h.register("F12",()=>{n&&(n.webContents.isDevToolsOpened()?n.webContents.closeDevTools():n.webContents.openDevTools())}),console.log("DevTools toggle registered (F12)"),l.on("activate",()=>{g.getAllWindows().length===0&&u()})});l.on("window-all-closed",()=>{process.platform!=="darwin"&&l.quit()});l.on("will-quit",()=>{h.unregisterAll()});a.handle("storage:get",async(e,r)=>{try{return t?t.get(r):(console.error("Store not initialized"),null)}catch(o){return console.error("Storage get error:",o),null}});a.handle("storage:set",async(e,r,o)=>{try{return t?(t.set(r,o),{success:!0}):(console.error("Store not initialized"),{success:!1,error:"Store not initialized"})}catch(s){return console.error("Storage set error:",s),{success:!1,error:s.message}}});a.handle("storage:remove",async(e,r)=>{try{return t?(t.delete(r),{success:!0}):(console.error("Store not initialized"),{success:!1,error:"Store not initialized"})}catch(o){return console.error("Storage remove error:",o),{success:!1,error:o.message}}});a.handle("storage:clear",async()=>{try{return t?(t.clear(),{success:!0}):(console.error("Store not initialized"),{success:!1,error:"Store not initialized"})}catch(e){return console.error("Storage clear error:",e),{success:!1,error:e.message}}});a.handle("storage:has",async(e,r)=>{try{return t?t.has(r):(console.error("Store not initialized"),!1)}catch(o){return console.error("Storage has error:",o),!1}});a.handle("storage:keys",async()=>{try{if(!t)return console.error("Store not initialized"),[];const e=t.store;return Object.keys(e)}catch(e){return console.error("Storage keys error:",e),[]}});a.handle("storage:getPath",async()=>t?t.path:"Store not initialized");console.log("Electron main process started");
+"use strict";
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+const { app, BrowserWindow, ipcMain, globalShortcut } = require("electron");
+const path = require("path");
+let mainWindow;
+let store;
+async function initStore() {
+  const Store = (await import("electron-store")).default;
+  store = new Store({
+    name: "probetheus-saves",
+    cwd: app.getPath("userData")
+  });
+  console.log("electron-store initialized");
+  console.log("Save data location:", store.path);
+}
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    width: 1920,
+    height: 1080,
+    minWidth: 1280,
+    minHeight: 720,
+    backgroundColor: "#000511",
+    icon: path.join(__dirname, "../images/icon.png"),
+    // Add your icon later
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false,
+      // Allow file:// protocol to load scripts
+      webSecurity: true
+    },
+    autoHideMenuBar: true,
+    // Hide menu bar for cleaner look
+    title: "Probetheus"
+  });
+  const indexPath = path.join(__dirname, "../index.html");
+  console.log("Loading index.html from:", indexPath);
+  mainWindow.loadFile(indexPath);
+  mainWindow.webContents.openDevTools();
+  console.log("Running in development mode with DevTools enabled");
+  mainWindow.webContents.on("did-fail-load", (event, errorCode, errorDescription) => {
+    console.error("Failed to load:", errorCode, errorDescription);
+  });
+  mainWindow.webContents.on("console-message", (event, level, message, line, sourceId) => {
+    console.log(`Renderer console [${level}]: ${message}`);
+  });
+  mainWindow.on("closed", () => {
+    mainWindow = null;
+  });
+}
+app.whenReady().then(async () => {
+  await initStore();
+  createWindow();
+  globalShortcut.register("F12", () => {
+    if (mainWindow) {
+      if (mainWindow.webContents.isDevToolsOpened()) {
+        mainWindow.webContents.closeDevTools();
+      } else {
+        mainWindow.webContents.openDevTools();
+      }
+    }
+  });
+  console.log("DevTools toggle registered (F12)");
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
+  });
+});
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
+    app.quit();
+  }
+});
+app.on("will-quit", () => {
+  globalShortcut.unregisterAll();
+});
+ipcMain.handle("storage:get", async (event, key) => {
+  try {
+    if (!store) {
+      console.error("Store not initialized");
+      return null;
+    }
+    return store.get(key);
+  } catch (error) {
+    console.error("Storage get error:", error);
+    return null;
+  }
+});
+ipcMain.handle("storage:set", async (event, key, value) => {
+  try {
+    if (!store) {
+      console.error("Store not initialized");
+      return { success: false, error: "Store not initialized" };
+    }
+    store.set(key, value);
+    return { success: true };
+  } catch (error) {
+    console.error("Storage set error:", error);
+    return { success: false, error: error.message };
+  }
+});
+ipcMain.handle("storage:remove", async (event, key) => {
+  try {
+    if (!store) {
+      console.error("Store not initialized");
+      return { success: false, error: "Store not initialized" };
+    }
+    store.delete(key);
+    return { success: true };
+  } catch (error) {
+    console.error("Storage remove error:", error);
+    return { success: false, error: error.message };
+  }
+});
+ipcMain.handle("storage:clear", async () => {
+  try {
+    if (!store) {
+      console.error("Store not initialized");
+      return { success: false, error: "Store not initialized" };
+    }
+    store.clear();
+    return { success: true };
+  } catch (error) {
+    console.error("Storage clear error:", error);
+    return { success: false, error: error.message };
+  }
+});
+ipcMain.handle("storage:has", async (event, key) => {
+  try {
+    if (!store) {
+      console.error("Store not initialized");
+      return false;
+    }
+    return store.has(key);
+  } catch (error) {
+    console.error("Storage has error:", error);
+    return false;
+  }
+});
+ipcMain.handle("storage:keys", async () => {
+  try {
+    if (!store) {
+      console.error("Store not initialized");
+      return [];
+    }
+    const allData = store.store;
+    return Object.keys(allData);
+  } catch (error) {
+    console.error("Storage keys error:", error);
+    return [];
+  }
+});
+ipcMain.handle("storage:getPath", async () => {
+  if (!store) {
+    return "Store not initialized";
+  }
+  return store.path;
+});
+console.log("Electron main process started");

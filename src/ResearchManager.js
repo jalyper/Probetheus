@@ -77,16 +77,16 @@ class ResearchManager {
      */
     drawTreeDividers(container) {
         // Calculate divider positions based on updated node positions
-        // Collection tree: highest node at y:20, lowest at y:200 (+ 80px height = 280px bottom)
-        // Probe tree: highest node at y:350, lowest at y:530 (+ 80px height = 610px bottom)  
-        // Alien tree: highest node at y:650, lowest at y:830 (+ 80px height = 910px bottom)
-        
-        // Divider between Collection and Probe trees (mid-gap at ~330px)
+        // Collection tree: highest node at y:20, lowest at y:290 (+ 80px height = 370px bottom)
+        // Probe tree: highest node at y:380, lowest at y:560 (+ 80px height = 640px bottom)
+        // Alien tree: highest node at y:680, lowest at y:860 (+ 80px height = 940px bottom)
+
+        // Divider between Collection and Probe trees (mid-gap at ~375px)
         const divider1 = document.createElement('div');
         divider1.style.cssText = `
             position: absolute;
             left: 0;
-            top: 320px;
+            top: 375px;
             width: 100%;
             height: 2px;
             background: linear-gradient(90deg, transparent 0%, #0ff 20%, #0ff 80%, transparent 100%);
@@ -111,12 +111,12 @@ class ResearchManager {
         collectionLabel.textContent = '📦 COLLECTION SPECIALIZATION';
         container.appendChild(collectionLabel);
 
-        // Divider between Probe and Alien trees (mid-gap at ~630px)
+        // Divider between Probe and Alien trees (mid-gap at ~660px)
         const divider2 = document.createElement('div');
         divider2.style.cssText = `
             position: absolute;
             left: 0;
-            top: 630px;
+            top: 660px;
             width: 100%;
             height: 2px;
             background: linear-gradient(90deg, transparent 0%, #4f4 20%, #4f4 80%, transparent 100%);
@@ -131,7 +131,7 @@ class ResearchManager {
         probeLabel.style.cssText = `
             position: absolute;
             left: 10px;
-            top: 330px;
+            top: 385px;
             color: #4f4;
             font-size: 14px;
             font-weight: bold;
@@ -146,7 +146,7 @@ class ResearchManager {
         alienLabel.style.cssText = `
             position: absolute;
             left: 10px;
-            top: 640px;
+            top: 670px;
             color: #f4f;
             font-size: 14px;
             font-weight: bold;

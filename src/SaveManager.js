@@ -106,7 +106,8 @@ class SaveManager {
                         active: probe.active,
                         status: probe.status,
                         hub: probe.hub ? { id: probe.hub.id, x: probe.hub.x, y: probe.hub.y } : null,
-                        equipment: probe.equipment,
+                        equipment: Array.isArray(probe.equipment) ? [...probe.equipment] : probe.equipment,
+                        maxEquipmentSlots: probe.maxEquipmentSlots || 2,
                         patrolMode: probe.patrolMode,
                         damage: probe.damage || 0,
                         cargo: probe.cargo ? { ...probe.cargo } : null,
@@ -483,16 +484,36 @@ class SaveManager {
                 pulseTimer: Math.random() * 1000, // Randomize pulse timer to restart signal generation
                 maxDamage: 3,
                 lastDamageTime: 0,
+                maxEquipmentSlots: probeData.maxEquipmentSlots || 2,
                 // Ensure base speed is always correct (0.0001) regardless of saved speed
                 speed: 0.0001  // Force base speed to prevent accumulation issues
             };
-            
+
+            // Migrate equipment to array format if needed
+            if (window.EquipmentSystem && typeof window.EquipmentSystem.migrateEquipment === 'function') {
+                window.EquipmentSystem.migrateEquipment(probe);
+            } else if (probe.equipment && !Array.isArray(probe.equipment)) {
+                // Fallback migration if EquipmentSystem not loaded yet
+                const oldEquipment = probe.equipment;
+                probe.equipment = [];
+                if (oldEquipment.type) {
+                    probe.equipment.push({
+                        type: oldEquipment.type,
+                        name: oldEquipment.name,
+                        collectionTypes: oldEquipment.collectionTypes || [],
+                        installedAt: Date.now()
+                    });
+                }
+            } else if (!probe.equipment) {
+                probe.equipment = [];
+            }
+
             // Debug restored probe status
             if (probe.waypoints.length > 0) {
                 console.log(`Restored probe ${probe.id}: status=${probe.status}, waypoints=${probe.waypoints.length}, currentWaypoint=${probe.currentWaypoint}, outboundCount=${probe.outboundWaypointsCount}`);
                 console.log(`Probe waypoints:`, probe.waypoints.map((wp, i) => `${i}: (${Math.round(wp.x)}, ${Math.round(wp.y)})`));
             }
-            
+
             return probe;
         });
         

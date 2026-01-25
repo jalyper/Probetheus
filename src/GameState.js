@@ -73,6 +73,7 @@ class GameState {
                     children: ['auto_minerals', 'auto_data', 'auto_artifacts'],
                     tree: 'collection'
                 },
+                // MINERAL COLLECTOR BRANCH
                 'auto_minerals': {
                     id: 'auto_minerals',
                     name: 'Auto-Collect Minerals',
@@ -82,10 +83,63 @@ class GameState {
                     researched: false,
                     available: false,
                     icon: '⛏️',
-                    children: ['auto_all'],
+                    children: ['minerals_uncommon', 'auto_all'],
                     parent: 'collection',
                     tree: 'collection'
                 },
+                'minerals_uncommon': {
+                    id: 'minerals_uncommon',
+                    name: 'Uncommon Mineral Processing',
+                    description: 'Mineral Collector can now collect uncommon mineral signals',
+                    cost: 2,
+                    position: { x: 350, y: 20 },
+                    researched: false,
+                    available: false,
+                    icon: '⛏️',
+                    parent: 'auto_minerals',
+                    children: ['minerals_rare'],
+                    tree: 'collection'
+                },
+                'minerals_rare': {
+                    id: 'minerals_rare',
+                    name: 'Rare Mineral Processing',
+                    description: 'Mineral Collector can now collect rare mineral signals',
+                    cost: 3,
+                    position: { x: 500, y: 20 },
+                    researched: false,
+                    available: false,
+                    icon: '⛏️',
+                    parent: 'minerals_uncommon',
+                    children: ['minerals_epic'],
+                    tree: 'collection'
+                },
+                'minerals_epic': {
+                    id: 'minerals_epic',
+                    name: 'Epic Mineral Processing',
+                    description: 'Mineral Collector can now collect epic mineral signals',
+                    cost: 5,
+                    position: { x: 650, y: 20 },
+                    researched: false,
+                    available: false,
+                    icon: '⛏️',
+                    parent: 'minerals_rare',
+                    children: ['minerals_legendary'],
+                    tree: 'collection'
+                },
+                'minerals_legendary': {
+                    id: 'minerals_legendary',
+                    name: 'Legendary Mineral Processing',
+                    description: 'Mineral Collector can now collect legendary mineral signals',
+                    cost: 8,
+                    position: { x: 800, y: 20 },
+                    researched: false,
+                    available: false,
+                    icon: '⛏️',
+                    parent: 'minerals_epic',
+                    tree: 'collection'
+                },
+
+                // DATA COLLECTOR BRANCH
                 'auto_data': {
                     id: 'auto_data',
                     name: 'Auto-Collect Data',
@@ -95,10 +149,63 @@ class GameState {
                     researched: false,
                     available: false,
                     icon: '💾',
-                    children: ['auto_all'],
+                    children: ['data_uncommon', 'auto_all'],
                     parent: 'collection',
                     tree: 'collection'
                 },
+                'data_uncommon': {
+                    id: 'data_uncommon',
+                    name: 'Uncommon Data Processing',
+                    description: 'Data Collector can now collect uncommon data signals',
+                    cost: 2,
+                    position: { x: 350, y: 110 },
+                    researched: false,
+                    available: false,
+                    icon: '💾',
+                    parent: 'auto_data',
+                    children: ['data_rare'],
+                    tree: 'collection'
+                },
+                'data_rare': {
+                    id: 'data_rare',
+                    name: 'Rare Data Processing',
+                    description: 'Data Collector can now collect rare data signals',
+                    cost: 3,
+                    position: { x: 500, y: 110 },
+                    researched: false,
+                    available: false,
+                    icon: '💾',
+                    parent: 'data_uncommon',
+                    children: ['data_epic'],
+                    tree: 'collection'
+                },
+                'data_epic': {
+                    id: 'data_epic',
+                    name: 'Epic Data Processing',
+                    description: 'Data Collector can now collect epic data signals',
+                    cost: 5,
+                    position: { x: 650, y: 110 },
+                    researched: false,
+                    available: false,
+                    icon: '💾',
+                    parent: 'data_rare',
+                    children: ['data_legendary'],
+                    tree: 'collection'
+                },
+                'data_legendary': {
+                    id: 'data_legendary',
+                    name: 'Legendary Data Processing',
+                    description: 'Data Collector can now collect legendary data signals',
+                    cost: 8,
+                    position: { x: 800, y: 110 },
+                    researched: false,
+                    available: false,
+                    icon: '💾',
+                    parent: 'data_epic',
+                    tree: 'collection'
+                },
+
+                // ARTIFACT COLLECTOR BRANCH
                 'auto_artifacts': {
                     id: 'auto_artifacts',
                     name: 'Auto-Collect Artifacts',
@@ -108,16 +215,69 @@ class GameState {
                     researched: false,
                     available: false,
                     icon: '🏺',
-                    children: ['auto_all'],
+                    children: ['artifacts_uncommon', 'auto_all'],
                     parent: 'collection',
                     tree: 'collection'
                 },
+                'artifacts_uncommon': {
+                    id: 'artifacts_uncommon',
+                    name: 'Uncommon Artifact Processing',
+                    description: 'Artifact Collector can now collect uncommon artifact signals',
+                    cost: 2,
+                    position: { x: 350, y: 200 },
+                    researched: false,
+                    available: false,
+                    icon: '🏺',
+                    parent: 'auto_artifacts',
+                    children: ['artifacts_rare'],
+                    tree: 'collection'
+                },
+                'artifacts_rare': {
+                    id: 'artifacts_rare',
+                    name: 'Rare Artifact Processing',
+                    description: 'Artifact Collector can now collect rare artifact signals',
+                    cost: 3,
+                    position: { x: 500, y: 200 },
+                    researched: false,
+                    available: false,
+                    icon: '🏺',
+                    parent: 'artifacts_uncommon',
+                    children: ['artifacts_epic'],
+                    tree: 'collection'
+                },
+                'artifacts_epic': {
+                    id: 'artifacts_epic',
+                    name: 'Epic Artifact Processing',
+                    description: 'Artifact Collector can now collect epic artifact signals',
+                    cost: 5,
+                    position: { x: 650, y: 200 },
+                    researched: false,
+                    available: false,
+                    icon: '🏺',
+                    parent: 'artifacts_rare',
+                    children: ['artifacts_legendary'],
+                    tree: 'collection'
+                },
+                'artifacts_legendary': {
+                    id: 'artifacts_legendary',
+                    name: 'Legendary Artifact Processing',
+                    description: 'Artifact Collector can now collect legendary artifact signals',
+                    cost: 8,
+                    position: { x: 800, y: 200 },
+                    researched: false,
+                    available: false,
+                    icon: '🏺',
+                    parent: 'artifacts_epic',
+                    tree: 'collection'
+                },
+
+                // UNIVERSAL COLLECTOR BRANCH (requires all 3 base collectors)
                 'auto_all': {
                     id: 'auto_all',
                     name: 'Universal Collection',
-                    description: 'Auto-Collectors automatically gather ALL resource types from common signals',
+                    description: 'Universal Collector gathers ALL resource types from common signals',
                     cost: 2,
-                    position: { x: 350, y: 110 },
+                    position: { x: 200, y: 290 },
                     researched: false,
                     available: false,
                     icon: '🌟',
@@ -127,10 +287,10 @@ class GameState {
                 },
                 'rarity_uncommon': {
                     id: 'rarity_uncommon',
-                    name: 'Uncommon Signal Processing',
-                    description: 'Auto-Collectors can now collect uncommon signals (and below)',
+                    name: 'Universal Uncommon Processing',
+                    description: 'Universal Collector can now collect uncommon signals (all types)',
                     cost: 3,
-                    position: { x: 500, y: 110 },
+                    position: { x: 350, y: 290 },
                     researched: false,
                     available: false,
                     icon: '🔸',
@@ -140,10 +300,10 @@ class GameState {
                 },
                 'rarity_rare': {
                     id: 'rarity_rare',
-                    name: 'Rare Signal Processing',
-                    description: 'Auto-Collectors can now collect rare signals (and below)',
+                    name: 'Universal Rare Processing',
+                    description: 'Universal Collector can now collect rare signals (all types)',
                     cost: 5,
-                    position: { x: 650, y: 110 },
+                    position: { x: 500, y: 290 },
                     researched: false,
                     available: false,
                     icon: '🔹',
@@ -153,10 +313,10 @@ class GameState {
                 },
                 'rarity_epic': {
                     id: 'rarity_epic',
-                    name: 'Epic Signal Processing',
-                    description: 'Auto-Collectors can now collect epic signals (and below)',
+                    name: 'Universal Epic Processing',
+                    description: 'Universal Collector can now collect epic signals (all types)',
                     cost: 8,
-                    position: { x: 800, y: 110 },
+                    position: { x: 650, y: 290 },
                     researched: false,
                     available: false,
                     icon: '💎',
@@ -166,10 +326,10 @@ class GameState {
                 },
                 'rarity_legendary': {
                     id: 'rarity_legendary',
-                    name: 'Legendary Signal Processing',
-                    description: 'Auto-Collectors can now collect ALL signal rarities',
+                    name: 'Universal Legendary Processing',
+                    description: 'Universal Collector can now collect ALL signal rarities',
                     cost: 12,
-                    position: { x: 950, y: 110 },
+                    position: { x: 800, y: 290 },
                     researched: false,
                     available: false,
                     icon: '⭐',
@@ -427,10 +587,12 @@ class GameState {
     updateResources(updates, eventBus = null) {
         const oldResources = { ...this.resources };
         Object.assign(this.resources, updates);
-        
-        // Check for milestone achievements if eventBus is provided
+
+        // Check for milestone achievements and trigger UI update if eventBus is provided
         if (eventBus) {
             this.checkMilestones(oldResources, this.resources, eventBus);
+            // Emit ui:update so hub menu button states refresh dynamically
+            eventBus.emit('ui:update');
         }
     }
 
@@ -578,11 +740,17 @@ class GameState {
 
     /**
      * Calculate and accumulate Probethium based on efficiency and progress
+     * Only generates probetheum after first mining station is built
      */
     calculateProbethium(deltaTime) {
+        // Don't accumulate probetheum until player has built at least one mining station
+        if (!this.mining || !this.mining.stations || this.mining.stations.length === 0) {
+            return;
+        }
+
         const now = Date.now();
         const timeDelta = now - this.probethium.lastUpdateTime;
-        
+
         if (timeDelta < 1000) return; // Only update once per second
         
         const stats = this.probethium.stats;
