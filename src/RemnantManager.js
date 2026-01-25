@@ -11,7 +11,7 @@ class RemnantManager {
         // Remnant state
         this.activeRemnant = null;
         this.lastSpawnTime = 0;
-        this.spawnCooldown = 600000; // 10 minutes in ms
+        this.spawnCooldown = 180000; // 3 minutes in ms
         this.despawnTimeout = 300000; // 5 minutes in ms
 
         // Animation state
@@ -58,7 +58,7 @@ class RemnantManager {
                 title: 'The Ancient',
                 eyeColor: '#aa3333',  // Dim red
                 shipStyle: 'ancient',
-                unlockCondition: () => this.getLifetimeProbetheum() >= 100
+                unlockCondition: () => this.getExploredSectorCount() >= 5
             },
             'null': {
                 id: 'null',
@@ -116,24 +116,33 @@ class RemnantManager {
             return;
         }
 
-        // Check minimum requirements
-        const exploredSectors = this.getExploredSectorCount();
-        const lifetimeProbetheum = this.getLifetimeProbetheum();
+        // Only check once per second (not every frame)
+        if (!this.lastSpawnCheck) this.lastSpawnCheck = 0;
+        if (now - this.lastSpawnCheck < 1000) {
+            return;
+        }
+        this.lastSpawnCheck = now;
 
-        if (exploredSectors < 2 || lifetimeProbetheum < 10) {
+        // Check minimum requirements:
+        // - At least 2 explored sectors
+        // - At least one mining station built (gates probetheum accumulation)
+        const exploredSectors = this.getExploredSectorCount();
+        const hasMiningStation = this.getMiningStationCount() > 0;
+
+        if (exploredSectors < 2 || !hasMiningStation) {
             return;
         }
 
-        // Calculate spawn chance
-        let spawnChance = 0.005; // Base 0.5% per update cycle (roughly per second)
+        // Calculate spawn chance (now per second since we throttle above)
+        let spawnChance = 0.01; // Base 1% per second
 
-        // Increase by 0.1% per explored sector (max +2%)
-        spawnChance += Math.min(exploredSectors * 0.001, 0.02);
+        // Increase by 0.5% per explored sector (max +5%)
+        spawnChance += Math.min(exploredSectors * 0.005, 0.05);
 
-        // Increase by 0.5% if player has unspent Probetheum > 50
+        // Increase by 1% if player has any Probetheum
         const currentProbetheum = this.gameState.probethium?.current || 0;
-        if (currentProbetheum > 50) {
-            spawnChance += 0.005;
+        if (currentProbetheum > 0) {
+            spawnChance += 0.01;
         }
 
         // Roll for spawn
@@ -499,7 +508,7 @@ class RemnantManager {
      * Get lifetime probetheum (total ever collected)
      */
     getLifetimeProbetheum() {
-        return this.gameState.probethium?.totalCollected || 0;
+        return this.gameState.probethium?.totalAccumulated || 0;
     }
 
     /**

@@ -83,11 +83,15 @@ See `.planning/remnants-story-prd.md` for full PRD.
   - Now triggers on `research:showTree` event (when player clicks Enter Lab or Research Lab button)
   - Updated tutorial message to be contextual (player is already in the lab)
 - Renamed "Mining Facility" to "Mining Station" in UI (index.html button)
+- **Tutorial now waits for title animation**: Tutorial message is delayed until after the opening title animation completes (triggered by `IntroCutscene.showTutorial()`)
+  - Removed duplicate tutorial trigger in `index.html` that was firing during title animation
+  - Tutorial properly starts after ~6 seconds when titles fade out
 
 ### The Remnants Story System - Phase 1 Foundation
 - New `src/RemnantManager.js` - NPC spawning, movement, and interaction
   - Five unique Remnant types: Keth-Varn, Whisperer, Mira-Sol, Archivist, Null
-  - Spawn conditions: 2+ explored sectors, 10+ lifetime Probetheum, cooldown
+  - Spawn conditions: 2+ explored sectors, at least one mining station, 3 min cooldown
+  - ~1-7% spawn chance per second when conditions met
   - Glow/fade animation with particle trail
   - Click detection and event emission
   - Story state management (fragments, encounters)

@@ -54,7 +54,7 @@ test.describe('Remnant NPC System', () => {
 
         expect(remnantManager.exists).toBe(true);
         expect(remnantManager.activeRemnant).toBeNull();
-        expect(remnantManager.spawnCooldown).toBe(600000); // 10 minutes
+        expect(remnantManager.spawnCooldown).toBe(180000); // 3 minutes
     });
 
     test('DialogueSystem initializes correctly', async ({ page }) => {

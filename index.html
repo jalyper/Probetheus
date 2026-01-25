@@ -754,13 +754,9 @@
                         window.game.startMusic();
                     }
                 }, 500);
-                
-                // Start tutorial immediately after initialization
-                setTimeout(() => {
-                    if (window.game && window.game.tutorialManager) {
-                        window.game.tutorialManager.startTutorial();
-                    }
-                }, 1000); // Wait 1 second for everything to load
+
+                // Tutorial will be triggered by IntroCutscene.showTutorial()
+                // after the title animation completes (6+ seconds)
             });
         }
 

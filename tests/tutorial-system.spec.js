@@ -20,7 +20,16 @@ test.describe('Tutorial System', () => {
         // Start new game
         await page.click('#newGameBtn');
         await page.waitForSelector('#galaxyCanvas');
-        await page.waitForTimeout(2000);
+
+        // Wait for game to initialize, then trigger tutorial manually
+        // (In live game, tutorial is triggered after title animation completes)
+        await page.waitForTimeout(1000);
+        await page.evaluate(() => {
+            if (window.game && window.game.tutorialManager) {
+                window.game.tutorialManager.startTutorial();
+            }
+        });
+        await page.waitForTimeout(500);
 
         // Tutorial banner should be visible
         const tutorialPanel = await page.$('#tutorialPanel');
@@ -38,7 +47,15 @@ test.describe('Tutorial System', () => {
     test('should progress through tutorial steps', async ({ page }) => {
         await page.click('#newGameBtn');
         await page.waitForSelector('#galaxyCanvas');
-        await page.waitForTimeout(2000);
+
+        // Wait for game to initialize, then trigger tutorial manually
+        await page.waitForTimeout(1000);
+        await page.evaluate(() => {
+            if (window.game && window.game.tutorialManager) {
+                window.game.tutorialManager.startTutorial();
+            }
+        });
+        await page.waitForTimeout(500);
 
         // Step 1: Deploy first probe
         let content = await page.textContent('#tutorialPanel');
@@ -83,7 +100,15 @@ test.describe('Tutorial System', () => {
     test('tutorial should stay visible until step completed', async ({ page }) => {
         await page.click('#newGameBtn');
         await page.waitForSelector('#galaxyCanvas');
-        await page.waitForTimeout(2000);
+
+        // Wait for game to initialize, then trigger tutorial manually
+        await page.waitForTimeout(1000);
+        await page.evaluate(() => {
+            if (window.game && window.game.tutorialManager) {
+                window.game.tutorialManager.startTutorial();
+            }
+        });
+        await page.waitForTimeout(500);
 
         // Tutorial should be visible
         let isVisible = await page.isVisible('#tutorialPanel');
