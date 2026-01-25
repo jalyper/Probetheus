@@ -186,7 +186,7 @@ class RemnantManager {
             y: spawnPos.y,
             destX: destPos.x,
             destY: destPos.y,
-            speed: 0.00002, // Very slow - 20% of probe base speed
+            speed: 0.03, // Visible movement speed (pixels per ms)
             spawnTime: Date.now(),
             interacted: false
         };
@@ -203,12 +203,49 @@ class RemnantManager {
 
     /**
      * Force spawn a specific remnant (for testing)
+     * Spawns in the player's current view for visibility
      */
     forceSpawn(remnantId) {
         if (this.activeRemnant) {
             this.despawnRemnant('forced');
         }
-        this.spawnRemnant(remnantId);
+
+        // Get the remnant type
+        const selectedType = this.remnantTypes[remnantId] || this.remnantTypes['keth_varn'];
+
+        // Spawn in player's current view - left side, traveling right
+        const world = this.gameState.getWorld();
+        const viewWidth = window.innerWidth;
+        const viewHeight = window.innerHeight;
+
+        // Spawn at left edge of current view, vertically centered
+        const spawnX = world.viewOffset.x + 50;
+        const spawnY = world.viewOffset.y + viewHeight / 2;
+
+        // Destination is right edge of view
+        const destX = world.viewOffset.x + viewWidth - 50;
+        const destY = spawnY + (Math.random() - 0.5) * 200; // Slight vertical variation
+
+        // Create remnant
+        this.activeRemnant = {
+            type: selectedType,
+            x: spawnX,
+            y: spawnY,
+            destX: destX,
+            destY: destY,
+            speed: 0.03, // Visible movement speed
+            spawnTime: Date.now(),
+            interacted: false
+        };
+
+        this.lastSpawnTime = Date.now();
+
+        console.log(`Remnant force-spawned: ${selectedType.name} at (${spawnX}, ${spawnY}) -> (${destX}, ${destY})`);
+
+        this.eventBus.emit('remnant:spawned', {
+            remnantId: selectedType.id,
+            position: { x: spawnX, y: spawnY }
+        });
     }
 
     /**
