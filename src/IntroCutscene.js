@@ -815,15 +815,15 @@ class IntroCutscene {
     
     showTutorial() {
         // Trigger the game's tutorial system after cutscene and titles
-        if (window.game && window.game.showGameTips) {
+        if (window.game && window.game.tutorialManager) {
             console.log('Triggering tutorial after cutscene and titles');
-            window.game.showGameTips();
+            window.game.tutorialManager.startTutorial();
         } else {
             console.warn('Game not initialized yet, delaying tutorial...');
             // Retry after a short delay if game isn't ready
             setTimeout(() => {
-                if (window.game && window.game.showGameTips) {
-                    window.game.showGameTips();
+                if (window.game && window.game.tutorialManager) {
+                    window.game.tutorialManager.startTutorial();
                 }
             }, 500);
         }
