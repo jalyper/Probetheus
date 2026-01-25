@@ -882,10 +882,21 @@ class GameController {
             });
         }
 
-        // Close Dark Market modal
+        // Close Dark Market modal (X button at top)
         const closeDarkMarket = document.getElementById('closeDarkMarket');
         if (closeDarkMarket) {
             closeDarkMarket.addEventListener('click', () => {
+                const modal = document.getElementById('darkMarketModal');
+                if (modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+
+        // Close Dark Market modal (Close button at bottom)
+        const closeDarkMarketBottom = document.getElementById('closeDarkMarketBottom');
+        if (closeDarkMarketBottom) {
+            closeDarkMarketBottom.addEventListener('click', () => {
                 const modal = document.getElementById('darkMarketModal');
                 if (modal) {
                     modal.style.display = 'none';
