@@ -22,6 +22,8 @@
 3. ~~Finish building out the tutorial system~~ ✓ DONE (see `.planning/tutorial-system-prd.md`)
 4. ~~Add ability to turn off tips/tutorial from main menu~~ ✓ DONE
 5. Implement new signal distribution system
+6. **Fix mining bug** - Mining sometimes doesn't start when station has full resources (100% capacity)
+7. **Apply shell visuals to probes** - Make equipped shells change probe appearance (color, trail effects) - reference solar/red skin for trail implementation
 
 ### Tutorial System Sprint (Jan 2026) - COMPLETE
 See `.planning/tutorial-system-prd.md` for full PRD.
@@ -56,6 +58,23 @@ See `.planning/remnants-story-prd.md` for full PRD.
 **Phase 3-5**: Story fragments, endgame, polish (see PRD)
 
 ## Recent Changes (Jan 2026)
+
+### Shell System (Cosmetics)
+- New `src/ShellSystem.js` - Complete cosmetics system for probes, hubs, and mining stations
+  - 50+ shell definitions with rarity (common/uncommon/rare/epic/legendary)
+  - NPC-specific shells sold by Remnant traders (Keth-Varn, Whisperer, Mira-Sol, Archivist, Null)
+  - Shared shells available from any NPC
+  - Bonus system for gameplay effects (data discovery, research speed, signal range, etc.)
+  - Purchase with Probethium currency
+- Shell section added to probe details panel (`index.html`, `UIManager.js`)
+  - Preview of current equipped shell
+  - "Change Shell" button opens modal with owned shells
+  - Per-probe shell equipping via `equipShellOnProbe()`
+- Renamed all "skin" terminology to "shell" throughout codebase
+  - `GameState.cosmetics.ownedShells` / `equippedShells`
+  - `SaveManager.js` migration support for old save format
+- Fixed connector line drift bug - now accounts for zoom level in `getProbeScreenPosition()`
+- New test file: `tests/shell-system.spec.js` (12 tests)
 
 ### Probe Detail Panel Enhancements
 - Enhanced `probeDetailPanel` (the compact floating panel) with new features:

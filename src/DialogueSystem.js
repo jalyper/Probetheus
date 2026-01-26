@@ -362,16 +362,19 @@ class DialogueSystem {
     }
 
     /**
-     * Handle trade button
+     * Handle trade button - opens Dark Market for current NPC
      */
     handleTrade() {
         console.log('Opening trade with', this.currentRemnant?.name);
-        this.eventBus.emit('remnant:trade', {
-            remnantId: this.currentRemnant?.id
+
+        // Emit event to open Dark Market with NPC-specific inventory
+        this.eventBus.emit('darkmarket:openForNPC', {
+            npcId: this.currentRemnant?.id,
+            npcType: this.currentRemnant
         });
 
-        // For now, just log - will be implemented with StoryManager
-        this.textEl.textContent = "Trade functionality coming soon...";
+        // Show loading text while market opens
+        this.textEl.textContent = "Opening my wares for you...";
     }
 
     /**

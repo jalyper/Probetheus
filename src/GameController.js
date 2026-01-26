@@ -25,6 +25,7 @@ class GameController {
         this.tutorialManager = new TutorialManager(this.gameState, this.eventBus);
         this.cosmeticManager = new CosmeticManager(this.gameState, this.eventBus);
         this.darkMarketSystem = new DarkMarketSystem(this.gameState, this.eventBus);
+        this.shellSystem = new ShellSystem(this.gameState, this.eventBus);
         this.remnantManager = new RemnantManager(this.gameState, this.eventBus);
         this.dialogueSystem = new DialogueSystem(this.gameState, this.eventBus);
         this.musicManager = new MusicManager(this.gameState, this.eventBus);
@@ -70,7 +71,12 @@ class GameController {
                 this.selectHub(data.hub);
             }
         });
-        
+
+        // Listen for Dark Market opening from NPC trade
+        this.eventBus.on('darkmarket:openForNPC', (data) => {
+            this.openDarkMarketForNPC(data.npcId, data.npcType);
+        });
+
         // Canvas elements
         this.canvas = document.getElementById('galaxyCanvas');
         this.ctx = this.canvas.getContext('2d');
@@ -1290,6 +1296,328 @@ class GameController {
         const modal = document.getElementById('settingsModal');
         if (modal) {
             modal.style.display = 'none';
+        }
+    }
+
+    /**
+     * Open Dark Market for a specific NPC (from dialogue Trade button)
+     */
+    openDarkMarketForNPC(npcId, npcType) {
+        console.log('Opening Dark Market for NPC:', npcId, npcType);
+
+        // Generate NPC-specific inventory
+        this.darkMarketSystem.generateNPCInventory(npcId);
+
+        // Populate UI with NPC-specific content
+        this.populateNPCDarkMarketUI(npcId, npcType);
+
+        // Show modal
+        const modal = document.getElementById('darkMarketModal');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    }
+
+    /**
+     * Populate Dark Market UI with NPC-specific inventory
+     */
+    populateNPCDarkMarketUI(npcId, npcType) {
+        const container = document.getElementById('darkMarketInventory');
+        if (!container) return;
+
+        const inventory = this.darkMarketSystem.currentMarketInventory;
+        if (!inventory) return;
+
+        const shellSystem = this.shellSystem;
+        const npcConfig = inventory.npcConfig || {};
+        const npcTheme = npcType || {};
+
+        // Update modal header with NPC info
+        const modalContent = container.closest('.modal-content');
+        if (modalContent) {
+            // Find or create header section
+            let headerSection = modalContent.querySelector('.npc-market-header');
+            if (!headerSection) {
+                headerSection = document.createElement('div');
+                headerSection.className = 'npc-market-header';
+                modalContent.insertBefore(headerSection, container);
+            }
+
+            const eyeColor = npcTheme.eyeColor || npcConfig.color || '#9400d3';
+
+            headerSection.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid ${eyeColor}44;">
+                    <div style="width: 80px; height: 80px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #222, #0a0a0f); border: 2px solid ${eyeColor}; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px ${eyeColor}44;">
+                        <div style="display: flex; gap: 12px;">
+                            <div style="width: 8px; height: 8px; border-radius: 50%; background: ${eyeColor}; box-shadow: 0 0 10px ${eyeColor};"></div>
+                            <div style="width: 8px; height: 8px; border-radius: 50%; background: ${eyeColor}; box-shadow: 0 0 10px ${eyeColor};"></div>
+                        </div>
+                    </div>
+                    <div style="flex-grow: 1;">
+                        <div style="color: ${eyeColor}; font-size: 24px; font-weight: bold; text-shadow: 0 0 10px ${eyeColor}44;">
+                            ${npcTheme.name || npcId}
+                        </div>
+                        <div style="color: #888; font-size: 14px; margin-top: 4px;">
+                            ${npcTheme.title || npcConfig.theme || ''}
+                        </div>
+                        <div style="color: #666; font-size: 12px; margin-top: 8px;">
+                            ${npcConfig.description || 'A mysterious merchant...'}
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                    <button class="market-filter-btn active" data-filter="all" style="padding: 8px 16px; background: ${eyeColor}22; border: 1px solid ${eyeColor}; color: ${eyeColor}; border-radius: 4px; cursor: pointer;">All</button>
+                    <button class="market-filter-btn" data-filter="probes" style="padding: 8px 16px; background: transparent; border: 1px solid #555; color: #888; border-radius: 4px; cursor: pointer;">Probes</button>
+                    <button class="market-filter-btn" data-filter="hubs" style="padding: 8px 16px; background: transparent; border: 1px solid #555; color: #888; border-radius: 4px; cursor: pointer;">Hubs</button>
+                    <button class="market-filter-btn" data-filter="miningStations" style="padding: 8px 16px; background: transparent; border: 1px solid #555; color: #888; border-radius: 4px; cursor: pointer;">Stations</button>
+                    <button class="market-filter-btn" data-filter="special" style="padding: 8px 16px; background: transparent; border: 1px solid #555; color: #888; border-radius: 4px; cursor: pointer;">Special</button>
+                </div>
+            `;
+
+            // Add filter click handlers
+            headerSection.querySelectorAll('.market-filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Update active state
+                    headerSection.querySelectorAll('.market-filter-btn').forEach(b => {
+                        b.classList.remove('active');
+                        b.style.background = 'transparent';
+                        b.style.borderColor = '#555';
+                        b.style.color = '#888';
+                    });
+                    btn.classList.add('active');
+                    btn.style.background = `${eyeColor}22`;
+                    btn.style.borderColor = eyeColor;
+                    btn.style.color = eyeColor;
+
+                    // Filter items
+                    this.filterMarketItems(btn.dataset.filter);
+                });
+            });
+        }
+
+        // Build inventory HTML
+        let html = '<div class="market-items-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">';
+
+        // Add special reward if available
+        if (inventory.specialReward) {
+            const special = inventory.specialReward;
+            html += this.renderMarketItemCard({
+                ...special,
+                category: 'special',
+                isSpecial: true,
+                visual: { color: '#ffd700' },
+                rarity: 'epic'
+            }, npcConfig.color || '#9400d3');
+        }
+
+        // Add all shells
+        ['probes', 'hubs', 'miningStations'].forEach(category => {
+            const shells = inventory.shells?.[category] || [];
+            shells.forEach(shell => {
+                html += this.renderMarketItemCard({
+                    ...shell,
+                    category: category
+                }, npcConfig.color || '#9400d3');
+            });
+        });
+
+        html += '</div>';
+
+        // Add Probethium display
+        const currentProbethium = this.gameState.probethium?.current || 0;
+        html += `
+            <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #333;">
+                <span style="color: #888;">Your Probethium:</span>
+                <span style="color: #ffd700; font-weight: bold; margin-left: 8px;">${currentProbethium.toFixed(4)} P</span>
+            </div>
+        `;
+
+        container.innerHTML = html;
+
+        // Add purchase event listeners
+        this.attachMarketPurchaseHandlers();
+    }
+
+    /**
+     * Render a market item card
+     */
+    renderMarketItemCard(item, npcColor) {
+        const rarityInfo = window.RARITY?.[item.rarity] || { color: '#aaaaaa', name: 'Common' };
+        const visualColor = item.visual?.color || rarityInfo.color;
+
+        // Category labels
+        const categoryLabels = {
+            probes: 'Probe Shell',
+            hubs: 'Hub Shell',
+            miningStations: 'Station Shell',
+            special: 'Special'
+        };
+
+        // Format bonuses
+        let bonusHtml = '';
+        if (item.bonuses && Object.keys(item.bonuses).length > 0) {
+            const bonusEntries = Object.entries(item.bonuses).map(([type, value]) => {
+                const info = window.BONUS_TYPES?.[type] || { icon: '', label: type, unit: '' };
+                return `<div style="color: #88ff88; font-size: 11px;">${info.icon} +${value}${info.unit} ${info.label}</div>`;
+            });
+            bonusHtml = bonusEntries.join('');
+        }
+
+        // Unique badge
+        const uniqueBadge = item.isUnique ?
+            `<div style="position: absolute; top: 8px; right: 8px; background: ${npcColor}; color: #000; font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: bold;">UNIQUE</div>` : '';
+
+        // Preview
+        let previewHtml = '';
+        if (item.category === 'probes') {
+            previewHtml = this.renderProbeSkinPreview(visualColor);
+        } else if (item.category === 'hubs') {
+            previewHtml = this.renderHubSkinPreview(visualColor);
+        } else if (item.category === 'miningStations') {
+            previewHtml = this.renderStationSkinPreview(visualColor);
+        } else if (item.isSpecial) {
+            previewHtml = '<div style="font-size: 40px;">🎁</div>';
+        }
+
+        return `
+            <div class="market-item-card" data-category="${item.category}" style="
+                border: 2px solid ${rarityInfo.color}44;
+                border-radius: 8px;
+                padding: 15px;
+                background: linear-gradient(135deg, ${rarityInfo.color}11, transparent);
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                min-height: 220px;
+            ">
+                ${uniqueBadge}
+                <div style="text-align: center; margin-bottom: 10px;">
+                    <div style="color: ${rarityInfo.color}; font-size: 10px; text-transform: uppercase; margin-bottom: 4px;">
+                        ${rarityInfo.name} ${categoryLabels[item.category] || ''}
+                    </div>
+                    <div style="color: #fff; font-size: 14px; font-weight: bold;">
+                        ${item.name}
+                    </div>
+                </div>
+                <div style="width: 60px; height: 60px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center;">
+                    ${previewHtml}
+                </div>
+                <div style="flex-grow: 1;">
+                    ${bonusHtml || '<div style="color: #666; font-size: 11px; text-align: center;">No stat bonuses</div>'}
+                </div>
+                <div style="color: #888; font-size: 11px; margin-bottom: 10px; text-align: center;">
+                    ${item.description || ''}
+                </div>
+                <button class="market-buy-btn" data-item-id="${item.id}" data-category="${item.category}" data-is-special="${item.isSpecial || false}" style="
+                    background: linear-gradient(135deg, ${rarityInfo.color}44, ${rarityInfo.color}22);
+                    border: 1px solid ${rarityInfo.color};
+                    color: ${rarityInfo.color};
+                    padding: 8px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    width: 100%;
+                    transition: all 0.2s;
+                ">
+                    ${item.price} P
+                </button>
+            </div>
+        `;
+    }
+
+    /**
+     * Render hub skin preview
+     */
+    renderHubSkinPreview(color) {
+        return `
+            <svg width="50" height="50" viewBox="0 0 50 50">
+                <circle cx="25" cy="25" r="18" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="4,2"/>
+                <circle cx="25" cy="25" r="10" fill="${color}44" stroke="${color}" stroke-width="2"/>
+                <circle cx="25" cy="25" r="4" fill="${color}"/>
+            </svg>
+        `;
+    }
+
+    /**
+     * Render mining station skin preview
+     */
+    renderStationSkinPreview(color) {
+        return `
+            <svg width="50" height="50" viewBox="0 0 50 50">
+                <rect x="15" y="20" width="20" height="20" fill="${color}44" stroke="${color}" stroke-width="2"/>
+                <rect x="20" y="10" width="10" height="12" fill="${color}66"/>
+                <circle cx="25" cy="30" r="5" fill="${color}"/>
+            </svg>
+        `;
+    }
+
+    /**
+     * Filter market items by category
+     */
+    filterMarketItems(filter) {
+        const cards = document.querySelectorAll('.market-item-card');
+        cards.forEach(card => {
+            const category = card.dataset.category;
+            if (filter === 'all' || category === filter) {
+                card.style.display = 'flex';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    /**
+     * Attach purchase handlers to market buttons
+     */
+    attachMarketPurchaseHandlers() {
+        document.querySelectorAll('.market-buy-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const itemId = btn.dataset.itemId;
+                const category = btn.dataset.category;
+                const isSpecial = btn.dataset.isSpecial === 'true';
+
+                if (isSpecial) {
+                    this.purchaseSpecialReward();
+                } else {
+                    this.purchaseMarketShell(category, itemId);
+                }
+            });
+
+            // Hover effects
+            btn.addEventListener('mouseenter', () => {
+                btn.style.transform = 'scale(1.02)';
+                btn.style.boxShadow = '0 0 10px currentColor';
+            });
+            btn.addEventListener('mouseleave', () => {
+                btn.style.transform = 'scale(1)';
+                btn.style.boxShadow = 'none';
+            });
+        });
+    }
+
+    /**
+     * Purchase a skin from the market
+     */
+    purchaseMarketShell(category, shellId) {
+        const success = this.darkMarketSystem.purchaseShell(category, shellId);
+        if (success) {
+            // Re-render the market UI
+            const npcId = this.darkMarketSystem.currentNPC;
+            const npcType = window.NPC_THEMES?.[npcId] || {};
+            this.populateNPCDarkMarketUI(npcId, npcType);
+        }
+    }
+
+    /**
+     * Purchase special reward from market
+     */
+    purchaseSpecialReward() {
+        const success = this.darkMarketSystem.purchaseSpecialReward();
+        if (success) {
+            // Re-render the market UI
+            const npcId = this.darkMarketSystem.currentNPC;
+            const npcType = window.NPC_THEMES?.[npcId] || {};
+            this.populateNPCDarkMarketUI(npcId, npcType);
         }
     }
 

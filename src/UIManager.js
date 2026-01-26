@@ -125,7 +125,7 @@ class UIManager {
     }
 
     /**
-     * Get probe's screen position (accounting for canvas offset)
+     * Get probe's screen position (accounting for canvas offset and zoom)
      */
     getProbeScreenPosition(probe) {
         if (!probe) return null;
@@ -136,9 +136,9 @@ class UIManager {
         const canvasRect = canvas.getBoundingClientRect();
         const world = this.gameState.getWorld();
 
-        // Probe position relative to canvas
-        const probeCanvasX = probe.current.x - world.viewOffset.x;
-        const probeCanvasY = probe.current.y - world.viewOffset.y;
+        // Probe position relative to canvas (accounting for zoom level)
+        const probeCanvasX = (probe.current.x - world.viewOffset.x) * world.zoomLevel;
+        const probeCanvasY = (probe.current.y - world.viewOffset.y) * world.zoomLevel;
 
         // Convert to screen position
         return {
@@ -246,6 +246,17 @@ class UIManager {
                 }
             });
         }
+
+        // Change Shell button - opens shell modal
+        const changeShellBtn = document.getElementById('changeShellBtn');
+        if (changeShellBtn) {
+            changeShellBtn.addEventListener('click', () => {
+                const selectedProbe = this.gameState.ui.selectedProbe;
+                if (selectedProbe) {
+                    this.showShellModal(selectedProbe);
+                }
+            });
+        }
     }
 
     /**
@@ -268,6 +279,9 @@ class UIManager {
 
         // Update equipment slots display
         this.updateEquipmentSlots(probe);
+
+        // Update shell section display
+        this.updateShellSection(probe);
 
         // Show the panel
         if (this.elements.probeDetailPanel) {
@@ -1444,6 +1458,211 @@ class UIManager {
 
         // Update UI to reflect probe removal
         this.updateUI();
+    }
+
+    /**
+     * Update shell section in probe detail panel
+     */
+    updateShellSection(probe) {
+        const previewBox = document.getElementById('currentShellPreview');
+        const nameEl = document.getElementById('currentShellName');
+        if (!previewBox || !nameEl) return;
+
+        const shellSystem = window.game?.shellSystem;
+        if (!shellSystem) {
+            // ShellSystem not available, show default
+            previewBox.innerHTML = '<span style="color: #0ff; font-size: 24px;">🛸</span>';
+            nameEl.textContent = 'Default';
+            return;
+        }
+
+        const shell = shellSystem.getProbeShell(probe);
+        const shellColor = shell?.visual?.color || '#0ff';
+
+        // Render shell preview
+        previewBox.innerHTML = this.renderProbeShellPreview(shell);
+        previewBox.style.borderColor = shellColor;
+        previewBox.style.background = `rgba(${this.hexToRgb(shellColor)}, 0.1)`;
+        nameEl.textContent = shell?.name || 'Default';
+        nameEl.style.color = shellColor;
+    }
+
+    /**
+     * Render a small probe shell preview SVG
+     */
+    renderProbeShellPreview(shell) {
+        const color = shell?.visual?.color || '#0ff';
+        const glow = shell?.visual?.glow || color;
+
+        return `
+            <svg width="40" height="40" viewBox="0 0 40 40">
+                <defs>
+                    <filter id="shellGlow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
+                        <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7"/>
+                    </filter>
+                </defs>
+                <!-- Body -->
+                <ellipse cx="20" cy="20" rx="8" ry="6" fill="${color}" filter="url(#shellGlow)"/>
+                <!-- Wings -->
+                <rect x="8" y="17" width="8" height="3" fill="${color}" opacity="0.8"/>
+                <rect x="24" y="17" width="8" height="3" fill="${color}" opacity="0.8"/>
+                <!-- Front -->
+                <polygon points="20,10 17,16 23,16" fill="${glow}"/>
+                <!-- Antenna -->
+                <line x1="17" y1="12" x2="14" y2="8" stroke="${glow}" stroke-width="1"/>
+                <line x1="23" y1="12" x2="26" y2="8" stroke="${glow}" stroke-width="1"/>
+                <circle cx="14" cy="8" r="2" fill="${glow}"/>
+                <circle cx="26" cy="8" r="2" fill="${glow}"/>
+            </svg>
+        `;
+    }
+
+    /**
+     * Convert hex color to RGB values
+     */
+    hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        if (result) {
+            return `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`;
+        }
+        return '0, 255, 255';
+    }
+
+    /**
+     * Show shell selection modal
+     */
+    showShellModal(probe) {
+        // Remove existing modal if present
+        const existingModal = document.getElementById('shellModal');
+        if (existingModal) existingModal.remove();
+
+        const shellSystem = window.game?.shellSystem;
+        if (!shellSystem) {
+            this.showMessage({ text: 'Shell system not available', type: 'error' });
+            return;
+        }
+
+        // Get owned shells
+        const ownedShells = shellSystem.getOwnedShells('probes');
+        const currentShellId = probe.shellId || this.gameState.cosmetics?.equippedShells?.probes || 'default';
+
+        const modal = document.createElement('div');
+        modal.id = 'shellModal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        `;
+
+        const rarityColors = {
+            common: '#aaa',
+            uncommon: '#0f0',
+            rare: '#00f',
+            epic: '#f0f',
+            legendary: '#ffd700'
+        };
+
+        modal.innerHTML = `
+            <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border: 2px solid #9400d3; border-radius: 10px; padding: 20px; max-width: 450px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 style="color: #9400d3; margin: 0;">🎨 Equip Shell</h3>
+                    <button id="closeShellModal" style="background: none; border: none; color: #888; font-size: 20px; cursor: pointer;">&times;</button>
+                </div>
+
+                <div style="color: #888; font-size: 12px; margin-bottom: 15px;">
+                    Probe ${probe.id} | Current: ${ownedShells.find(s => s.id === currentShellId)?.name || 'Default'}
+                </div>
+
+                <div style="color: #9400d3; font-weight: bold; margin-bottom: 10px;">Available Shells:</div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px;">
+                    ${ownedShells.map(shell => {
+                        const isSelected = shell.id === currentShellId;
+                        const color = shell.visual?.color || '#0ff';
+                        const rarityColor = rarityColors[shell.rarity] || '#aaa';
+
+                        return `
+                            <div
+                                class="shell-option"
+                                data-shell-id="${shell.id}"
+                                style="
+                                    background: ${isSelected ? 'rgba(148, 0, 211, 0.2)' : 'rgba(0,0,0,0.3)'};
+                                    border: 2px solid ${isSelected ? '#9400d3' : color};
+                                    border-radius: 8px;
+                                    padding: 10px;
+                                    cursor: pointer;
+                                    text-align: center;
+                                    transition: all 0.2s;
+                                    ${isSelected ? 'box-shadow: 0 0 10px rgba(148, 0, 211, 0.5);' : ''}
+                                "
+                            >
+                                ${this.renderProbeShellPreview(shell)}
+                                <div style="color: ${color}; font-size: 11px; font-weight: bold; margin-top: 5px;">${shell.name}</div>
+                                <div style="color: ${rarityColor}; font-size: 9px; text-transform: uppercase;">${shell.rarity || 'common'}</div>
+                                ${isSelected ? '<div style="color: #0f8; font-size: 9px; margin-top: 3px;">✓ EQUIPPED</div>' : ''}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+
+                ${ownedShells.length <= 1 ? `
+                    <div style="color: #888; text-align: center; padding: 20px; margin-top: 15px; background: rgba(0,0,0,0.2); border-radius: 5px;">
+                        <div style="font-size: 24px; margin-bottom: 5px;">🛒</div>
+                        <div>Visit a Remnant trader to purchase more shells!</div>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Store reference to this for callbacks
+        const self = this;
+
+        // Setup modal event handlers
+        document.getElementById('closeShellModal').addEventListener('click', () => {
+            modal.remove();
+        });
+
+        // Close on background click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.remove();
+        });
+
+        // Setup shell option click handlers
+        const shellOptions = modal.querySelectorAll('.shell-option');
+        shellOptions.forEach(option => {
+            option.addEventListener('mouseenter', () => {
+                option.style.transform = 'scale(1.05)';
+            });
+            option.addEventListener('mouseleave', () => {
+                option.style.transform = 'scale(1)';
+            });
+            option.addEventListener('click', () => {
+                const shellId = option.getAttribute('data-shell-id');
+                const result = shellSystem.equipShellOnProbe(probe, shellId);
+
+                if (result.success) {
+                    self.eventBus.emit('ui:message', {
+                        text: `Equipped ${ownedShells.find(s => s.id === shellId)?.name || 'shell'}!`,
+                        type: 'success'
+                    });
+                    // Update the shell section display
+                    self.updateShellSection(probe);
+                    modal.remove();
+                } else {
+                    self.eventBus.emit('ui:message', { text: result.error || 'Failed to equip shell', type: 'error' });
+                }
+            });
+        });
     }
 }
 

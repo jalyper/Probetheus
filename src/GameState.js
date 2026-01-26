@@ -569,6 +569,20 @@ class GameState {
             selectionEnd: null
         };
 
+        // Cosmetics/Shell system storage
+        this.cosmetics = {
+            ownedShells: {
+                probes: ['default'],
+                hubs: ['default'],
+                miningStations: ['default']
+            },
+            equippedShells: {
+                probes: 'default',
+                hubs: 'default',
+                miningStations: 'default'
+            }
+        };
+
         this.version = '0.3.1-pre-alpha';
     }
 

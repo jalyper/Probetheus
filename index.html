@@ -310,6 +310,20 @@
                 </button>
             </div>
 
+            <!-- Shell Section -->
+            <div id="shellSection" style="border-top: 1px solid #333; padding-top: 12px; margin-bottom: 12px;">
+                <div style="color: #9400d3; font-weight: bold; font-size: 12px; margin-bottom: 8px; text-align: center;">🎨 EQUIP SHELL</div>
+                <div id="shellPreviewBox" style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
+                    <div id="currentShellPreview" style="width: 50px; height: 50px; border: 2px solid #9400d3; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(148, 0, 211, 0.1);">
+                        <!-- Current shell preview rendered dynamically -->
+                    </div>
+                    <div id="currentShellName" style="color: #aaa; font-size: 11px; margin-left: 12px;">Default</div>
+                </div>
+                <button id="changeShellBtn" class="control-btn" style="width: 100%; font-size: 11px; padding: 8px; border-color: #9400d3; color: #9400d3;">
+                    🎨 Change Shell
+                </button>
+            </div>
+
             <div id="probeBuildingPanel" style="display: none; border-top: 1px solid #333; padding-top: 12px; margin-top: 12px;">
                 <div style="color: #888; font-size: 12px; margin-bottom: 8px;">Build along probe path:</div>
                 <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -512,23 +526,20 @@
         
         <!-- Dark Market Modal -->
         <div id="darkMarketModal" class="modal" style="display: none; background: rgba(0,0,0,0.98);">
-            <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto; border: 3px solid #9400d3; box-shadow: 0 0 50px rgba(148,0,211,0.8); background: linear-gradient(135deg, #0a0015 0%, #15001a 100%); position: relative;">
-                <button id="closeDarkMarket" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #9400d3; font-size: 24px; cursor: pointer; padding: 5px 10px; z-index: 10;">&times;</button>
-                
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <div style="font-size: 48px; margin-bottom: 15px;">🌑</div>
-                    <h1 style="color: #9400d3; margin: 0 0 10px 0; font-size: 28px; text-shadow: 0 0 20px rgba(148,0,211,0.8);">
-                        THE DARK MARKET
-                    </h1>
-                    <div style="color: #888; font-size: 14px;">Rare goods from beyond the void</div>
-                </div>
-                
-                <div id="darkMarketInventory" style="display: grid; gap: 20px; grid-template-columns: 1fr; max-width: 100%;">
-                    <!-- Inventory items will be populated here -->
+            <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto; border: 3px solid #9400d3; box-shadow: 0 0 50px rgba(148,0,211,0.8); background: linear-gradient(135deg, #0a0015 0%, #15001a 100%); position: relative; padding: 25px;">
+                <button id="closeDarkMarket" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #9400d3; font-size: 28px; cursor: pointer; padding: 5px 10px; z-index: 10; transition: all 0.2s;" onmouseover="this.style.textShadow='0 0 10px #9400d3'" onmouseout="this.style.textShadow='none'">&times;</button>
+
+                <!-- NPC header will be dynamically inserted here by JavaScript -->
+
+                <div id="darkMarketInventory" style="max-width: 100%;">
+                    <!-- Inventory items will be populated here dynamically -->
+                    <div style="text-align: center; color: #666; padding: 40px;">
+                        Loading market inventory...
+                    </div>
                 </div>
 
-                <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #9400d3;">
-                    <button id="closeDarkMarketBottom" class="control-btn" style="background: linear-gradient(135deg, #2a0040 0%, #15001a 100%); border-color: #9400d3; color: #9400d3;">Close</button>
+                <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #9400d333;">
+                    <button id="closeDarkMarketBottom" class="control-btn" style="background: linear-gradient(135deg, #2a0040 0%, #15001a 100%); border-color: #9400d3; color: #9400d3; padding: 10px 30px; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.boxShadow='0 0 15px rgba(148,0,211,0.5)'" onmouseout="this.style.boxShadow='none'">Close Market</button>
                 </div>
             </div>
         </div>
@@ -651,6 +662,7 @@
     <script src="src/TutorialManager.js"></script>
     <script src="src/CosmeticManager.js"></script>
     <script src="src/DarkMarketSystem.js"></script>
+    <script src="src/ShellSystem.js"></script>
     <script src="src/RemnantManager.js"></script>
     <script src="src/DialogueSystem.js"></script>
     <script src="src/MusicManager.js"></script>
@@ -677,6 +689,7 @@
             { name: 'OfflineManager', type: 'class' },
             { name: 'TutorialManager', type: 'class' },
             { name: 'CosmeticManager', type: 'class' },
+            { name: 'ShellSystem', type: 'class' },
             { name: 'RemnantManager', type: 'class' },
             { name: 'DialogueSystem', type: 'class' },
             { name: 'UIManager', type: 'class' },

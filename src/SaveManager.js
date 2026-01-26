@@ -126,7 +126,19 @@ class SaveManager {
                     miningOutposts: [...this.gameState.entities.miningOutposts],
                     miningFacilities: [...this.gameState.entities.miningFacilities],
                     signals: [] // Don't save temporary signals
-                }
+                },
+                cosmetics: this.gameState.cosmetics ? {
+                    ownedShells: {
+                        probes: [...(this.gameState.cosmetics.ownedShells?.probes || ['default'])],
+                        hubs: [...(this.gameState.cosmetics.ownedShells?.hubs || ['default'])],
+                        miningStations: [...(this.gameState.cosmetics.ownedShells?.miningStations || ['default'])]
+                    },
+                    equippedShells: {
+                        probes: this.gameState.cosmetics.equippedShells?.probes || 'default',
+                        hubs: this.gameState.cosmetics.equippedShells?.hubs || 'default',
+                        miningStations: this.gameState.cosmetics.equippedShells?.miningStations || 'default'
+                    }
+                } : null
             }
         };
 
@@ -533,7 +545,31 @@ class SaveManager {
             };
             console.log('✓ Mining system restored:', this.gameState.mining.stations.length, 'stations,', this.gameState.mining.shuttles.length, 'shuttles');
         }
-        
+
+        // Restore cosmetics/shell system (with migration from old skin format)
+        if (savedState.cosmetics) {
+            // Support both old 'ownedSkins' and new 'ownedShells' format
+            const ownedSource = savedState.cosmetics.ownedShells || savedState.cosmetics.ownedSkins;
+            const equippedSource = savedState.cosmetics.equippedShells || savedState.cosmetics.equippedSkins;
+
+            this.gameState.cosmetics = {
+                ownedShells: {
+                    probes: [...(ownedSource?.probes || ['default'])],
+                    hubs: [...(ownedSource?.hubs || ['default'])],
+                    miningStations: [...(ownedSource?.miningStations || ['default'])]
+                },
+                equippedShells: {
+                    probes: equippedSource?.probes || 'default',
+                    hubs: equippedSource?.hubs || 'default',
+                    miningStations: equippedSource?.miningStations || 'default'
+                }
+            };
+            console.log('✓ Cosmetics restored:',
+                this.gameState.cosmetics.ownedShells.probes.length, 'probe shells,',
+                this.gameState.cosmetics.ownedShells.hubs.length, 'hub shells,',
+                this.gameState.cosmetics.ownedShells.miningStations.length, 'station shells');
+        }
+
         // Clear UI state
         this.gameState.ui.selectedHub = null;
         this.gameState.ui.deployMode = false;
