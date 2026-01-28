@@ -2771,7 +2771,16 @@ class GameController {
         const blinkCycle = skin?.blinkSpeed || 1500; // Customizable blink speed
         const blinkPhase = (time % blinkCycle) / blinkCycle;
         const componentAlpha = 0.6 + 0.4 * Math.abs(Math.sin(blinkPhase * Math.PI * 2));
-        
+
+        // Apply glow effect if shell has it enabled
+        if (skin?.glow) {
+            const glowColor = skin.bodyColor || probeColor;
+            this.ctx.shadowColor = glowColor;
+            this.ctx.shadowBlur = 12;
+            this.ctx.shadowOffsetX = 0;
+            this.ctx.shadowOffsetY = 0;
+        }
+
         // Apply skin overrides
         const bodyColor = skin?.bodyColor || probeColor;
         const wingColorBase = skin?.wingColor || probeColor;
@@ -2865,10 +2874,14 @@ class GameController {
         this.ctx.beginPath();
         this.ctx.moveTo(-bodyRadius, 1);
         this.ctx.lineTo(
-            -bodyRadius - antennaLength * Math.cos(angleRad), 
+            -bodyRadius - antennaLength * Math.cos(angleRad),
             1 + antennaLength * Math.sin(angleRad)
         );
         this.ctx.stroke();
+
+        // Reset shadow/glow
+        this.ctx.shadowBlur = 0;
+        this.ctx.shadowColor = 'transparent';
     }
 
     /**
