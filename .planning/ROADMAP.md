@@ -1,0 +1,33 @@
+# Probetheus Roadmap
+
+## Current Milestone: v1.1 Shell Visuals & Cosmetics
+
+### Phase 1: Shell Visuals for Probes
+
+**Goal:** Implement Shell system for probes that allows equipping Shells via the Probe Details panel, granting visual aesthetics similar to the existing red probe skin. Includes unique trail effects (color variations) mapped to Dark Market shells.
+
+**Depends on:** None (first phase)
+**Plans:** 1 plan
+
+Plans:
+- [ ] 01-01-PLAN.md — Bridge shell visuals to probe.cosmetic and add glow rendering
+
+**Details:**
+The shell system already has visual definitions (color, trail, glow) but they aren't applied to probe rendering. This plan bridges the gap by:
+1. Adding buildCosmeticFromShell() to convert shell.visual to probe.cosmetic format
+2. Updating equipShellOnProbe() to apply cosmetic data immediately
+3. Adding shadowBlur glow effect in drawProbeComponents() for shells with glow:true
+4. Tests verifying visual application works correctly
+
+Key requirements:
+- Equip shells via Probe Details panel (already working)
+- Visual aesthetic changes (similar to red probe skin) - this plan
+- Trail effect color changes based on shell - this plan
+- Map all shells to Dark Market offerings (already complete in ShellSystem.js)
+- Reference existing red/solar skin implementation for trails - used as reference
+
+---
+
+## Future Milestones
+
+(To be planned)
