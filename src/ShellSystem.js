@@ -756,6 +756,33 @@ class ShellSystem {
     }
 
     /**
+     * Build probe.cosmetic object from shell visual properties
+     * Converts shell.visual to the format expected by probe rendering
+     * @param {Object} shell - Shell definition object
+     * @returns {Object} - Cosmetic data compatible with probe rendering
+     */
+    buildCosmeticFromShell(shell) {
+        const visual = shell?.visual || {};
+        const defaultColor = '#00ffff';
+
+        return {
+            trailEnabled: true,
+            trail: {
+                length: 15,
+                color: visual.trail || visual.color || defaultColor,
+                width: visual.glow ? 4 : 3,
+                opacity: visual.glow ? 0.95 : 0.9
+            },
+            bodyColor: visual.color || defaultColor,
+            wingColor: visual.color || defaultColor,
+            frontColor: visual.color || defaultColor,
+            antennaColor: visual.color || defaultColor,
+            glow: visual.glow || false,
+            blinkSpeed: 1500
+        };
+    }
+
+    /**
      * Equip a shell on a specific probe (per-entity override)
      */
     equipShellOnProbe(probe, shellId) {
@@ -764,10 +791,25 @@ class ShellSystem {
         }
 
         probe.shellId = shellId;
+
+        // Apply cosmetic data to probe for immediate visual update
+        const shell = this.getShell('probes', shellId);
+        probe.cosmetic = this.buildCosmeticFromShell(shell);
+
         this.eventBus.emit('shell:equippedOnProbe', { probe, shellId });
         this.eventBus.emit('ui:update');
 
         return { success: true };
+    }
+
+    /**
+     * Refresh probe cosmetic from its current shellId
+     * Useful after save/load to re-apply visual data
+     * @param {Object} probe - Probe entity to refresh
+     */
+    refreshProbeCosmetic(probe) {
+        const shell = this.getProbeShell(probe);
+        probe.cosmetic = this.buildCosmeticFromShell(shell);
     }
 
     /**
