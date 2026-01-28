@@ -30,17 +30,18 @@ Key requirements:
 
 ---
 
-### Phase 2: Shell Persistence on Save/Load
+### Phase 2: Shell Persistence on Save/Load ✓
 
 **Goal:** Ensure per-probe shell assignments persist through save/load cycles. When a player equips a custom shell on a specific probe, saves the game, and loads that save, the probe should retain its equipped shell and visual appearance.
 
 **Depends on:** Phase 1 (Shell Visuals for Probes)
-**Status:** Not started
-**Gap Closure:** Closes gaps from v1.1 audit
+**Status:** Complete
+**Completed:** 2026-01-27
+**Gap Closure:** Closed gaps from v1.1 audit
 **Plans:** 1 plan
 
 Plans:
-- [ ] 02-01-PLAN.md — Add shellId serialization and cosmetic refresh on load
+- [x] 02-01-PLAN.md — Add shellId serialization and cosmetic refresh on load
 
 **Details:**
 Closes the following audit gaps:
