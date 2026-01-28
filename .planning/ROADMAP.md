@@ -2,15 +2,17 @@
 
 ## Current Milestone: v1.1 Shell Visuals & Cosmetics
 
-### Phase 1: Shell Visuals for Probes
+### Phase 1: Shell Visuals for Probes ✓
 
 **Goal:** Implement Shell system for probes that allows equipping Shells via the Probe Details panel, granting visual aesthetics similar to the existing red probe skin. Includes unique trail effects (color variations) mapped to Dark Market shells.
 
 **Depends on:** None (first phase)
+**Status:** Complete
+**Completed:** 2026-01-27
 **Plans:** 1 plan
 
 Plans:
-- [ ] 01-01-PLAN.md — Bridge shell visuals to probe.cosmetic and add glow rendering
+- [x] 01-01-PLAN.md — Bridge shell visuals to probe.cosmetic and add glow rendering
 
 **Details:**
 The shell system already has visual definitions (color, trail, glow) but they aren't applied to probe rendering. This plan bridges the gap by:
