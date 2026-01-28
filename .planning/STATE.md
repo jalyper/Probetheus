@@ -5,8 +5,9 @@
 **Milestone:** v1.1 Shell Visuals & Cosmetics
 **Phase:** 1 - Shell Visuals for Probes
 **Plan:** 1 of 1
-**Status:** Phase Complete - Verified
-**Last activity:** 2026-01-27 - Phase 1 verified, all must-haves confirmed
+**Status:** Gap closure planned
+**Last activity:** 2026-01-27 - Phase 2 added to close save/load persistence gap
+**Next Phase:** 2 - Shell Persistence on Save/Load
 
 Progress: [==============================] 100%
 
