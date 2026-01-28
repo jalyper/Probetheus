@@ -37,10 +37,10 @@ Key requirements:
 **Depends on:** Phase 1 (Shell Visuals for Probes)
 **Status:** Not started
 **Gap Closure:** Closes gaps from v1.1 audit
-**Plans:** 0 plans
+**Plans:** 1 plan
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 2 to break down)
+- [ ] 02-01-PLAN.md — Add shellId serialization and cosmetic refresh on load
 
 **Details:**
 Closes the following audit gaps:
