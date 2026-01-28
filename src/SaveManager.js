@@ -112,7 +112,8 @@ class SaveManager {
                         damage: probe.damage || 0,
                         cargo: probe.cargo ? { ...probe.cargo } : null,
                         outboundWaypointsCount: probe.outboundWaypointsCount || 0,
-                        returnSpeed: probe.returnSpeed || 0.0003
+                        returnSpeed: probe.returnSpeed || 0.0003,
+                        shellId: probe.shellId || 'default'
                     })),
                     reconHubs: this.gameState.entities.reconHubs.map(hub => ({
                         id: hub.id,
@@ -528,7 +529,15 @@ class SaveManager {
 
             return probe;
         });
-        
+
+        // Refresh probe cosmetics from shellIds after all probes are restored
+        if (window.game?.shellSystem) {
+            this.gameState.entities.probes.forEach(probe => {
+                window.game.shellSystem.refreshProbeCosmetic(probe);
+            });
+            console.log('Shell cosmetics refreshed for', this.gameState.entities.probes.length, 'probes');
+        }
+
         this.gameState.entities.reconHubs = [...savedState.entities.reconHubs];
         this.gameState.entities.miningOutposts = [...savedState.entities.miningOutposts];
         this.gameState.entities.miningFacilities = [...savedState.entities.miningFacilities];
