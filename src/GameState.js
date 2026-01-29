@@ -790,10 +790,14 @@ class GameState {
         multipliers.endurance = 1.0 + Math.min(hoursPlayed * 0.05, 2.0); // Cap at 3x for 40+ hours
         
         // Calculate final rate
-        const totalMultiplier = multipliers.efficiency * multipliers.exploration * 
+        const totalMultiplier = multipliers.efficiency * multipliers.exploration *
                                multipliers.research * multipliers.endurance;
-        
-        const finalRate = baseRate * totalMultiplier;
+
+        // Shell bonus: probethiumRate increases probethium generation
+        const probethiumShellBonus = window.game?.shellSystem ? window.game.shellSystem.getEntityBonus('miningStations', null, 'probethiumRate') : 0;
+        const shellMultiplier = 1 + probethiumShellBonus / 100;
+
+        const finalRate = baseRate * totalMultiplier * shellMultiplier;
         
         // Accumulate Probethium
         const accumulated = finalRate * (timeDelta / 1000);

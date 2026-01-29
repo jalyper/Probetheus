@@ -269,7 +269,10 @@ class MiningManager {
             // Continuous Probethium production and resource consumption during mining
             // Check if station is in an asteroid field for 3x bonus
             const sectorBonus = this.getStationSectorBonus(station);
-            const productionPerMs = (stationType.output * station.level * station.efficiency * this.gameState.mining.efficiencyBonus * sectorBonus) / stationType.operationDuration;
+            // Shell bonus: miningEfficiency increases output
+            const efficiencyShellBonus = window.game?.shellSystem ? window.game.shellSystem.getEntityBonus('miningStations', null, 'miningEfficiency') : 0;
+            const efficiencyShellMultiplier = 1 + efficiencyShellBonus / 100;
+            const productionPerMs = (stationType.output * station.level * station.efficiency * this.gameState.mining.efficiencyBonus * sectorBonus * efficiencyShellMultiplier) / stationType.operationDuration;
             const continuousProduction = productionPerMs * deltaTime;
             
             // Consume resources continuously during the cycle
@@ -338,11 +341,12 @@ class MiningManager {
         
         if (!hub || !station) return;
         
-        // Pause shuttle movement if station is actively mining (between 10-90% of cycle)
+        // If station is actively mining (between 10-90% of cycle), send shuttle back to hub instead of freezing mid-flight
         const isMiningActive = station.active && station.operationCycleProgress > 0.1 && station.operationCycleProgress < 0.9;
         if (isMiningActive && shuttle.status === 'delivering') {
-            // Hold position during active mining
-            return;
+            // Return to hub and wait instead of freezing in place
+            shuttle.target = 'hub';
+            shuttle.status = 'returning';
         }
         
         // Calculate movement
@@ -369,7 +373,9 @@ class MiningManager {
             }
             
             // Move towards target
-            const moveDistance = shuttle.speed * shuttle.level * deltaTime;
+            // Shell bonus: shuttleSpeed increases shuttle movement speed
+            const speedShellBonus = window.game?.shellSystem ? window.game.shellSystem.getEntityBonus('miningStations', null, 'shuttleSpeed') : 0;
+            const moveDistance = shuttle.speed * shuttle.level * (1 + speedShellBonus / 100) * deltaTime;
             const moveRatio = Math.min(moveDistance / distance, 1);
             
             shuttle.position.x += dx * moveRatio;
@@ -522,40 +528,48 @@ class MiningManager {
         // Load exact requirements that station is missing
         shuttle.cargo = {};
         let totalLoaded = 0;
-        
+
         console.log('Loading shuttle for station', station.id);
         console.log('Station current inventory:', JSON.stringify(station.stationInventory));
         console.log('Station requirements:', JSON.stringify(stationType.requirements));
-        
+
+        // Build up deductions first, then apply once to avoid overwriting previous deductions
+        const deductions = {};
+
         Object.entries(stationType.requirements).forEach(([resource, required]) => {
             const currentInventory = station.stationInventory[resource] || 0;
             const needed = Math.max(0, required - currentInventory);
-            
+
             console.log(`Resource ${resource}: has ${currentInventory}, needs ${required}, missing ${needed}`);
-            
+
             if (needed > 0) {
                 const toLoad = Math.min(
                     needed, // Only load what's needed to meet requirements
                     resources[resource] || 0,
                     shuttle.capacity - totalLoaded
                 );
-                
+
                 console.log(`Loading ${toLoad} ${resource} (capacity limit: ${shuttle.capacity - totalLoaded})`);
-                
+
                 if (toLoad > 0) {
                     shuttle.cargo[resource] = toLoad;
                     totalLoaded += toLoad;
-                    
-                    // Deduct from global resources
-                    const newResources = { ...resources };
-                    newResources[resource] -= toLoad;
-                    this.gameState.updateResources(newResources, this.eventBus);
+                    deductions[resource] = toLoad;
                 }
             }
         });
-        
+
+        // Apply all resource deductions at once
+        if (Object.keys(deductions).length > 0) {
+            const newResources = { ...resources };
+            Object.entries(deductions).forEach(([resource, amount]) => {
+                newResources[resource] -= amount;
+            });
+            this.gameState.updateResources(newResources, this.eventBus);
+        }
+
         console.log('Shuttle loaded with:', JSON.stringify(shuttle.cargo), 'total:', totalLoaded);
-        
+
         // Trigger UI update to show resource consumption
         this.eventBus.emit('ui:update');
     }
@@ -854,8 +868,8 @@ class MiningManager {
             const stationType = this.getStationTypes()[station.type];
             const progress = this.getStationResourceProgress(station, stationType);
             
-            // If station needs resources (below 95%)
-            if (progress < 0.95) {
+            // If station needs resources (match main shuttle logic threshold)
+            if (progress < 0.999) {
                 // Check if we now have resources available
                 const canLoadAnything = this.canLoadAnyRequiredResources(shuttle, station, stationType);
                 
