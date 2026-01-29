@@ -329,22 +329,36 @@ class ResearchManager {
     }
 
     /**
+     * Calculate effective research cost after shell bonus reduction
+     * @param {number} baseCost - Original node cost
+     * @returns {number} Reduced cost (minimum 1)
+     */
+    getEffectiveCost(baseCost) {
+        const researchShellBonus = window.game?.shellSystem ? window.game.shellSystem.getEntityBonus('hubs', null, 'researchSpeed') : 0;
+        return Math.max(1, Math.ceil(baseCost * (1 - researchShellBonus / 100)));
+    }
+
+    /**
      * Show research details and allow researching
      */
     showResearchDetails(node) {
         const infoDiv = document.getElementById('researchInfo');
         if (!infoDiv) return;
-        
+
         const research = this.gameState.getResearchSystem();
-        const canResearch = !node.researched && research.points >= node.cost;
-        
+        const effectiveCost = this.getEffectiveCost(node.cost);
+        const canResearch = !node.researched && research.points >= effectiveCost;
+        const costDisplay = effectiveCost < node.cost
+            ? `<span style="text-decoration: line-through; color: #666;">${node.cost}</span> ${effectiveCost}`
+            : `${node.cost}`;
+
         infoDiv.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
                 <div>
                     <h3 style="color: #0ff; margin: 0 0 5px 0;">${node.name}</h3>
-                    <div style="color: #888; font-size: 12px;">Cost: ${node.cost} Research Point${node.cost !== 1 ? 's' : ''}</div>
+                    <div style="color: #888; font-size: 12px;">Cost: ${costDisplay} Research Point${effectiveCost !== 1 ? 's' : ''}</div>
                 </div>
-                <button id="researchNodeBtn" class="control-btn resource-button ${!canResearch ? 'insufficient' : ''}" 
+                <button id="researchNodeBtn" class="control-btn resource-button ${!canResearch ? 'insufficient' : ''}"
                     style="font-size: 12px; padding: 8px 16px;"
                     ${!canResearch ? 'disabled' : ''}>
                     ${node.researched ? 'Researched ✓' : 'Research'}
@@ -368,11 +382,12 @@ class ResearchManager {
      */
     researchNode(node) {
         const research = this.gameState.getResearchSystem();
-        
-        if (node.researched || research.points < node.cost) return;
-        
-        // Spend research points
-        research.points -= node.cost;
+        const effectiveCost = this.getEffectiveCost(node.cost);
+
+        if (node.researched || research.points < effectiveCost) return;
+
+        // Spend research points (reduced by shell bonus)
+        research.points -= effectiveCost;
         
         // Mark as researched
         node.researched = true;
