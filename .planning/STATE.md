@@ -4,12 +4,12 @@
 
 **Milestone:** v1.2 Shell Bonuses & Effects
 **Phase:** 3 - Bonus Gameplay
-**Plan:** Not yet planned
-**Status:** Roadmap complete, ready to plan Phase 3
-**Last activity:** 2026-01-28 -- Roadmap created for v1.2
+**Plan:** 1 of 5 (Shell Bonus Foundation) -- COMPLETE
+**Status:** In progress
+**Last activity:** 2026-01-28 -- Completed 03-01-PLAN.md (Shell Bonus Foundation)
 **Next Milestone:** -
 
-Progress: [..........] 0/25 requirements
+Progress: [##........] 1/5 plans complete
 
 ## Project Reference
 
@@ -32,12 +32,15 @@ See: .planning/PROJECT.md (updated 2026-01-28)
 - Trail config varies with glow: width 4/3, opacity 0.95/0.9
 - shellId persists in SaveManager probe serialization
 - refreshProbeCosmetic() called after probe restore in SaveManager
-- ShellSystem has bonus calculation methods (getTotalBonuses, getBonus, applyBonus) but they are never called
-- 12 bonus types defined, ~40 shells have bonuses
+- All ~40 shell bonus values normalized to rarity scale (10/15/20/25 primary, 5/8/10/12 secondary)
+- `getEntityBonus(category, entity, bonusType)` resolves per-entity bonuses (probes via shellId, hubs/stations via category)
+- `applyBonusMultiplier(baseValue, bonusPercent)` utility for consistent bonus math
+- Hub shells only have researchSpeed bonus; mining station shells only have miningEfficiency/shuttleSpeed/probethiumRate
+- Probe shells do not have researchSpeed or probethiumRate
 - Per-entity bonus model: each shell only affects the entity it is equipped on
 
 ### Key Files
-- `src/ShellSystem.js` - Shell definitions, cosmetic bridging, equipping, bonus methods
+- `src/ShellSystem.js` - Shell definitions, cosmetic bridging, equipping, bonus methods, getEntityBonus()
 - `src/SaveManager.js` - Save/load with shellId serialization
 - `src/GameController.js` - Probe rendering with glow effects
 - `src/ProbeManager.js` - Probe collection and movement logic
@@ -46,6 +49,7 @@ See: .planning/PROJECT.md (updated 2026-01-28)
 - `src/DetailsPanel.js` - Entity detail panels
 - `tests/shell-visuals.spec.js` - 11 tests for shell visual system
 - `tests/shell-persistence.spec.js` - 4 tests for shell persistence
+- `tests/shell-bonus-foundation.spec.js` - 13 tests for bonus normalization and getEntityBonus()
 
 ### Key Decisions
 | Decision | Rationale | Milestone |
@@ -57,6 +61,10 @@ See: .planning/PROJECT.md (updated 2026-01-28)
 | refreshProbeCosmetic after full restore | Ensure probes array complete before iteration | v1.1 |
 | Per-entity bonuses (not global stacking) | Intuitive -- each entity's shell affects only itself | v1.2 |
 | 2-phase roadmap (gameplay then UI) | All bonus wiring is same pattern; UI depends on working bonuses | v1.2 |
+| Remove researchSpeed from probe shells | Probes don't research; only hub-appropriate | v1.2 |
+| Remove probethiumRate from probe shells | Probes don't mine; only station-appropriate | v1.2 |
+| All hub shells get researchSpeed only | Only hub-appropriate bonus type | v1.2 |
+| Station bonuses: miningEfficiency/shuttleSpeed/probethiumRate | Only station-appropriate bonus types | v1.2 |
 
 ### Tech Debt
 - Hub and mining station shells not visually applied (from v1.1)
@@ -67,5 +75,5 @@ None
 ## Session Continuity
 
 Last session: 2026-01-28
-Stopped at: Roadmap created, ready to plan Phase 3
+Stopped at: Completed 03-01-PLAN.md (Shell Bonus Foundation)
 Resume file: None
