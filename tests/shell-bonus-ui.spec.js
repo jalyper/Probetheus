@@ -257,13 +257,19 @@ test.describe('Shell Bonus UI - Tooltips', () => {
             const detailsPanel = document.getElementById('detailsPanel');
             if (detailsPanel) detailsPanel.style.display = 'none';
 
-            // Select the probe to show detail panel
+            // Select the probe using the proper event pattern
             probe.selected = true;
             window.game.gameState.ui.selectedProbe = probe;
-            window.game.uiManager.showProbeDetails(probe);
+            window.game.eventBus.emit('ui:probeSelected', { probe });
 
             // Wait for panel render and tooltip handlers to attach
             await new Promise(resolve => setTimeout(resolve, 800));
+
+            // Verify panel is visible
+            const probeDetailPanel = document.getElementById('probeDetailPanel');
+            if (!probeDetailPanel || probeDetailPanel.style.display === 'none') {
+                return { error: `probeDetailPanel not visible (display: ${probeDetailPanel?.style.display || 'null'})` };
+            }
 
             // Find currentShellPreview element
             const previewElement = document.getElementById('currentShellPreview');
@@ -365,23 +371,27 @@ test.describe('Shell Bonus UI - Tooltips', () => {
         const result = await page.evaluate(async () => {
             const gs = window.game.gameState;
 
-            // Ensure miningStations array exists and create a station if none exists
-            if (!gs.entities.miningStations) {
-                gs.entities.miningStations = [];
-            }
-            if (gs.entities.miningStations.length === 0) {
+            // Ensure mining.stations array exists and create a station if none exists
+            if (!gs.mining) gs.mining = { stations: [], shuttles: [] };
+            if (!gs.mining.stations) gs.mining.stations = [];
+
+            if (gs.mining.stations.length === 0) {
+                // Create a properly structured mining station
                 const newStation = {
                     id: 'test-station-' + Date.now(),
-                    x: 100,
-                    y: 100,
+                    type: 'basic',
+                    position: { x: 100, y: 100 },
+                    hubId: gs.entities.reconHubs[0]?.id || 'test-hub',
                     level: 1,
                     active: true,
-                    minerals: 0,
-                    data: 0,
-                    capacity: 100,
-                    sector: 0
+                    efficiency: 1.0,
+                    resourceBuffer: {},
+                    stationInventory: { minerals: 0, data: 0 },
+                    lastConsumption: Date.now(),
+                    totalProduced: 0,
+                    createdAt: Date.now()
                 };
-                gs.entities.miningStations.push(newStation);
+                gs.mining.stations.push(newStation);
             }
 
             // Find a station shell with bonuses
@@ -400,7 +410,7 @@ test.describe('Shell Bonus UI - Tooltips', () => {
             if (probePanel) probePanel.style.display = 'none';
 
             // Select the station
-            const station = gs.entities.miningStations[0];
+            const station = gs.mining.stations[0];
             station.selected = true;
             window.game.eventBus.emit('entity:selected', { entity: station, type: 'miningStation' });
 
