@@ -54,16 +54,39 @@ class SaveManager {
      * Create a comprehensive save data object
      */
     async createSaveData() {
+        const tutorialProgress = await this.getTutorialProgress();
+        const tutorialCompleted = await storageAdapter.getItem('tutorialCompleted');
+        return this._buildSaveDataCore(tutorialProgress, tutorialCompleted);
+    }
+
+    /**
+     * Create save data synchronously (for beforeunload handler).
+     * Reads tutorial data directly from localStorage instead of async storageAdapter.
+     */
+    createSaveDataSync() {
+        let tutorialProgress = null;
+        try {
+            const savedProgress = localStorage.getItem('tutorialProgress');
+            tutorialProgress = savedProgress ? JSON.parse(savedProgress) : null;
+        } catch (e) {
+            tutorialProgress = null;
+        }
+        const tutorialCompleted = localStorage.getItem('tutorialCompleted');
+        return this._buildSaveDataCore(tutorialProgress, tutorialCompleted);
+    }
+
+    /**
+     * Core save data builder (synchronous)
+     */
+    _buildSaveDataCore(tutorialProgress, tutorialCompleted) {
         try {
             console.log('createSaveData: Starting save data creation...');
-            
+
             console.log('createSaveData: Getting resources...');
             const resources = this.gameState.getResources();
             console.log('createSaveData: Resources obtained:', resources);
-            
+
             console.log('createSaveData: Creating base save data structure...');
-            const tutorialProgress = await this.getTutorialProgress();
-            const tutorialCompleted = await storageAdapter.getItem('tutorialCompleted');
             
             const saveData = {
             version: this.version,
@@ -113,7 +136,8 @@ class SaveManager {
                         cargo: probe.cargo ? { ...probe.cargo } : null,
                         outboundWaypointsCount: probe.outboundWaypointsCount || 0,
                         returnSpeed: probe.returnSpeed || 0.0003,
-                        shellId: probe.shellId || 'default'
+                        shellId: probe.shellId || 'default',
+                        baseMaxDamage: probe.baseMaxDamage || probe.maxDamage || 3
                     })),
                     reconHubs: this.gameState.entities.reconHubs.map(hub => ({
                         id: hub.id,
