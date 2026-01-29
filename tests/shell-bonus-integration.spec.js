@@ -158,8 +158,13 @@ test.describe('Shell Bonus Integration', () => {
     test('TEST-08: save/load preserves shell bonuses and they remain functional', async ({ page }) => {
         await startGame(page);
 
-        // First, set up game state with equipped shell
-        const beforeSave = await page.evaluate(() => {
+        // Wait for game to be fully initialized
+        await page.waitForFunction(() => {
+            return window.game && window.game.gameState && window.game.gameState.entities && window.game.gameState.entities.probes;
+        }, { timeout: 10000 });
+
+        // First, set up game state with equipped shell and save
+        const beforeSave = await page.evaluate(async () => {
             const probe = window.game.gameState.entities.probes[0];
             if (!probe) return { error: 'no probe' };
 
@@ -180,23 +185,13 @@ test.describe('Shell Bonus Integration', () => {
                 return { error: `equipShellOnProbe failed: shellId is ${probe.shellId}, expected ${shellId}` };
             }
 
-            // Save game
-            window.game.saveManager.saveGame();
-
-            // Verify save contains shellId
-            const savedData = localStorage.getItem('csog_save_autosave');
-            const parsedSave = JSON.parse(savedData);
-            const savedProbe = parsedSave.entities.probes.find(p => p.id === probe.id);
+            // Save game to slot 1
+            await window.game.saveManager.saveGame(1);
 
             return {
                 probeId: probe.id,
                 shellId: probe.shellId,
-                bonusValue,
-                savedProbeShellId: savedProbe?.shellId,
-                debug: {
-                    probeCount: gs.entities.probes.length,
-                    ownedShells: gs.cosmetics.ownedShells.probes
-                }
+                bonusValue
             };
         });
 
@@ -218,26 +213,34 @@ test.describe('Shell Bonus Integration', () => {
         await page.waitForSelector('#galaxyCanvas', { timeout: 10000 });
         await page.waitForTimeout(2000);
 
-        // Dismiss tutorial
         await page.evaluate(() => {
             const tutorialPanel = document.getElementById('tutorialPanel');
             if (tutorialPanel) tutorialPanel.style.display = 'none';
         });
 
-        // Load saved game
-        const afterLoad = await page.evaluate(async (savedProbeId) => {
-            window.game.saveManager.loadGame();
+        // Wait for game object to be available after reload
+        await page.waitForFunction(() => window.game && window.game.saveManager, { timeout: 10000 });
 
-            // Wait for load to complete - longer timeout for full game state restore
-            await new Promise(resolve => setTimeout(resolve, 1500));
+        // Load saved game from slot 1
+        const afterLoad = await page.evaluate(async () => {
+            await window.game.saveManager.loadGame(1);
+            await new Promise(resolve => setTimeout(resolve, 2000));
 
             const gs = window.game.gameState;
             const ss = window.game.shellSystem;
 
+            if (!gs || !gs.entities || !gs.entities.probes) {
+                return {
+                    error: 'gameState or entities not loaded',
+                    hasGameState: !!gs,
+                    hasEntities: !!gs?.entities,
+                    hasProbes: !!gs?.entities?.probes
+                };
+            }
+
             // Find the probe that had the shell equipped
             const probe = gs.entities.probes.find(p => p.shellId === 'echo_receiver');
             if (!probe) {
-                // Fallback to first probe
                 const firstProbe = gs.entities.probes[0];
                 return {
                     error: 'probe with echo_receiver not found',
@@ -256,7 +259,7 @@ test.describe('Shell Bonus Integration', () => {
                 shellId: probe.shellId,
                 bonusValue
             };
-        }, beforeSave.probeId);
+        });
 
         expect(afterLoad.error).toBeUndefined();
         expect(afterLoad.shellId).toBe(beforeSave.shellId);
@@ -267,7 +270,7 @@ test.describe('Shell Bonus Integration', () => {
         await startGame(page);
 
         // Set up hub and station shells with bonuses
-        const beforeSave = await page.evaluate(() => {
+        const beforeSave = await page.evaluate(async () => {
             const gs = window.game.gameState;
             const ss = window.game.shellSystem;
 
@@ -313,8 +316,8 @@ test.describe('Shell Bonus Integration', () => {
             const hubBonus = ss.getEntityBonus('hubs', null, 'researchSpeed');
             const stationBonus = ss.getEntityBonus('miningStations', null, stationBonusType);
 
-            // Save game
-            window.game.saveManager.saveGame();
+            // Save game to slot 1
+            await window.game.saveManager.saveGame(1);
 
             return {
                 hubShellId: hubShell.id,
@@ -348,9 +351,9 @@ test.describe('Shell Bonus Integration', () => {
             if (tutorialPanel) tutorialPanel.style.display = 'none';
         });
 
-        // Load saved game
+        // Load saved game from slot 1
         const afterLoad = await page.evaluate(async () => {
-            window.game.saveManager.loadGame();
+            await window.game.saveManager.loadGame(1);
             await new Promise(resolve => setTimeout(resolve, 1000));
 
             const gs = window.game.gameState;
