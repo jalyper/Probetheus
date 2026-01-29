@@ -4,12 +4,12 @@
 
 **Milestone:** v1.2 Shell Bonuses & Effects
 **Phase:** 3 - Bonus Gameplay
-**Plan:** 2 of 5 (Probe Bonus Integration) -- COMPLETE
+**Plan:** 3 of 5 (Station & Hub Bonus Wiring) -- COMPLETE
 **Status:** In progress
-**Last activity:** 2026-01-28 -- Completed 03-02-PLAN.md (Probe Bonus Integration)
+**Last activity:** 2026-01-28 -- Completed 03-03-PLAN.md (Station & Hub Bonus Wiring)
 **Next Milestone:** -
 
-Progress: [####......] 2/5 plans complete
+Progress: [######....] 3/5 plans complete
 
 ## Project Reference
 
@@ -42,19 +42,25 @@ See: .planning/PROJECT.md (updated 2026-01-28)
 - Probes store `baseMaxDamage` for durability bonus recalculation on shell swap
 - explorationRewards applied before artifactDiscovery for multiplicative stacking
 - Starting probes in GameController.js now include damage/baseMaxDamage/cargo properties
+- All 3 mining station bonuses wired: miningEfficiency (output), shuttleSpeed (movement), probethiumRate (generation)
+- Hub researchSpeed bonus wired as cost reduction with `getEffectiveCost()` in ResearchManager
+- Research cost reduction formula: `Math.max(1, Math.ceil(baseCost * (1 - bonus/100)))` -- minimum cost 1
+- All 12 bonus types now fully functional across 3 files
 
 ### Key Files
 - `src/ShellSystem.js` - Shell definitions, cosmetic bridging, equipping, bonus methods, getEntityBonus(), durability recalc on equip
 - `src/SaveManager.js` - Save/load with shellId serialization
 - `src/GameController.js` - Probe rendering with glow effects, starting probe creation
 - `src/ProbeManager.js` - Probe collection, movement, all 8 probe bonus integration points
-- `src/GameState.js` - Research tree, resource calculations
-- `src/MiningManager.js` - Mining station and shuttle logic
+- `src/GameState.js` - Research tree, resource calculations, probethiumRate bonus
+- `src/MiningManager.js` - Mining station and shuttle logic, miningEfficiency + shuttleSpeed bonuses
+- `src/ResearchManager.js` - Research tree UI and node purchasing, researchSpeed cost reduction
 - `src/DetailsPanel.js` - Entity detail panels
 - `tests/shell-visuals.spec.js` - 11 tests for shell visual system
 - `tests/shell-persistence.spec.js` - 4 tests for shell persistence
 - `tests/shell-bonus-foundation.spec.js` - 13 tests for bonus normalization and getEntityBonus()
 - `tests/probe-bonus-integration.spec.js` - 9 tests for probe bonus integration
+- `tests/shell-bonus-wiring.spec.js` - 8 tests for station and hub bonus wiring
 
 ### Key Decisions
 | Decision | Rationale | Milestone |
@@ -72,6 +78,8 @@ See: .planning/PROJECT.md (updated 2026-01-28)
 | Station bonuses: miningEfficiency/shuttleSpeed/probethiumRate | Only station-appropriate bonus types | v1.2 |
 | explorationRewards before artifactDiscovery | Multiplicative stacking: general boost then specific | v1.2 |
 | baseMaxDamage tracking on probes | Prevents compounding when swapping shells | v1.2 |
+| Research cost reduction: Math.max(1, Math.ceil(...)) | Conservative rounding; minimum 1 prevents free research | v1.2 |
+| Strikethrough cost display when reduced | Clear bonus feedback without Phase 4 indicator UI | v1.2 |
 
 ### Tech Debt
 - Hub and mining station shells not visually applied (from v1.1)
@@ -82,5 +90,5 @@ None
 ## Session Continuity
 
 Last session: 2026-01-28
-Stopped at: Completed 03-02-PLAN.md (Probe Bonus Integration)
+Stopped at: Completed 03-03-PLAN.md (Station & Hub Bonus Wiring)
 Resume file: None
