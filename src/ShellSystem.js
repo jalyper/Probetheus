@@ -837,6 +837,34 @@ class ShellSystem {
     }
 
     /**
+     * Get bonus value for a specific entity's equipped shell
+     * @param {string} category - 'probes', 'hubs', or 'miningStations'
+     * @param {Object} entity - The entity object (probe with shellId, or hub/station)
+     * @param {string} bonusType - Bonus type key (e.g., 'dataSignalDiscovery')
+     * @returns {number} Bonus percentage value, or 0 if no bonus
+     */
+    getEntityBonus(category, entity, bonusType) {
+        let shellId;
+        if (category === 'probes') {
+            shellId = entity?.shellId || this.gameState.cosmetics?.equippedShells?.probes || 'default';
+        } else {
+            shellId = this.gameState.cosmetics?.equippedShells?.[category] || 'default';
+        }
+        const shell = this.getShell(category, shellId);
+        return shell?.bonuses?.[bonusType] || 0;
+    }
+
+    /**
+     * Apply a bonus multiplier to a base value
+     * @param {number} baseValue - The base value to modify
+     * @param {number} bonusPercent - Bonus percentage (e.g., 15 for 15%)
+     * @returns {number} Modified value: baseValue * (1 + bonusPercent/100)
+     */
+    applyBonusMultiplier(baseValue, bonusPercent) {
+        return baseValue * (1 + bonusPercent / 100);
+    }
+
+    /**
      * Calculate total bonuses from all equipped shells
      */
     getTotalBonuses() {
