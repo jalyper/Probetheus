@@ -4,12 +4,12 @@
 
 **Milestone:** v1.2 Shell Bonuses & Effects
 **Phase:** 3 - Bonus Gameplay
-**Plan:** 1 of 5 (Shell Bonus Foundation) -- COMPLETE
+**Plan:** 2 of 5 (Probe Bonus Integration) -- COMPLETE
 **Status:** In progress
-**Last activity:** 2026-01-28 -- Completed 03-01-PLAN.md (Shell Bonus Foundation)
+**Last activity:** 2026-01-28 -- Completed 03-02-PLAN.md (Probe Bonus Integration)
 **Next Milestone:** -
 
-Progress: [##........] 1/5 plans complete
+Progress: [####......] 2/5 plans complete
 
 ## Project Reference
 
@@ -38,18 +38,23 @@ See: .planning/PROJECT.md (updated 2026-01-28)
 - Hub shells only have researchSpeed bonus; mining station shells only have miningEfficiency/shuttleSpeed/probethiumRate
 - Probe shells do not have researchSpeed or probethiumRate
 - Per-entity bonus model: each shell only affects the entity it is equipped on
+- All 8 probe bonus types wired into ProbeManager.js via getEntityBonus()
+- Probes store `baseMaxDamage` for durability bonus recalculation on shell swap
+- explorationRewards applied before artifactDiscovery for multiplicative stacking
+- Starting probes in GameController.js now include damage/baseMaxDamage/cargo properties
 
 ### Key Files
-- `src/ShellSystem.js` - Shell definitions, cosmetic bridging, equipping, bonus methods, getEntityBonus()
+- `src/ShellSystem.js` - Shell definitions, cosmetic bridging, equipping, bonus methods, getEntityBonus(), durability recalc on equip
 - `src/SaveManager.js` - Save/load with shellId serialization
-- `src/GameController.js` - Probe rendering with glow effects
-- `src/ProbeManager.js` - Probe collection and movement logic
+- `src/GameController.js` - Probe rendering with glow effects, starting probe creation
+- `src/ProbeManager.js` - Probe collection, movement, all 8 probe bonus integration points
 - `src/GameState.js` - Research tree, resource calculations
 - `src/MiningManager.js` - Mining station and shuttle logic
 - `src/DetailsPanel.js` - Entity detail panels
 - `tests/shell-visuals.spec.js` - 11 tests for shell visual system
 - `tests/shell-persistence.spec.js` - 4 tests for shell persistence
 - `tests/shell-bonus-foundation.spec.js` - 13 tests for bonus normalization and getEntityBonus()
+- `tests/probe-bonus-integration.spec.js` - 9 tests for probe bonus integration
 
 ### Key Decisions
 | Decision | Rationale | Milestone |
@@ -65,6 +70,8 @@ See: .planning/PROJECT.md (updated 2026-01-28)
 | Remove probethiumRate from probe shells | Probes don't mine; only station-appropriate | v1.2 |
 | All hub shells get researchSpeed only | Only hub-appropriate bonus type | v1.2 |
 | Station bonuses: miningEfficiency/shuttleSpeed/probethiumRate | Only station-appropriate bonus types | v1.2 |
+| explorationRewards before artifactDiscovery | Multiplicative stacking: general boost then specific | v1.2 |
+| baseMaxDamage tracking on probes | Prevents compounding when swapping shells | v1.2 |
 
 ### Tech Debt
 - Hub and mining station shells not visually applied (from v1.1)
@@ -75,5 +82,5 @@ None
 ## Session Continuity
 
 Last session: 2026-01-28
-Stopped at: Completed 03-01-PLAN.md (Shell Bonus Foundation)
+Stopped at: Completed 03-02-PLAN.md (Probe Bonus Integration)
 Resume file: None
