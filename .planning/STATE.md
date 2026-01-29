@@ -2,14 +2,21 @@
 
 ## Current Position
 
-**Milestone:** None active
-**Phase:** -
+**Milestone:** v1.2 Shell Bonuses & Effects
+**Phase:** Not started (defining requirements)
 **Plan:** -
-**Status:** Between milestones
-**Last activity:** 2026-01-27 - Completed v1.1 Shell Visuals & Cosmetics
-**Next Milestone:** To be planned
+**Status:** Defining requirements
+**Last activity:** 2026-01-28 — Milestone v1.2 started
+**Next Milestone:** -
 
 Progress: Ready for new milestone
+
+## Project Reference
+
+See: .planning/PROJECT.md (updated 2026-01-28)
+
+**Core value:** Players explore, expand, and upgrade through satisfying resource collection and progression loops
+**Current focus:** Defining requirements for v1.2
 
 ## Completed Milestones
 
@@ -25,11 +32,15 @@ Progress: Ready for new milestone
 - Trail config varies with glow: width 4/3, opacity 0.95/0.9
 - shellId persists in SaveManager probe serialization
 - refreshProbeCosmetic() called after probe restore in SaveManager
+- ShellSystem has bonus calculation methods (getTotalBonuses, getBonus, applyBonus) but they are never called
+- 12 bonus types defined, ~40 shells have bonuses
 
 ### Key Files
-- `src/ShellSystem.js` - Shell definitions, cosmetic bridging, equipping
+- `src/ShellSystem.js` - Shell definitions, cosmetic bridging, equipping, bonus methods
 - `src/SaveManager.js` - Save/load with shellId serialization
 - `src/GameController.js` - Probe rendering with glow effects
+- `src/ProbeManager.js` - Probe collection and movement logic
+- `src/GameState.js` - Research tree, resource calculations
 - `tests/shell-visuals.spec.js` - 11 tests for shell visual system
 - `tests/shell-persistence.spec.js` - 4 tests for shell persistence
 
@@ -41,6 +52,7 @@ Progress: Ready for new milestone
 | Sync cosmetic update on equip | Immediate visual feedback | v1.1 |
 | shellId defaults to 'default' | Backwards compatibility with old saves | v1.1 |
 | refreshProbeCosmetic after full restore | Ensure probes array complete before iteration | v1.1 |
+| Per-entity bonuses (not global stacking) | Intuitive — each entity's shell affects only itself | v1.2 |
 
 ### Tech Debt
 - Hub and mining station shells not visually applied (from v1.1)
@@ -50,6 +62,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-01-27
-Stopped at: Completed v1.1 milestone
-Resume file: None - ready for new milestone
+Last session: 2026-01-28
+Stopped at: Defining requirements for v1.2
+Resume file: None
