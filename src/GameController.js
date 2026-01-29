@@ -339,8 +339,18 @@ class GameController {
                         maxEquipmentSlots: 2,
                         status: 'ready',
                         returnedToHub: false,
+                        damage: 0,
+                        baseMaxDamage: 3,
+                        maxDamage: 3,
+                        lastDamageTime: 0,
+                        cargo: {
+                            minerals: 0,
+                            data: 0,
+                            artifacts: 0,
+                            exoticMinerals: 0
+                        },
                         // Apply active cosmetic skin (if CosmeticManager exists)
-                        cosmetic: this.gameState.cosmeticManager ? 
+                        cosmetic: this.gameState.cosmeticManager ?
                             { ...this.gameState.cosmeticManager.getActiveSkinDesign() } :
                             {
                                 // Fallback default skin
@@ -4711,7 +4721,7 @@ class GameController {
                 // For web mode, use sync localStorage operations (beforeunload can't be async)
                 // For Electron, the main process handles this before quit
                 if (!storageAdapter.isElectron) {
-                    const saveData = this.saveManager.createSaveData(); // This needs to be synchronous
+                    const saveData = this.saveManager.createSaveDataSync();
                     const autoSaveKey = 'csog_save_auto';
                     localStorage.setItem(autoSaveKey, JSON.stringify(saveData));
                     localStorage.setItem('csog_last_play_time', Date.now().toString());
