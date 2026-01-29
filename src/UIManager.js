@@ -26,6 +26,9 @@ class UIManager {
         this.probeTrackingInterval = null;
         this.createConnectorLine();
 
+        // Create singleton bonus tooltip
+        this.createBonusTooltip();
+
         this.setupEventListeners();
         
         // Listen for game events
@@ -1485,6 +1488,9 @@ class UIManager {
         previewBox.style.background = `rgba(${this.hexToRgb(shellColor)}, 0.1)`;
         nameEl.textContent = shell?.name || 'Default';
         nameEl.style.color = shellColor;
+
+        // Attach tooltip handler to preview box
+        this.attachTooltipHandlers(previewBox, shell);
     }
 
     /**
@@ -1629,25 +1635,38 @@ class UIManager {
 
         // Setup modal event handlers
         document.getElementById('closeShellModal').addEventListener('click', () => {
+            if (self.bonusTooltip) self.bonusTooltip.style.display = 'none';
             modal.remove();
         });
 
         // Close on background click
         modal.addEventListener('click', (e) => {
-            if (e.target === modal) modal.remove();
+            if (e.target === modal) {
+                if (self.bonusTooltip) self.bonusTooltip.style.display = 'none';
+                modal.remove();
+            }
         });
 
         // Setup shell option click handlers
         const shellOptions = modal.querySelectorAll('.shell-option');
         shellOptions.forEach(option => {
+            // Find the matching shell object for tooltip
+            const shellId = option.getAttribute('data-shell-id');
+            const matchingShell = ownedShells.find(s => s.id === shellId);
+
             option.addEventListener('mouseenter', () => {
                 option.style.transform = 'scale(1.05)';
             });
             option.addEventListener('mouseleave', () => {
                 option.style.transform = 'scale(1)';
             });
+
+            // Attach tooltip handlers
+            if (matchingShell) {
+                self.attachTooltipHandlers(option, matchingShell);
+            }
+
             option.addEventListener('click', () => {
-                const shellId = option.getAttribute('data-shell-id');
                 const result = shellSystem.equipShellOnProbe(probe, shellId);
 
                 if (result.success) {
@@ -1657,11 +1676,165 @@ class UIManager {
                     });
                     // Update the shell section display
                     self.updateShellSection(probe);
+                    if (self.bonusTooltip) self.bonusTooltip.style.display = 'none';
                     modal.remove();
                 } else {
                     self.eventBus.emit('ui:message', { text: result.error || 'Failed to equip shell', type: 'error' });
                 }
             });
+        });
+    }
+
+    /**
+     * Create singleton bonus tooltip element
+     */
+    createBonusTooltip() {
+        // Remove existing if present
+        const existing = document.getElementById('bonusTooltip');
+        if (existing) existing.remove();
+
+        // Create tooltip container
+        const tooltip = document.createElement('div');
+        tooltip.id = 'bonusTooltip';
+        tooltip.style.cssText = `
+            position: fixed;
+            display: none;
+            pointer-events: none;
+            z-index: 10001;
+            background: rgba(20, 20, 40, 0.95);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 4px;
+            padding: 8px 12px;
+            color: #ccc;
+            font-size: 11px;
+            line-height: 1.6;
+        `;
+
+        // Create arrow pointer
+        const arrow = document.createElement('div');
+        arrow.id = 'tooltipArrow';
+        arrow.style.cssText = `
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 6px solid rgba(20, 20, 40, 0.95);
+        `;
+
+        tooltip.appendChild(arrow);
+        document.body.appendChild(tooltip);
+
+        this.bonusTooltip = tooltip;
+        this.tooltipArrow = arrow;
+    }
+
+    /**
+     * Build tooltip HTML content from shell bonuses
+     * Returns null if shell has no bonuses
+     */
+    buildTooltipContent(shell) {
+        if (!shell || !shell.bonuses || Object.keys(shell.bonuses).length === 0) {
+            return null;
+        }
+
+        const shellSystem = window.game?.shellSystem;
+        if (!shellSystem) return null;
+
+        const lines = [];
+        for (const [bonusType, value] of Object.entries(shell.bonuses)) {
+            const info = shellSystem.getBonusTypeInfo(bonusType);
+            if (info) {
+                lines.push(`${info.icon} ${info.label}: <span style="color: #0f0">+${value}${info.unit}</span>`);
+            }
+        }
+
+        return lines.length > 0 ? lines.join('<br>') : null;
+    }
+
+    /**
+     * Position tooltip above target element
+     */
+    positionTooltip(target) {
+        if (!this.bonusTooltip || !target) return;
+
+        const rect = target.getBoundingClientRect();
+
+        // Show tooltip off-screen to measure it
+        this.bonusTooltip.style.display = 'block';
+        this.bonusTooltip.style.left = '-9999px';
+        this.bonusTooltip.style.top = '-9999px';
+
+        const tooltipWidth = this.bonusTooltip.offsetWidth;
+        const tooltipHeight = this.bonusTooltip.offsetHeight;
+
+        // Center horizontally above target
+        let x = rect.left + (rect.width / 2) - (tooltipWidth / 2);
+        let y = rect.top - tooltipHeight - 8;
+
+        // Bounds checking - keep on screen horizontally
+        x = Math.max(10, Math.min(x, window.innerWidth - tooltipWidth - 10));
+
+        // Check if tooltip would go off top of screen
+        if (y < 10) {
+            // Flip below target
+            y = rect.bottom + 8;
+            // Flip arrow to point up
+            this.tooltipArrow.style.bottom = 'auto';
+            this.tooltipArrow.style.top = '-6px';
+            this.tooltipArrow.style.borderTop = 'none';
+            this.tooltipArrow.style.borderBottom = '6px solid rgba(20, 20, 40, 0.95)';
+        } else {
+            // Arrow points down (default)
+            this.tooltipArrow.style.bottom = '-6px';
+            this.tooltipArrow.style.top = 'auto';
+            this.tooltipArrow.style.borderTop = '6px solid rgba(20, 20, 40, 0.95)';
+            this.tooltipArrow.style.borderBottom = 'none';
+        }
+
+        // Apply final position
+        this.bonusTooltip.style.left = x + 'px';
+        this.bonusTooltip.style.top = y + 'px';
+    }
+
+    /**
+     * Attach tooltip handlers to an element
+     */
+    attachTooltipHandlers(element, shell) {
+        if (!element || !this.bonusTooltip) return;
+
+        element.addEventListener('mouseenter', () => {
+            // Clear any existing timeout
+            if (element._tooltipTimeout) {
+                clearTimeout(element._tooltipTimeout);
+            }
+
+            // Set 300ms delay before showing tooltip
+            element._tooltipTimeout = setTimeout(() => {
+                const content = this.buildTooltipContent(shell);
+                if (content) {
+                    this.bonusTooltip.innerHTML = content;
+                    // Re-add arrow (innerHTML cleared it)
+                    this.bonusTooltip.appendChild(this.tooltipArrow);
+                    this.positionTooltip(element);
+                    this.bonusTooltip.style.display = 'block';
+                }
+            }, 300);
+        });
+
+        element.addEventListener('mouseleave', () => {
+            // Clear timeout if mouse leaves before delay
+            if (element._tooltipTimeout) {
+                clearTimeout(element._tooltipTimeout);
+                element._tooltipTimeout = null;
+            }
+            // Hide tooltip immediately
+            if (this.bonusTooltip) {
+                this.bonusTooltip.style.display = 'none';
+            }
         });
     }
 }
