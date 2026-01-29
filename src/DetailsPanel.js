@@ -174,6 +174,11 @@ class DetailsPanel {
         const availableProbes = this.getAvailableProbeCount(hub);
         const deployedProbes = probeCount - availableProbes;
         
+        // Get shell information for equipped shell
+        const equippedShellId = this.gameState.cosmetics?.equippedShells?.hubs || 'default';
+        const shell = window.SHELL_CATALOG?.hubs?.[equippedShellId] || null;
+        const shellColor = shell?.visual?.color || '#0f8';
+
         this.content.innerHTML = `
             <div style="background: rgba(0,255,128,0.05); border: 1px solid rgba(0,255,128,0.2); border-radius: 5px; padding: 10px; margin-bottom: 12px;">
                 <div style="color: #0f8; font-size: 12px; font-weight: bold; margin-bottom: 6px;">📍 Hub Status</div>
@@ -185,7 +190,7 @@ class DetailsPanel {
                     <div>Sector: [${hub.sectorX || 0}, ${hub.sectorY || 0}]</div>
                 </div>
             </div>
-            
+
             <div style="background: rgba(200,150,255,0.05); border: 1px solid rgba(200,150,255,0.2); border-radius: 5px; padding: 10px;">
                 <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 10px;">
                     <div style="font-size: 16px;">⚡</div>
@@ -233,10 +238,29 @@ class DetailsPanel {
                     </button>
                 </div>
             </div>
+
+            <div style="background: rgba(148,0,211,0.05); border: 1px solid rgba(148,0,211,0.2); border-radius: 5px; padding: 10px; margin-top: 12px;">
+                <div style="color: #9400d3; font-size: 12px; font-weight: bold; margin-bottom: 6px;">🎨 Equipped Shell</div>
+                <div id="hubShellIndicator" style="display: flex; align-items: center; gap: 8px; cursor: default;">
+                    <div style="width: 24px; height: 24px; border-radius: 4px; background: ${shellColor}; border: 1px solid rgba(255,255,255,0.2);"></div>
+                    <div>
+                        <div style="color: ${shellColor}; font-size: 11px; font-weight: bold;">${shell?.name || 'Default'}</div>
+                        <div style="color: #888; font-size: 9px; text-transform: uppercase;">${shell?.rarity || 'standard'}</div>
+                    </div>
+                </div>
+            </div>
         `;
         
         // Add button listeners
         this.setupHubButtons(hub);
+
+        // Attach tooltip handlers for shell indicator if shell has bonuses
+        if (shell && shell.bonuses && Object.keys(shell.bonuses).length > 0) {
+            const indicator = document.getElementById('hubShellIndicator');
+            if (indicator && window.game?.uiManager?.attachTooltipHandlers) {
+                window.game.uiManager.attachTooltipHandlers(indicator, shell);
+            }
+        }
     }
     
     /**
