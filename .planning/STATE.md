@@ -4,12 +4,12 @@
 
 **Milestone:** v1.2 Shell Bonuses & Effects
 **Phase:** 3 - Bonus Gameplay
-**Plan:** 3 of 5 (Station & Hub Bonus Wiring) -- COMPLETE
+**Plan:** 4 of 5 (Comprehensive Bonus Tests) -- COMPLETE
 **Status:** In progress
-**Last activity:** 2026-01-28 -- Completed 03-03-PLAN.md (Station & Hub Bonus Wiring)
+**Last activity:** 2026-01-28 -- Completed 03-04-PLAN.md (Comprehensive Bonus Tests)
 **Next Milestone:** -
 
-Progress: [######....] 3/5 plans complete
+Progress: [########..] 4/5 plans complete
 
 ## Project Reference
 
@@ -46,6 +46,7 @@ See: .planning/PROJECT.md (updated 2026-01-28)
 - Hub researchSpeed bonus wired as cost reduction with `getEffectiveCost()` in ResearchManager
 - Research cost reduction formula: `Math.max(1, Math.ceil(baseCost * (1 - bonus/100)))` -- minimum cost 1
 - All 12 bonus types now fully functional across 3 files
+- 41 shell bonus tests across 4 test files verify all bonus types + per-entity isolation
 
 ### Key Files
 - `src/ShellSystem.js` - Shell definitions, cosmetic bridging, equipping, bonus methods, getEntityBonus(), durability recalc on equip
@@ -61,6 +62,7 @@ See: .planning/PROJECT.md (updated 2026-01-28)
 - `tests/shell-bonus-foundation.spec.js` - 13 tests for bonus normalization and getEntityBonus()
 - `tests/probe-bonus-integration.spec.js` - 9 tests for probe bonus integration
 - `tests/shell-bonus-wiring.spec.js` - 8 tests for station and hub bonus wiring
+- `tests/shell-bonuses.spec.js` - 11 tests for comprehensive bonus verification and isolation
 
 ### Key Decisions
 | Decision | Rationale | Milestone |
@@ -90,5 +92,5 @@ None
 ## Session Continuity
 
 Last session: 2026-01-28
-Stopped at: Completed 03-03-PLAN.md (Station & Hub Bonus Wiring)
+Stopped at: Completed 03-04-PLAN.md (Comprehensive Bonus Tests)
 Resume file: None
