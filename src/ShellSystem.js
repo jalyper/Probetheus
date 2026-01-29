@@ -145,7 +145,7 @@ const SHELL_CATALOG = {
             price: 200,
             npcVendor: 'keth_varn',
             visual: { color: '#00ffff', trail: '#00cccc', glow: true, pattern: 'circuit' },
-            bonuses: { dataSignalDiscovery: 5 }
+            bonuses: { dataSignalDiscovery: 10 }
         },
         probability_engine: {
             id: 'probability_engine',
@@ -155,7 +155,7 @@ const SHELL_CATALOG = {
             price: 350,
             npcVendor: 'keth_varn',
             visual: { color: '#00ddff', trail: '#0099cc', glow: true, pattern: 'hex' },
-            bonuses: { dataSignalDiscovery: 8, researchSpeed: 3 }
+            bonuses: { dataSignalDiscovery: 15 }
         },
         quantum_processor: {
             id: 'quantum_processor',
@@ -165,7 +165,7 @@ const SHELL_CATALOG = {
             price: 500,
             npcVendor: 'keth_varn',
             visual: { color: '#00eeff', trail: '#00bbff', glow: true, pattern: 'matrix' },
-            bonuses: { dataSignalDiscovery: 12, researchSpeed: 6 }
+            bonuses: { dataSignalDiscovery: 20 }
         },
         infinity_calculator: {
             id: 'infinity_calculator',
@@ -175,7 +175,7 @@ const SHELL_CATALOG = {
             price: 800,
             npcVendor: 'keth_varn',
             visual: { color: '#66ffff', trail: '#33ffff', glow: true, pattern: 'infinity' },
-            bonuses: { dataSignalDiscovery: 18, researchSpeed: 10 }
+            bonuses: { dataSignalDiscovery: 25 }
         },
 
         // Whisperer shells (Signals) - 4
@@ -187,7 +187,7 @@ const SHELL_CATALOG = {
             price: 200,
             npcVendor: 'whisperer',
             visual: { color: '#ffffff', trail: '#cccccc', glow: true, pattern: 'wave' },
-            bonuses: { signalRange: 5 }
+            bonuses: { signalRange: 10 }
         },
         frequency_hunter: {
             id: 'frequency_hunter',
@@ -197,7 +197,7 @@ const SHELL_CATALOG = {
             price: 350,
             npcVendor: 'whisperer',
             visual: { color: '#eeeeff', trail: '#aaaacc', glow: true, pattern: 'pulse' },
-            bonuses: { signalRange: 8, rareSignalChance: 3 }
+            bonuses: { signalRange: 15, rareSignalChance: 8 }
         },
         cosmic_antenna: {
             id: 'cosmic_antenna',
@@ -207,7 +207,7 @@ const SHELL_CATALOG = {
             price: 500,
             npcVendor: 'whisperer',
             visual: { color: '#ffffff', trail: '#ddddff', glow: true, pattern: 'radial' },
-            bonuses: { signalRange: 12, rareSignalChance: 6 }
+            bonuses: { signalRange: 20, rareSignalChance: 10 }
         },
         omniscient_listener: {
             id: 'omniscient_listener',
@@ -217,7 +217,7 @@ const SHELL_CATALOG = {
             price: 800,
             npcVendor: 'whisperer',
             visual: { color: '#ffffff', trail: '#ffffff', glow: true, pattern: 'aura' },
-            bonuses: { signalRange: 18, rareSignalChance: 10 }
+            bonuses: { signalRange: 25, rareSignalChance: 12 }
         },
 
         // Mira-Sol shells (Survival) - 4
@@ -229,7 +229,7 @@ const SHELL_CATALOG = {
             price: 200,
             npcVendor: 'mira_sol',
             visual: { color: '#ffaa00', trail: '#cc8800', glow: false, pattern: 'armor' },
-            bonuses: { probeDurability: 5 }
+            bonuses: { probeDurability: 10 }
         },
         survivor_class: {
             id: 'survivor_class',
@@ -239,7 +239,7 @@ const SHELL_CATALOG = {
             price: 350,
             npcVendor: 'mira_sol',
             visual: { color: '#ffbb33', trail: '#cc9922', glow: true, pattern: 'shield' },
-            bonuses: { probeDurability: 8, asteroidSurvival: 3 }
+            bonuses: { probeDurability: 15, asteroidSurvival: 8 }
         },
         fortress_probe: {
             id: 'fortress_probe',
@@ -249,7 +249,7 @@ const SHELL_CATALOG = {
             price: 500,
             npcVendor: 'mira_sol',
             visual: { color: '#ffcc44', trail: '#ddaa33', glow: true, pattern: 'fortress' },
-            bonuses: { probeDurability: 12, asteroidSurvival: 6 }
+            bonuses: { probeDurability: 20, asteroidSurvival: 10 }
         },
         immortal_sentinel: {
             id: 'immortal_sentinel',
@@ -259,7 +259,7 @@ const SHELL_CATALOG = {
             price: 800,
             npcVendor: 'mira_sol',
             visual: { color: '#ffdd66', trail: '#eebb44', glow: true, pattern: 'immortal' },
-            bonuses: { probeDurability: 18, asteroidSurvival: 10 }
+            bonuses: { probeDurability: 25, asteroidSurvival: 12 }
         },
 
         // Archivist shells (Discovery) - 4
@@ -271,7 +271,7 @@ const SHELL_CATALOG = {
             price: 200,
             npcVendor: 'archivist',
             visual: { color: '#ff4444', trail: '#cc2222', glow: true, pattern: 'ancient' },
-            bonuses: { artifactDiscovery: 5 }
+            bonuses: { artifactDiscovery: 10 }
         },
         treasure_hunter: {
             id: 'treasure_hunter',
@@ -281,7 +281,7 @@ const SHELL_CATALOG = {
             price: 350,
             npcVendor: 'archivist',
             visual: { color: '#ff5555', trail: '#dd3333', glow: true, pattern: 'treasure' },
-            bonuses: { artifactDiscovery: 8, explorationRewards: 3 }
+            bonuses: { artifactDiscovery: 15, explorationRewards: 8 }
         },
         archaeologist_prime: {
             id: 'archaeologist_prime',
@@ -291,7 +291,7 @@ const SHELL_CATALOG = {
             price: 500,
             npcVendor: 'archivist',
             visual: { color: '#ff6666', trail: '#ee4444', glow: true, pattern: 'dig' },
-            bonuses: { artifactDiscovery: 12, explorationRewards: 6 }
+            bonuses: { artifactDiscovery: 20, explorationRewards: 10 }
         },
         eternal_curator: {
             id: 'eternal_curator',
@@ -301,7 +301,7 @@ const SHELL_CATALOG = {
             price: 800,
             npcVendor: 'archivist',
             visual: { color: '#ff8888', trail: '#ff5555', glow: true, pattern: 'eternal' },
-            bonuses: { artifactDiscovery: 18, explorationRewards: 10 }
+            bonuses: { artifactDiscovery: 25, explorationRewards: 12 }
         },
 
         // Null shells (Exotic) - 4
@@ -313,7 +313,7 @@ const SHELL_CATALOG = {
             price: 200,
             npcVendor: 'null',
             visual: { color: '#1a0a2e', trail: '#3a1a4e', glow: true, pattern: 'void' },
-            bonuses: { exoticYield: 5 }
+            bonuses: { exoticYield: 10 }
         },
         abyssal_harvester: {
             id: 'abyssal_harvester',
@@ -323,7 +323,7 @@ const SHELL_CATALOG = {
             price: 350,
             npcVendor: 'null',
             visual: { color: '#2a1a3e', trail: '#4a2a5e', glow: true, pattern: 'abyss' },
-            bonuses: { exoticYield: 8, probethiumRate: 3 }
+            bonuses: { exoticYield: 15 }
         },
         entropy_engine: {
             id: 'entropy_engine',
@@ -333,7 +333,7 @@ const SHELL_CATALOG = {
             price: 500,
             npcVendor: 'null',
             visual: { color: '#3a2a4e', trail: '#5a3a6e', glow: true, pattern: 'entropy' },
-            bonuses: { exoticYield: 12, probethiumRate: 6 }
+            bonuses: { exoticYield: 20 }
         },
         null_singularity: {
             id: 'null_singularity',
@@ -343,7 +343,7 @@ const SHELL_CATALOG = {
             price: 800,
             npcVendor: 'null',
             visual: { color: '#4a3a5e', trail: '#6a4a7e', glow: true, pattern: 'singularity' },
-            bonuses: { exoticYield: 18, probethiumRate: 10 }
+            bonuses: { exoticYield: 25 }
         }
     },
 
@@ -392,7 +392,7 @@ const SHELL_CATALOG = {
             price: 450,
             npcVendor: 'keth_varn',
             visual: { color: '#00ddff', glow: '#00ffff', ring: '#00ccff', pattern: 'data' },
-            bonuses: { dataSignalDiscovery: 8, researchSpeed: 4 }
+            bonuses: { researchSpeed: 15 }
         },
         quantum_hub: {
             id: 'quantum_hub',
@@ -402,7 +402,7 @@ const SHELL_CATALOG = {
             price: 700,
             npcVendor: 'keth_varn',
             visual: { color: '#00eeff', glow: '#33ffff', ring: '#00ddff', pattern: 'quantum' },
-            bonuses: { dataSignalDiscovery: 15, researchSpeed: 8 }
+            bonuses: { researchSpeed: 20 }
         },
 
         // Whisperer hubs - 2
@@ -414,7 +414,7 @@ const SHELL_CATALOG = {
             price: 450,
             npcVendor: 'whisperer',
             visual: { color: '#ffffff', glow: '#ffffff', ring: '#ddddff', pattern: 'signal' },
-            bonuses: { signalRange: 10, rareSignalChance: 5 }
+            bonuses: { researchSpeed: 15 }
         },
         echo_chamber: {
             id: 'echo_chamber',
@@ -424,7 +424,7 @@ const SHELL_CATALOG = {
             price: 700,
             npcVendor: 'whisperer',
             visual: { color: '#eeeeff', glow: '#ffffff', ring: '#ccccff', pattern: 'echo' },
-            bonuses: { signalRange: 18, rareSignalChance: 10 }
+            bonuses: { researchSpeed: 20 }
         },
 
         // Mira-Sol hubs - 2
@@ -436,7 +436,7 @@ const SHELL_CATALOG = {
             price: 450,
             npcVendor: 'mira_sol',
             visual: { color: '#ffbb33', glow: '#ffaa00', ring: '#cc8800', pattern: 'shelter' },
-            bonuses: { probeDurability: 10, asteroidSurvival: 5 }
+            bonuses: { researchSpeed: 15 }
         },
         bastion_hub: {
             id: 'bastion_hub',
@@ -446,7 +446,7 @@ const SHELL_CATALOG = {
             price: 700,
             npcVendor: 'mira_sol',
             visual: { color: '#ffcc44', glow: '#ffbb33', ring: '#ddaa22', pattern: 'bastion' },
-            bonuses: { probeDurability: 18, asteroidSurvival: 10 }
+            bonuses: { researchSpeed: 20 }
         },
 
         // Archivist hubs - 2
@@ -458,7 +458,7 @@ const SHELL_CATALOG = {
             price: 450,
             npcVendor: 'archivist',
             visual: { color: '#ff5555', glow: '#ff4444', ring: '#cc3333', pattern: 'archive' },
-            bonuses: { artifactDiscovery: 10, explorationRewards: 5 }
+            bonuses: { researchSpeed: 15 }
         },
         museum_prime: {
             id: 'museum_prime',
@@ -468,7 +468,7 @@ const SHELL_CATALOG = {
             price: 700,
             npcVendor: 'archivist',
             visual: { color: '#ff6666', glow: '#ff5555', ring: '#dd4444', pattern: 'museum' },
-            bonuses: { artifactDiscovery: 18, explorationRewards: 10 }
+            bonuses: { researchSpeed: 20 }
         },
 
         // Null hubs - 2
@@ -480,7 +480,7 @@ const SHELL_CATALOG = {
             price: 450,
             npcVendor: 'null',
             visual: { color: '#3a2a4e', glow: '#5a3a6e', ring: '#2a1a3e', pattern: 'void' },
-            bonuses: { exoticYield: 10, probethiumRate: 5 }
+            bonuses: { researchSpeed: 15 }
         },
         null_gate: {
             id: 'null_gate',
@@ -490,7 +490,7 @@ const SHELL_CATALOG = {
             price: 700,
             npcVendor: 'null',
             visual: { color: '#4a3a5e', glow: '#6a4a7e', ring: '#3a2a4e', pattern: 'gate' },
-            bonuses: { exoticYield: 18, probethiumRate: 10 }
+            bonuses: { researchSpeed: 20 }
         }
     },
 
@@ -517,7 +517,7 @@ const SHELL_CATALOG = {
             price: 400,
             npcVendor: null,
             visual: { color: '#888888', glow: '#666666', platform: '#444444' },
-            bonuses: { miningEfficiency: 5 }
+            bonuses: { miningEfficiency: 10 }
         },
 
         // Keth-Varn stations - 2
@@ -529,7 +529,7 @@ const SHELL_CATALOG = {
             price: 600,
             npcVendor: 'keth_varn',
             visual: { color: '#00ddff', glow: '#00ffff', platform: '#006688', pattern: 'optimal' },
-            bonuses: { miningEfficiency: 10, researchSpeed: 5 }
+            bonuses: { miningEfficiency: 15, shuttleSpeed: 8 }
         },
         calculation_mine: {
             id: 'calculation_mine',
@@ -539,7 +539,7 @@ const SHELL_CATALOG = {
             price: 900,
             npcVendor: 'keth_varn',
             visual: { color: '#00eeff', glow: '#33ffff', platform: '#007799', pattern: 'calc' },
-            bonuses: { miningEfficiency: 18, researchSpeed: 10 }
+            bonuses: { miningEfficiency: 20, shuttleSpeed: 10 }
         },
 
         // Mira-Sol stations - 2
@@ -551,7 +551,7 @@ const SHELL_CATALOG = {
             price: 600,
             npcVendor: 'mira_sol',
             visual: { color: '#ffbb33', glow: '#ffaa00', platform: '#885500', pattern: 'armor' },
-            bonuses: { shuttleSpeed: 10, asteroidSurvival: 8 }
+            bonuses: { shuttleSpeed: 15, miningEfficiency: 8 }
         },
         endurance_platform: {
             id: 'endurance_platform',
@@ -561,7 +561,7 @@ const SHELL_CATALOG = {
             price: 900,
             npcVendor: 'mira_sol',
             visual: { color: '#ffcc44', glow: '#ffbb33', platform: '#996600', pattern: 'endure' },
-            bonuses: { shuttleSpeed: 18, asteroidSurvival: 15 }
+            bonuses: { shuttleSpeed: 20, miningEfficiency: 10 }
         },
 
         // Archivist stations - 2
@@ -573,7 +573,7 @@ const SHELL_CATALOG = {
             price: 600,
             npcVendor: 'archivist',
             visual: { color: '#ff5555', glow: '#ff4444', platform: '#883333', pattern: 'dig' },
-            bonuses: { artifactDiscovery: 12, explorationRewards: 8 }
+            bonuses: { miningEfficiency: 15, probethiumRate: 8 }
         },
         relic_foundry: {
             id: 'relic_foundry',
@@ -583,7 +583,7 @@ const SHELL_CATALOG = {
             price: 900,
             npcVendor: 'archivist',
             visual: { color: '#ff6666', glow: '#ff5555', platform: '#994444', pattern: 'foundry' },
-            bonuses: { artifactDiscovery: 20, explorationRewards: 15 }
+            bonuses: { miningEfficiency: 20, probethiumRate: 10 }
         },
 
         // Null stations - 2
@@ -595,7 +595,7 @@ const SHELL_CATALOG = {
             price: 600,
             npcVendor: 'null',
             visual: { color: '#3a2a4e', glow: '#5a3a6e', platform: '#1a0a2e', pattern: 'void' },
-            bonuses: { exoticYield: 15, probethiumRate: 8 }
+            bonuses: { probethiumRate: 15, miningEfficiency: 8 }
         },
         singularity_mine: {
             id: 'singularity_mine',
@@ -605,7 +605,7 @@ const SHELL_CATALOG = {
             price: 1200,
             npcVendor: 'null',
             visual: { color: '#5a4a6e', glow: '#7a5a8e', platform: '#2a1a3e', pattern: 'singularity' },
-            bonuses: { exoticYield: 25, probethiumRate: 15 }
+            bonuses: { probethiumRate: 25, miningEfficiency: 12 }
         }
     }
 };
