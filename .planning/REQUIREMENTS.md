@@ -28,11 +28,11 @@
 
 ### Bonus UI
 
-- [ ] **BUI-01**: Hovering over a shell in the shell selection modal shows a tooltip with bonus effects
-- [ ] **BUI-02**: Hovering over the equipped shell in probe detail panel shows a tooltip with bonus effects
-- [ ] **BUI-03**: Hovering over the equipped shell in hub detail panel shows a tooltip with bonus effects
-- [ ] **BUI-04**: Hovering over the equipped shell in mining station detail panel shows a tooltip with bonus effects
-- [ ] **BUI-05**: Tooltip displays bonus type label, icon, and percentage value
+- [x] **BUI-01**: Hovering over a shell in the shell selection modal shows a tooltip with bonus effects
+- [x] **BUI-02**: Hovering over the equipped shell in probe detail panel shows a tooltip with bonus effects
+- [x] **BUI-03**: Hovering over the equipped shell in hub detail panel shows a tooltip with bonus effects
+- [x] **BUI-04**: Hovering over the equipped shell in mining station detail panel shows a tooltip with bonus effects
+- [x] **BUI-05**: Tooltip displays bonus type label, icon, and percentage value
 
 ### Tests
 
@@ -40,10 +40,10 @@
 - [x] **TEST-02**: Test hub bonus (researchSpeed) applies correctly
 - [x] **TEST-03**: Test each mining station bonus applies correctly (miningEfficiency, probethiumRate, shuttleSpeed)
 - [x] **TEST-04**: Test bonuses are per-entity (equipping a shell on one probe does not affect another)
-- [ ] **TEST-05**: Test bonus tooltip displays correct info on hover in shell selection modal
-- [ ] **TEST-06**: Test bonus tooltip displays correct info on hover in detail panels
-- [ ] **TEST-07**: Integration test -- equip shell with bonus, verify gameplay effect, swap shell, verify effect changes
-- [ ] **TEST-08**: Integration test -- save/load game preserves shell bonuses and they remain functional after load
+- [x] **TEST-05**: Test bonus tooltip displays correct info on hover in shell selection modal
+- [x] **TEST-06**: Test bonus tooltip displays correct info on hover in detail panels
+- [x] **TEST-07**: Integration test -- equip shell with bonus, verify gameplay effect, swap shell, verify effect changes
+- [x] **TEST-08**: Integration test -- save/load game preserves shell bonuses and they remain functional after load
 
 ## Future Requirements
 
@@ -77,19 +77,19 @@
 | MBON-01 | Phase 3 | Complete |
 | MBON-02 | Phase 3 | Complete |
 | MBON-03 | Phase 3 | Complete |
-| BUI-01 | Phase 4 | Pending |
-| BUI-02 | Phase 4 | Pending |
-| BUI-03 | Phase 4 | Pending |
-| BUI-04 | Phase 4 | Pending |
-| BUI-05 | Phase 4 | Pending |
+| BUI-01 | Phase 4 | Complete |
+| BUI-02 | Phase 4 | Complete |
+| BUI-03 | Phase 4 | Complete |
+| BUI-04 | Phase 4 | Complete |
+| BUI-05 | Phase 4 | Complete |
 | TEST-01 | Phase 3 | Complete |
 | TEST-02 | Phase 3 | Complete |
 | TEST-03 | Phase 3 | Complete |
 | TEST-04 | Phase 3 | Complete |
-| TEST-05 | Phase 4 | Pending |
-| TEST-06 | Phase 4 | Pending |
-| TEST-07 | Phase 4 | Pending |
-| TEST-08 | Phase 4 | Pending |
+| TEST-05 | Phase 4 | Complete |
+| TEST-06 | Phase 4 | Complete |
+| TEST-07 | Phase 4 | Complete |
+| TEST-08 | Phase 4 | Complete |
 
 **Coverage:**
 - v1.2 requirements: 25 total
@@ -98,4 +98,4 @@
 
 ---
 *Requirements defined: 2026-01-28*
-*Last updated: 2026-01-28 after Phase 3 completion*
+*Last updated: 2026-01-29 after Phase 4 completion*
