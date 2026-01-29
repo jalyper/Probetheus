@@ -330,7 +330,12 @@ class DetailsPanel {
         
         // Find connected shuttles
         const connectedShuttles = this.gameState.mining?.shuttles?.filter(s => s.stationId === station.id) || [];
-        
+
+        // Get shell information for equipped shell
+        const equippedStationShellId = this.gameState.cosmetics?.equippedShells?.miningStations || 'default';
+        const stationShell = window.SHELL_CATALOG?.miningStations?.[equippedStationShellId] || null;
+        const stationShellColor = stationShell?.visual?.color || '#c9f';
+
         this.content.innerHTML = `
             <div style="background: rgba(200,150,255,0.05); border: 1px solid rgba(200,150,255,0.2); border-radius: 5px; padding: 10px; margin-bottom: 12px;">
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
@@ -365,7 +370,18 @@ class DetailsPanel {
                     ⬆️ Upgrade Station (${50 * (station.level + 1)}M, ${20 * (station.level + 1)}D)
                 </button>
             </div>
-            
+
+            <div style="background: rgba(148,0,211,0.05); border: 1px solid rgba(148,0,211,0.2); border-radius: 5px; padding: 10px; margin-top: 12px;">
+                <div style="color: #9400d3; font-size: 12px; font-weight: bold; margin-bottom: 6px;">🎨 Equipped Shell</div>
+                <div id="stationShellIndicator" style="display: flex; align-items: center; gap: 8px; cursor: default;">
+                    <div style="width: 24px; height: 24px; border-radius: 4px; background: ${stationShellColor}; border: 1px solid rgba(255,255,255,0.2);"></div>
+                    <div>
+                        <div style="color: ${stationShellColor}; font-size: 11px; font-weight: bold;">${stationShell?.name || 'Default'}</div>
+                        <div style="color: #888; font-size: 9px; text-transform: uppercase;">${stationShell?.rarity || 'standard'}</div>
+                    </div>
+                </div>
+            </div>
+
             <div style="color: #666; font-size: 10px; margin-top: 8px; line-height: 1.3;">
                 ${!station.active ? '⚠️ Station needs resources to operate' : '✅ Station is producing Probetheum'}
             </div>
@@ -373,9 +389,17 @@ class DetailsPanel {
         
         // Add button listeners
         this.setupMiningStationButtons(station);
-        
+
         // Update button states based on resources
         this.updateMiningStationButtonStates(station);
+
+        // Attach tooltip handlers for shell indicator if shell has bonuses
+        if (stationShell && stationShell.bonuses && Object.keys(stationShell.bonuses).length > 0) {
+            const indicator = document.getElementById('stationShellIndicator');
+            if (indicator && window.game?.uiManager?.attachTooltipHandlers) {
+                window.game.uiManager.attachTooltipHandlers(indicator, stationShell);
+            }
+        }
     }
     
     /**
