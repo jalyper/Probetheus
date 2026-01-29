@@ -102,6 +102,7 @@ class ProbeManager {
                 status: 'ready',
                 returnedToHub: false,
                 damage: 0,
+                baseMaxDamage: 3,
                 maxDamage: 3,
                 lastDamageTime: 0,
                 cargo: {
@@ -111,7 +112,7 @@ class ProbeManager {
                     exoticMinerals: 0
                 },
                 // Apply active cosmetic skin (if CosmeticManager exists)
-                cosmetic: this.gameState.cosmeticManager ? 
+                cosmetic: this.gameState.cosmeticManager ?
                     { ...this.gameState.cosmeticManager.getActiveSkinDesign() } :
                     {
                         // Fallback default skin
@@ -124,7 +125,13 @@ class ProbeManager {
                         }
                     }
             };
-            
+
+            // PBON-04: probeDurability bonus increases maxDamage
+            const durabilityBonus = window.game?.shellSystem ? window.game.shellSystem.getEntityBonus('probes', probe, 'probeDurability') : 0;
+            if (durabilityBonus > 0) {
+                probe.maxDamage = Math.floor(probe.baseMaxDamage * (1 + durabilityBonus / 100));
+            }
+
             this.gameState.entities.probes.push(probe);
             this.gameState.updateResources({ minerals: resources.minerals - 25 }, this.eventBus);
             
@@ -239,6 +246,7 @@ class ProbeManager {
             status: 'exploring',
             returnedToHub: false,
             damage: 0,
+            baseMaxDamage: 3,
             maxDamage: 3,
             lastDamageTime: 0,
             cargo: {
@@ -248,6 +256,13 @@ class ProbeManager {
                 exoticMinerals: 0
             }
         };
+
+        // PBON-04: probeDurability bonus increases maxDamage
+        const durabilityBonus = window.game?.shellSystem ? window.game.shellSystem.getEntityBonus('probes', probe, 'probeDurability') : 0;
+        if (durabilityBonus > 0) {
+            probe.maxDamage = Math.floor(probe.baseMaxDamage * (1 + durabilityBonus / 100));
+        }
+
         return probe;
     }
 
@@ -753,8 +768,22 @@ class ProbeManager {
                     legendary: { minerals: 100, data: 50, artifacts: 25 }
                 };
                 
-                const rewards = baseRewards[signal.rarity] || baseRewards.common;
-                
+                const rewards = { ...(baseRewards[signal.rarity] || baseRewards.common) };
+
+                // PBON-07: explorationRewards bonus increases ALL reward types (applied first for multiplicative stacking)
+                const rewardBonus = window.game?.shellSystem ? window.game.shellSystem.getEntityBonus('probes', probe, 'explorationRewards') : 0;
+                if (rewardBonus > 0) {
+                    rewards.minerals = Math.max(1, Math.floor(rewards.minerals * (1 + rewardBonus / 100)));
+                    rewards.data = Math.max(1, Math.floor(rewards.data * (1 + rewardBonus / 100)));
+                    rewards.artifacts = Math.max(1, Math.floor(rewards.artifacts * (1 + rewardBonus / 100)));
+                }
+
+                // PBON-06: artifactDiscovery bonus increases artifact rewards specifically (applied after explorationRewards)
+                const artifactBonus = window.game?.shellSystem ? window.game.shellSystem.getEntityBonus('probes', probe, 'artifactDiscovery') : 0;
+                if (artifactBonus > 0) {
+                    rewards.artifacts = Math.max(1, Math.floor(rewards.artifacts * (1 + artifactBonus / 100)));
+                }
+
                 // Initialize probe cargo if it doesn't exist
                 if (!probe.cargo) {
                     probe.cargo = {
@@ -797,14 +826,19 @@ class ProbeManager {
                 }
                 
                 // Add exotic minerals for rare+ signals to cargo
-                let exoticBonus = 0;
-                if (signal.rarity === 'rare') exoticBonus = 1;
-                else if (signal.rarity === 'epic') exoticBonus = 3;
-                else if (signal.rarity === 'legendary') exoticBonus = 10;
-                
-                if (exoticBonus > 0) {
-                    probe.cargo.exoticMinerals += exoticBonus;
-                    totalResourcesGained += exoticBonus;
+                let exoticAmount = 0;
+                if (signal.rarity === 'rare') exoticAmount = 1;
+                else if (signal.rarity === 'epic') exoticAmount = 3;
+                else if (signal.rarity === 'legendary') exoticAmount = 10;
+
+                // PBON-08: exoticYield bonus increases exotic mineral rewards
+                if (exoticAmount > 0) {
+                    const exoticYieldBonus = window.game?.shellSystem ? window.game.shellSystem.getEntityBonus('probes', probe, 'exoticYield') : 0;
+                    if (exoticYieldBonus > 0) {
+                        exoticAmount = Math.max(1, Math.floor(exoticAmount * (1 + exoticYieldBonus / 100)));
+                    }
+                    probe.cargo.exoticMinerals += exoticAmount;
+                    totalResourcesGained += exoticAmount;
                 }
                 
                 // Update Probethium stats for auto-collection
@@ -888,8 +922,10 @@ class ProbeManager {
         if (currentTime - probe.lastDamageTime >= 3000) {
             probe.lastDamageTime = currentTime;
             
-            // 10% chance to take damage (as defined in sector type)
-            if (Math.random() < currentSector.type.probeDestructionChance) {
+            // PBON-05: asteroidSurvival bonus reduces destruction chance
+            const survivalBonus = window.game?.shellSystem ? window.game.shellSystem.getEntityBonus('probes', probe, 'asteroidSurvival') : 0;
+            const adjustedDestructionChance = currentSector.type.probeDestructionChance * (1 - survivalBonus / 100);
+            if (Math.random() < adjustedDestructionChance) {
                 probe.damage++;
                 console.log(`Probe ${probe.id} took damage in asteroid field! (${probe.damage}/${probe.maxDamage})`);
                 

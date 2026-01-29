@@ -796,6 +796,14 @@ class ShellSystem {
         const shell = this.getShell('probes', shellId);
         probe.cosmetic = this.buildCosmeticFromShell(shell);
 
+        // PBON-04: Recalculate maxDamage when shell changes (prevents compounding)
+        if (probe.baseMaxDamage != null) {
+            const durabilityBonus = this.getEntityBonus('probes', probe, 'probeDurability');
+            probe.maxDamage = durabilityBonus > 0
+                ? Math.floor(probe.baseMaxDamage * (1 + durabilityBonus / 100))
+                : probe.baseMaxDamage;
+        }
+
         this.eventBus.emit('shell:equippedOnProbe', { probe, shellId });
         this.eventBus.emit('ui:update');
 
