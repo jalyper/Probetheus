@@ -65,6 +65,13 @@ Plans:
 
 **Dependencies:** Phase 3 (bonuses must be functional before UI displays them and integration tests verify them)
 
+**Plans:** 3 plans
+
+Plans:
+- [ ] 04-01-PLAN.md -- Tooltip system + probe shell modal and detail panel tooltips (BUI-01, BUI-02, BUI-05)
+- [ ] 04-02-PLAN.md -- Hub and mining station detail panel shell indicators with tooltips (BUI-03, BUI-04)
+- [ ] 04-03-PLAN.md -- Playwright tests for tooltip display and integration (TEST-05 through TEST-08)
+
 **Requirements:**
 - BUI-01: Shell selection modal shows bonus tooltip on hover
 - BUI-02: Probe detail panel shows bonus tooltip on hover
