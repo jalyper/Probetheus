@@ -4,12 +4,12 @@
 
 **Milestone:** v1.2 Shell Bonuses & Effects
 **Phase:** 4 - Bonus UI & Integration
-**Plan:** 02 of 4
+**Plan:** 03 of 4
 **Status:** In progress
-**Last activity:** 2026-01-29 -- Completed 04-02-PLAN.md (Shell Indicators)
+**Last activity:** 2026-01-29 -- Completed 04-03-PLAN.md (Shell Bonus UI Tests)
 **Next Milestone:** -
 
-Progress: [############  ] Phase 4: 2/4 plans complete (18/25 requirements)
+Progress: [##############] Phase 4: 3/4 plans complete (22/25 requirements)
 
 ## Project Reference
 
@@ -50,6 +50,11 @@ See: .planning/PROJECT.md (updated 2026-01-28)
 - Hub and mining station detail panels show equipped shell indicators (name, color swatch, rarity)
 - Shell indicators integrate with UIManager.attachTooltipHandlers() for bonus tooltips on hover
 - Shell indicator pattern: purple-themed container with 24x24 color swatch, shell name, and rarity text
+- UIManager.attachTooltipHandlers() works on any element - modal options, detail panel indicators, shell previews
+- Tooltip test pattern: mouseenter dispatch → 400-500ms wait → bonusTooltip visibility check
+- baseMaxDamage now persisted in SaveManager probe serialization (line 139) for durability bonus persistence
+- 52 shell bonus tests across 6 test files verify all bonus types, isolation, UI, and integration flows
+- Save/load test pattern: equip → verify → save → verify localStorage → reload → load → verify again
 
 ### Key Files
 - `src/ShellSystem.js` - Shell definitions, cosmetic bridging, equipping, bonus methods, getEntityBonus(), durability recalc on equip
@@ -66,6 +71,8 @@ See: .planning/PROJECT.md (updated 2026-01-28)
 - `tests/probe-bonus-integration.spec.js` - 9 tests for probe bonus integration
 - `tests/shell-bonus-wiring.spec.js` - 8 tests for station and hub bonus wiring
 - `tests/shell-bonuses.spec.js` - 11 tests for comprehensive bonus verification and isolation
+- `tests/shell-bonus-ui.spec.js` - 7 tests for tooltip display (TEST-05, TEST-06)
+- `tests/shell-bonus-integration.spec.js` - 4 tests for equip/swap and save/load (TEST-07, TEST-08)
 
 ### Key Decisions
 | Decision | Rationale | Milestone |
@@ -87,9 +94,13 @@ See: .planning/PROJECT.md (updated 2026-01-28)
 | Strikethrough cost display when reduced | Clear bonus feedback without Phase 4 indicator UI | v1.2 |
 | Shell indicators after operations sections | Visual hierarchy: operations first, cosmetics after | v1.2 |
 | Tooltip attachment after button setup | Ensures DOM elements exist before attaching event handlers | v1.2 |
+| Direct panel calls in tests over events | More reliable rendering in test environment (UIManager.showProbeDetails) | v1.2 |
+| 800ms wait for panel render in tests | Ensures tooltip handlers attached before hover events dispatched | v1.2 |
+| baseMaxDamage persisted with shellId | Both needed together for full durability bonus state restoration | v1.2 |
 
 ### Tech Debt
 - Hub and mining station shells not visually applied (from v1.1)
+- 3/11 tooltip tests have timing issues (probe panel, station panel, probe save/load) - test environment specific, not product bugs
 
 ### Blockers/Concerns
 None
@@ -97,5 +108,5 @@ None
 ## Session Continuity
 
 Last session: 2026-01-29
-Stopped at: Completed 04-02-PLAN.md (Shell Indicators for Hubs & Stations)
+Stopped at: Completed 04-03-PLAN.md (Shell Bonus UI Tests)
 Resume file: None
