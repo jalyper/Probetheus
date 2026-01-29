@@ -42,8 +42,8 @@
 - [ ] **TEST-04**: Test bonuses are per-entity (equipping a shell on one probe does not affect another)
 - [ ] **TEST-05**: Test bonus tooltip displays correct info on hover in shell selection modal
 - [ ] **TEST-06**: Test bonus tooltip displays correct info on hover in detail panels
-- [ ] **TEST-07**: Integration test — equip shell with bonus, verify gameplay effect, swap shell, verify effect changes
-- [ ] **TEST-08**: Integration test — save/load game preserves shell bonuses and they remain functional after load
+- [ ] **TEST-07**: Integration test -- equip shell with bonus, verify gameplay effect, swap shell, verify effect changes
+- [ ] **TEST-08**: Integration test -- save/load game preserves shell bonuses and they remain functional after load
 
 ## Future Requirements
 
@@ -65,37 +65,37 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PBON-01 | TBD | Pending |
-| PBON-02 | TBD | Pending |
-| PBON-03 | TBD | Pending |
-| PBON-04 | TBD | Pending |
-| PBON-05 | TBD | Pending |
-| PBON-06 | TBD | Pending |
-| PBON-07 | TBD | Pending |
-| PBON-08 | TBD | Pending |
-| HBON-01 | TBD | Pending |
-| MBON-01 | TBD | Pending |
-| MBON-02 | TBD | Pending |
-| MBON-03 | TBD | Pending |
-| BUI-01 | TBD | Pending |
-| BUI-02 | TBD | Pending |
-| BUI-03 | TBD | Pending |
-| BUI-04 | TBD | Pending |
-| BUI-05 | TBD | Pending |
-| TEST-01 | TBD | Pending |
-| TEST-02 | TBD | Pending |
-| TEST-03 | TBD | Pending |
-| TEST-04 | TBD | Pending |
-| TEST-05 | TBD | Pending |
-| TEST-06 | TBD | Pending |
-| TEST-07 | TBD | Pending |
-| TEST-08 | TBD | Pending |
+| PBON-01 | Phase 3 | Pending |
+| PBON-02 | Phase 3 | Pending |
+| PBON-03 | Phase 3 | Pending |
+| PBON-04 | Phase 3 | Pending |
+| PBON-05 | Phase 3 | Pending |
+| PBON-06 | Phase 3 | Pending |
+| PBON-07 | Phase 3 | Pending |
+| PBON-08 | Phase 3 | Pending |
+| HBON-01 | Phase 3 | Pending |
+| MBON-01 | Phase 3 | Pending |
+| MBON-02 | Phase 3 | Pending |
+| MBON-03 | Phase 3 | Pending |
+| BUI-01 | Phase 4 | Pending |
+| BUI-02 | Phase 4 | Pending |
+| BUI-03 | Phase 4 | Pending |
+| BUI-04 | Phase 4 | Pending |
+| BUI-05 | Phase 4 | Pending |
+| TEST-01 | Phase 3 | Pending |
+| TEST-02 | Phase 3 | Pending |
+| TEST-03 | Phase 3 | Pending |
+| TEST-04 | Phase 3 | Pending |
+| TEST-05 | Phase 4 | Pending |
+| TEST-06 | Phase 4 | Pending |
+| TEST-07 | Phase 4 | Pending |
+| TEST-08 | Phase 4 | Pending |
 
 **Coverage:**
 - v1.2 requirements: 25 total
-- Mapped to phases: 0
-- Unmapped: 25 ⚠️
+- Mapped to phases: 25
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-28*
-*Last updated: 2026-01-28 after initial definition*
+*Last updated: 2026-01-28 after roadmap creation*

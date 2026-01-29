@@ -3,20 +3,20 @@
 ## Current Position
 
 **Milestone:** v1.2 Shell Bonuses & Effects
-**Phase:** Not started (defining requirements)
-**Plan:** -
-**Status:** Defining requirements
-**Last activity:** 2026-01-28 — Milestone v1.2 started
+**Phase:** 3 - Bonus Gameplay
+**Plan:** Not yet planned
+**Status:** Roadmap complete, ready to plan Phase 3
+**Last activity:** 2026-01-28 -- Roadmap created for v1.2
 **Next Milestone:** -
 
-Progress: Ready for new milestone
+Progress: [..........] 0/25 requirements
 
 ## Project Reference
 
 See: .planning/PROJECT.md (updated 2026-01-28)
 
 **Core value:** Players explore, expand, and upgrade through satisfying resource collection and progression loops
-**Current focus:** Defining requirements for v1.2
+**Current focus:** Wire shell bonuses into gameplay systems so equipped shells affect entity behavior
 
 ## Completed Milestones
 
@@ -34,6 +34,7 @@ See: .planning/PROJECT.md (updated 2026-01-28)
 - refreshProbeCosmetic() called after probe restore in SaveManager
 - ShellSystem has bonus calculation methods (getTotalBonuses, getBonus, applyBonus) but they are never called
 - 12 bonus types defined, ~40 shells have bonuses
+- Per-entity bonus model: each shell only affects the entity it is equipped on
 
 ### Key Files
 - `src/ShellSystem.js` - Shell definitions, cosmetic bridging, equipping, bonus methods
@@ -41,6 +42,8 @@ See: .planning/PROJECT.md (updated 2026-01-28)
 - `src/GameController.js` - Probe rendering with glow effects
 - `src/ProbeManager.js` - Probe collection and movement logic
 - `src/GameState.js` - Research tree, resource calculations
+- `src/MiningManager.js` - Mining station and shuttle logic
+- `src/DetailsPanel.js` - Entity detail panels
 - `tests/shell-visuals.spec.js` - 11 tests for shell visual system
 - `tests/shell-persistence.spec.js` - 4 tests for shell persistence
 
@@ -52,7 +55,8 @@ See: .planning/PROJECT.md (updated 2026-01-28)
 | Sync cosmetic update on equip | Immediate visual feedback | v1.1 |
 | shellId defaults to 'default' | Backwards compatibility with old saves | v1.1 |
 | refreshProbeCosmetic after full restore | Ensure probes array complete before iteration | v1.1 |
-| Per-entity bonuses (not global stacking) | Intuitive — each entity's shell affects only itself | v1.2 |
+| Per-entity bonuses (not global stacking) | Intuitive -- each entity's shell affects only itself | v1.2 |
+| 2-phase roadmap (gameplay then UI) | All bonus wiring is same pattern; UI depends on working bonuses | v1.2 |
 
 ### Tech Debt
 - Hub and mining station shells not visually applied (from v1.1)
@@ -63,5 +67,5 @@ None
 ## Session Continuity
 
 Last session: 2026-01-28
-Stopped at: Defining requirements for v1.2
+Stopped at: Roadmap created, ready to plan Phase 3
 Resume file: None
