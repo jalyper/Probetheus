@@ -447,18 +447,26 @@ class ProbeManager {
 
             console.log('Probe generating exploration pulse at:', probe.current.x, probe.current.y, 'Equipment:', probe.equipment ? 'Yes' : 'No');
 
+            // PBON-02: signalRange bonus affects radar pulse visual radius
+            const rangeBonus = window.game?.shellSystem ? window.game.shellSystem.getEntityBonus('probes', probe, 'signalRange') : 0;
+            const pulseMaxRadius = 80 * (1 + rangeBonus / 100);
+
             // Add radar pulse
             probe.radarPulses.push({
                 x: probe.current.x,
                 y: probe.current.y,
                 radius: 0,
-                maxRadius: 80,
+                maxRadius: pulseMaxRadius,
                 duration: 2000,
                 elapsed: 0
             });
 
-            // Generate signals with 30% chance
-            if (Math.random() < 0.3) {
+            // PBON-01: dataSignalDiscovery bonus increases signal generation chance
+            const signalDiscoveryBonus = window.game?.shellSystem ? window.game.shellSystem.getEntityBonus('probes', probe, 'dataSignalDiscovery') : 0;
+            const signalChance = 0.3 * (1 + signalDiscoveryBonus / 100);
+
+            // Generate signals with base 30% chance (modified by shell bonus)
+            if (Math.random() < signalChance) {
                 try {
                     const signalX = probe.current.x + (Math.random() - 0.5) * 160;
                     const signalY = probe.current.y + (Math.random() - 0.5) * 160;
@@ -481,7 +489,7 @@ class ProbeManager {
                         x: signalX,
                         y: signalY,
                         radius: isDarkMarket ? 12 : 8 + Math.random() * 4,
-                        rarity: isDarkMarket ? 'dark_market' : this.determineSignalRarity(isInAsteroidField),
+                        rarity: isDarkMarket ? 'dark_market' : this.determineSignalRarity(isInAsteroidField, probe),
                         signalType: signalType,
                         duration: isDarkMarket ? 5000 : 2000 + Math.random() * 1000, // Dark market signals last longer
                         createdAt: Date.now()
@@ -511,22 +519,39 @@ class ProbeManager {
     /**
      * Determine signal rarity
      */
-    determineSignalRarity(inAsteroidField = false) {
+    determineSignalRarity(inAsteroidField = false, probe = null) {
         const rand = Math.random();
-        
+
+        // PBON-03: rareSignalChance bonus shifts probability away from common toward rarer outcomes
+        const rareBonus = (probe && window.game?.shellSystem) ? window.game.shellSystem.getEntityBonus('probes', probe, 'rareSignalChance') : 0;
+
         if (inAsteroidField) {
             // Asteroid fields have 2x rare resources (shifted probabilities)
-            if (rand < 0.3) return 'common';
-            if (rand < 0.5) return 'uncommon';
-            if (rand < 0.75) return 'rare';
-            if (rand < 0.92) return 'epic';
+            const commonReduction = 0.3 * (rareBonus / 100);
+            const boost = commonReduction / 3;
+            const adjCommon = 0.3 - commonReduction;
+            const adjUncommon = 0.5 + boost;
+            const adjRare = 0.75 + boost * 2;
+            const adjEpic = Math.min(0.99, 0.92 + boost * 3);
+
+            if (rand < adjCommon) return 'common';
+            if (rand < adjUncommon) return 'uncommon';
+            if (rand < adjRare) return 'rare';
+            if (rand < adjEpic) return 'epic';
             return 'legendary';
         } else {
-            // Normal probabilities
-            if (rand < 0.5) return 'common';
-            if (rand < 0.75) return 'uncommon';
-            if (rand < 0.9) return 'rare';
-            if (rand < 0.98) return 'epic';
+            // Normal probabilities with rareSignalChance bonus
+            const commonReduction = 0.5 * (rareBonus / 100);
+            const boost = commonReduction / 3;
+            const adjCommon = 0.5 - commonReduction;
+            const adjUncommon = 0.75 + boost;
+            const adjRare = 0.9 + boost * 2;
+            const adjEpic = Math.min(0.99, 0.98 + boost * 3);
+
+            if (rand < adjCommon) return 'common';
+            if (rand < adjUncommon) return 'uncommon';
+            if (rand < adjRare) return 'rare';
+            if (rand < adjEpic) return 'epic';
             return 'legendary';
         }
     }
@@ -656,8 +681,9 @@ class ProbeManager {
         const canCollectArtifacts = collectionTypes.has('artifacts') || collectionTypes.has('all');
         const hasUniversal = collectionTypes.has('all');
         
-        // Check for signals within auto-collection range (80 pixels)
-        const collectionRange = 80;
+        // PBON-02: signalRange bonus affects auto-collection range
+        const collectionRangeBonus = window.game?.shellSystem ? window.game.shellSystem.getEntityBonus('probes', probe, 'signalRange') : 0;
+        const collectionRange = 80 * (1 + collectionRangeBonus / 100);
         const totalSignals = this.gameState.entities.signals.length;
         const signalsInRange = this.gameState.entities.signals.filter(signal => {
             const distance = Math.sqrt(
