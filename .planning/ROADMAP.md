@@ -88,10 +88,10 @@ Plans:
 
 | Phase | Name | Status | Requirements |
 |-------|------|--------|--------------|
-| 3 | Bonus Gameplay | Not Started | 16 |
-| 4 | Bonus UI & Integration | Not Started | 9 |
+| 3 | Bonus Gameplay | Complete | 16/16 |
+| 4 | Bonus UI & Integration | Not Started | 0/9 |
 
-**Total:** 0/25 requirements complete
+**Total:** 16/25 requirements complete
 
 ---
 
