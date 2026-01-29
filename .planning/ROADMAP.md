@@ -22,6 +22,14 @@
 
 **Dependencies:** None (ShellSystem bonus infrastructure already exists)
 
+**Plans:** 4 plans
+
+Plans:
+- [ ] 03-01-PLAN.md -- Normalize shell bonus values and add per-entity bonus resolver
+- [ ] 03-02-PLAN.md -- Wire 8 probe bonus types into ProbeManager
+- [ ] 03-03-PLAN.md -- Wire hub and mining station bonuses (researchSpeed, miningEfficiency, probethiumRate, shuttleSpeed)
+- [ ] 03-04-PLAN.md -- Playwright tests for all 12 bonus types + per-entity isolation
+
 **Requirements:**
 - PBON-01: dataSignalDiscovery bonus increases data signal discovery chance
 - PBON-02: signalRange bonus increases signal detection range
