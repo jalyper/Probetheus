@@ -3,13 +3,13 @@
 ## Current Position
 
 **Milestone:** v1.2 Shell Bonuses & Effects
-**Phase:** 3 - Bonus Gameplay -- COMPLETE
-**Plan:** All 4 plans complete
-**Status:** Phase 3 complete, Phase 4 not started
-**Last activity:** 2026-01-28 -- Phase 3 verified and closed
+**Phase:** 4 - Bonus UI & Integration
+**Plan:** 02 of 4
+**Status:** In progress
+**Last activity:** 2026-01-29 -- Completed 04-02-PLAN.md (Shell Indicators)
 **Next Milestone:** -
 
-Progress: [##########] Phase 3: 4/4 plans complete (16/25 requirements)
+Progress: [############  ] Phase 4: 2/4 plans complete (18/25 requirements)
 
 ## Project Reference
 
@@ -47,6 +47,9 @@ See: .planning/PROJECT.md (updated 2026-01-28)
 - Research cost reduction formula: `Math.max(1, Math.ceil(baseCost * (1 - bonus/100)))` -- minimum cost 1
 - All 12 bonus types now fully functional across 3 files
 - 41 shell bonus tests across 4 test files verify all bonus types + per-entity isolation
+- Hub and mining station detail panels show equipped shell indicators (name, color swatch, rarity)
+- Shell indicators integrate with UIManager.attachTooltipHandlers() for bonus tooltips on hover
+- Shell indicator pattern: purple-themed container with 24x24 color swatch, shell name, and rarity text
 
 ### Key Files
 - `src/ShellSystem.js` - Shell definitions, cosmetic bridging, equipping, bonus methods, getEntityBonus(), durability recalc on equip
@@ -82,6 +85,8 @@ See: .planning/PROJECT.md (updated 2026-01-28)
 | baseMaxDamage tracking on probes | Prevents compounding when swapping shells | v1.2 |
 | Research cost reduction: Math.max(1, Math.ceil(...)) | Conservative rounding; minimum 1 prevents free research | v1.2 |
 | Strikethrough cost display when reduced | Clear bonus feedback without Phase 4 indicator UI | v1.2 |
+| Shell indicators after operations sections | Visual hierarchy: operations first, cosmetics after | v1.2 |
+| Tooltip attachment after button setup | Ensures DOM elements exist before attaching event handlers | v1.2 |
 
 ### Tech Debt
 - Hub and mining station shells not visually applied (from v1.1)
@@ -91,6 +96,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-01-28
-Stopped at: Phase 3 complete, ready for Phase 4 (Bonus UI & Integration)
+Last session: 2026-01-29
+Stopped at: Completed 04-02-PLAN.md (Shell Indicators for Hubs & Stations)
 Resume file: None
