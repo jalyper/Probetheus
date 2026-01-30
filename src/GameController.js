@@ -10,10 +10,7 @@ class GameController {
         
         // Resource indicators for auto-collection
         this.resourceIndicators = [];
-        
-        // Track if asteroid field tip has been shown
-        this.hasShownAsteroidTip = false;
-        
+
         // Initialize managers
         this.probeManager = new ProbeManager(this.gameState, this.eventBus);
         this.buildingSystem = new BuildingSystem(this.gameState, this.eventBus);
@@ -51,12 +48,7 @@ class GameController {
         this.eventBus.on('research:completed', (data) => {
             this.onResearchCompleted(data.node);
         });
-        
-        // Listen for asteroid field entry
-        this.eventBus.on('probe:enteredAsteroidField', () => {
-            this.showAsteroidFieldTip();
-        });
-        
+
         // Listen for screen switching events
         this.eventBus.on('ui:switchScreen', (data) => {
             this.showScreen(data.screen + 'Screen');
@@ -154,13 +146,7 @@ class GameController {
     initializeGame() {
         this.initializeSector(0, 0, true);
         this.generateStars();
-        
-        // Tips will be shown by cutscene system for new games, 
-        // or immediately for continued/loaded games
-        if (this.shouldShowTipsImmediately()) {
-            this.showGameTips();
-        }
-        
+
         console.log('=== GAME INITIALIZATION ===');
         console.log('Game initialized. Hubs:', this.gameState.entities.reconHubs.length);
         console.log('Canvas dimensions:', this.canvas.width, 'x', this.canvas.height);
@@ -181,22 +167,6 @@ class GameController {
         
         // Setup auto-save on page unload
         this.setupAutoSaveOnExit();
-    }
-
-    /**
-     * Determine if tutorial tips should show immediately
-     * (for continued/loaded games) vs waiting for cutscene (new games)
-     */
-    shouldShowTipsImmediately() {
-        // For new games, tips will be triggered by cutscene system
-        // For continued/loaded games, show tips immediately
-        const gameLoadType = window.gameLoadType || 'unknown';
-        
-        console.log('shouldShowTipsImmediately: gameLoadType =', gameLoadType);
-        
-        // Show immediately for continued and loaded games
-        // Wait for cutscene trigger for new games
-        return gameLoadType === 'continue' || gameLoadType === 'load';
     }
 
     /**
@@ -677,19 +647,21 @@ class GameController {
         if (testProbethium) {
             console.log('✓ Probethium test button found');
             testProbethium.addEventListener('click', () => {
-                console.log('[TEST] Probethium button clicked!');
-                console.log('[TEST] Current probethium before:', this.gameState.probethium.current);
-                
                 // Add 100 Probethium for testing
+                this.gameState.mining.totalProbetheum += 100.0;
                 this.gameState.probethium.current += 100.0;
                 this.gameState.probethium.totalAccumulated += 100.0;
-                
-                console.log('[TEST] Current probethium after:', this.gameState.probethium.current);
-                
-                // Update UI
+
+                // Update top bar display
+                this.miningManager.updateProbetheum();
+
+                // Update trade menu balance if open
+                const tradeBalance = document.getElementById('tradeMenuProbethium');
+                if (tradeBalance) {
+                    tradeBalance.textContent = `${this.gameState.probethium.current.toFixed(4)} P`;
+                }
+
                 this.uiManager.updateUI();
-                
-                console.log('[TEST] UI updated. Check top bar!');
             });
         } else {
             console.error('❌ Probethium test button NOT found!');
@@ -1438,7 +1410,7 @@ class GameController {
         html += `
             <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #333;">
                 <span style="color: #888;">Your Probethium:</span>
-                <span style="color: #ffd700; font-weight: bold; margin-left: 8px;">${currentProbethium.toFixed(4)} P</span>
+                <span id="tradeMenuProbethium" style="color: #ffd700; font-weight: bold; margin-left: 8px;">${currentProbethium.toFixed(4)} P</span>
             </div>
         `;
 
@@ -3892,350 +3864,6 @@ class GameController {
                 this.eventBus.off('hub:clicked', this.tutorialHubClick);
             }, 4000);
         }
-    }
-    
-    /**
-     * Show asteroid field warning tip
-     */
-    showAsteroidFieldTip() {
-        if (this.hasShownAsteroidTip) return;
-        this.hasShownAsteroidTip = true;
-        
-        const tipsElement = document.getElementById('gameTips');
-        const tipText = document.getElementById('tipText');
-        
-        if (!tipsElement || !tipText) return;
-        
-        // Update text for asteroid field warning
-        tipText.innerHTML = 'ASTEROID FIELDS YIELD 3X RESOURCES<br>BUT THERE ARE RISKS<br>ROUTES HERE MUST BE PROTECTED FROM ASTEROID IMPACT';
-        
-        // Hide progress dots for this one-time tip
-        const tipProgress = document.getElementById('tipProgress');
-        if (tipProgress) {
-            tipProgress.style.display = 'none';
-        }
-        
-        // Show tip
-        tipsElement.style.opacity = '1';
-        
-        // Fade out after 6 seconds (longer for this important warning)
-        setTimeout(() => {
-            tipsElement.style.opacity = '0';
-            setTimeout(() => {
-                tipsElement.style.display = 'none';
-                // Restore progress dots for future use
-                if (tipProgress) {
-                    tipProgress.style.display = 'flex';
-                }
-            }, 500);
-        }, 6000);
-    }
-    
-    /**
-     * Show TRON-style game tips
-     */
-    showGameTips() {
-        // Check if tutorial has already been completed
-        if (localStorage.getItem('tutorialCompleted') === 'true') {
-            console.log('Tutorial already completed, skipping');
-            return;
-        }
-        
-        // Load tutorial progress
-        const savedProgress = this.loadTutorialProgress();
-        console.log('Loaded tutorial progress:', savedProgress);
-        
-        const tipsElement = document.getElementById('gameTips');
-        const tipText = document.getElementById('tipText');
-        const tipDots = [
-            document.getElementById('tipDot1'),
-            document.getElementById('tipDot2'),
-            document.getElementById('tipDot3'),
-            document.getElementById('tipDot4'),
-            document.getElementById('tipDot5'),
-            document.getElementById('tipDot6'),
-            document.getElementById('tipDot7'),
-            document.getElementById('tipDot8'),
-            document.getElementById('tipDot9')
-        ];
-        
-        if (!tipsElement || !tipText) return;
-        
-        // Initialize from saved progress
-        let hasDragged = savedProgress.hasDragged;
-        let hasScrolled = savedProgress.hasScrolled;
-        let hasIdentifiedSignal = savedProgress.hasIdentifiedSignal;
-        let hasChosenAction = savedProgress.hasChosenAction;
-        let hasSeenProbeLimit = savedProgress.hasSeenProbeLimit;
-        let hasSeenBuildInfo = savedProgress.hasSeenBuildInfo;
-        let hasClickedHubForBuild = savedProgress.hasClickedHubForBuild;
-        let currentTip = savedProgress.currentStep;
-        
-        // Initialize deployment count - track actual deployment actions, not probe count
-        let deployedProbeCount = savedProgress.deployedProbeCount;
-        
-        // For new games, deployedProbeCount should start at 0 regardless of existing probes
-        // Only saved progress from resumed games should count
-        const isNewGame = window.gameLoadType === 'new' && savedProgress.currentStep === 0;
-        if (isNewGame) {
-            deployedProbeCount = 0;
-        }
-        
-        // Define tips
-        const tips = [
-            { text: 'CLICK AND DRAG TO MOVE', action: 'drag' },
-            { text: 'SCROLL TO ZOOM IN/OUT', action: 'scroll' },
-            { text: 'CLICK ON HUB TO DEPLOY YOUR FIRST PROBE', action: 'deploy_first', counter: true },
-            { text: 'IDENTIFY SIGNALS BY CLICKING ON THEM AS THEY\'RE DISCOVERED BY YOUR PROBES', action: 'signal' },
-            { text: 'CONTINUE DEPLOYING PROBES TO EXPLORE MORE SPACE', action: 'deploy_continue', counter: true },
-            { text: 'CHOOSE AN ACTION. EACH ACTION YIELDS DIFFERENT REWARDS.', action: 'planet' },
-            { text: 'YOU CAN DEPLOY UP TO <span style="color: #ffff00; text-shadow: 0 0 10px #ffff00;">5</span> PROBES PER HUB', action: 'info1' },
-            { text: 'WHEN YOU IDENTIFY ENOUGH MINERALS, BUILD MORE PROBES FROM YOUR HUB.', action: 'info2' },
-            { text: 'CLICK ON A HUB TO SEE THE BUILD PROBE BUTTON', action: 'hubclick' }
-        ];
-        
-        // Only skip ahead if this is a resumed game with progress, not a fresh start
-        // Check if tutorial progress exists or if this is a continued/loaded game
-        const isResumedGame = savedProgress.currentStep > 0 || window.gameLoadType === 'continue' || window.gameLoadType === 'load';
-        
-        if (deployedProbeCount >= 3 && isResumedGame) {
-            currentTip = Math.max(savedProgress.currentStep, 5); // Start from planet interaction tip or saved progress
-        }
-        
-        // Initialize tutorial hub interaction state
-        this.tutorialAllowsHubClick = false;
-        
-        // Helper function to update progress
-        const updateProgress = () => {
-            const progress = {
-                completedSteps: [], // We'll track this differently
-                currentStep: currentTip,
-                hasDragged,
-                hasScrolled,
-                deployedProbeCount,
-                hasIdentifiedSignal,
-                hasChosenAction,
-                hasSeenProbeLimit,
-                hasSeenBuildInfo,
-                hasClickedHubForBuild
-            };
-            this.saveTutorialProgress(progress);
-        };
-        
-        // Function to show current tip
-        const showCurrentTip = () => {
-            if (currentTip >= tips.length) {
-                // All tips completed, mark tutorial as complete and fade out
-                this.completeTutorial();
-                setTimeout(() => {
-                    tipsElement.style.opacity = '0';
-                    setTimeout(() => {
-                        tipsElement.style.display = 'none';
-                    }, 3000);
-                }, 3000);
-                return;
-            }
-            
-            // Update text (handle HTML for special formatting)
-            if (tips[currentTip].text.includes('<span')) {
-                tipText.innerHTML = tips[currentTip].text;
-            } else {
-                let displayText = tips[currentTip].text;
-                // Add counter for deploy tips
-                if (tips[currentTip].counter && tips[currentTip].action === 'deploy_first') {
-                    displayText += ` ${deployedProbeCount}/1 PROBE DEPLOYED`;
-                } else if (tips[currentTip].counter && tips[currentTip].action === 'deploy_continue') {
-                    displayText += ` ${deployedProbeCount}/3 PROBES DEPLOYED`;
-                }
-                tipText.textContent = displayText;
-            }
-            
-            // Update progress dots
-            tipDots.forEach((dot, index) => {
-                if (dot) {
-                    if (index === currentTip) {
-                        dot.style.background = '#00ffff';
-                        dot.style.border = 'none';
-                        dot.style.boxShadow = '0 0 5px #00ffff';
-                    } else {
-                        dot.style.background = 'none';
-                        dot.style.border = '1px solid #00ffff';
-                        dot.style.boxShadow = 'none';
-                    }
-                }
-            });
-            
-            // Control hub clicking based on tutorial step
-            const currentAction = tips[currentTip]?.action;
-            this.tutorialAllowsHubClick = (currentAction === 'deploy_first' || currentAction === 'deploy_continue' || currentAction === 'hubclick');
-            console.log(`Tutorial step ${currentTip} (${currentAction}): hub clicking ${this.tutorialAllowsHubClick ? 'allowed' : 'restricted'}`);
-        };
-        
-        // Track drag action
-        let isDragging = false;
-        let dragStartPos = null;
-        
-        const handleMouseDown = (e) => {
-            if (currentTip === 0 && tips[currentTip].action === 'drag') {
-                isDragging = true;
-                dragStartPos = { x: e.clientX, y: e.clientY };
-            }
-        };
-        
-        const handleMouseMove = (e) => {
-            if (isDragging && dragStartPos) {
-                const dragDistance = Math.sqrt(
-                    Math.pow(e.clientX - dragStartPos.x, 2) + 
-                    Math.pow(e.clientY - dragStartPos.y, 2)
-                );
-                
-                // If dragged more than 50 pixels, consider it completed
-                if (dragDistance > 50 && !hasDragged) {
-                    hasDragged = true;
-                    currentTip++;
-                    updateProgress();
-                    showCurrentTip();
-                }
-            }
-        };
-        
-        const handleMouseUp = () => {
-            isDragging = false;
-            dragStartPos = null;
-        };
-        
-        // Track scroll action
-        const handleWheel = (e) => {
-            if (currentTip === 1 && tips[currentTip].action === 'scroll' && !hasScrolled) {
-                hasScrolled = true;
-                currentTip++;
-                updateProgress();
-                showCurrentTip();
-            }
-        };
-        
-        // Track probe deployment with counter
-        const checkProbeDeployment = () => {
-            // First probe deployment (step 2)
-            if (currentTip === 2 && tips[currentTip].action === 'deploy_first') {
-                deployedProbeCount++;
-                updateProgress();
-                // Update the tip text with new count
-                showCurrentTip();
-                
-                // Move to signal identification tip after first probe
-                if (deployedProbeCount >= 1) {
-                    currentTip++;
-                    updateProgress();
-                    showCurrentTip();
-                }
-            }
-            // Continue deploying probes (step 4)
-            else if (currentTip === 4 && tips[currentTip].action === 'deploy_continue') {
-                deployedProbeCount++;
-                updateProgress();
-                // Update the tip text with new count
-                showCurrentTip();
-                
-                // Move to next tip when 3 probes are deployed
-                if (deployedProbeCount >= 3) {
-                    currentTip++;
-                    updateProgress();
-                    showCurrentTip();
-                }
-            }
-        };
-        
-        // Track signal identification
-        const checkSignalCollection = () => {
-            if (currentTip === 3 && tips[currentTip].action === 'signal' && !hasIdentifiedSignal) {
-                hasIdentifiedSignal = true;
-                currentTip++;
-                updateProgress();
-                showCurrentTip();
-            }
-        };
-        
-        // Track exploration screen appearing
-        const checkExplorationScreen = () => {
-            // When exploration screen appears, advance to "CHOOSE AN ACTION" if we're at "CONTINUE DEPLOYING"
-            if (currentTip === 4 && tips[currentTip].action === 'deploy_continue') {
-                currentTip = 5; // Jump to "CHOOSE AN ACTION"
-                updateProgress();
-                showCurrentTip();
-            }
-        };
-        
-        // Track planet action choice
-        const checkPlanetAction = () => {
-            if (currentTip === 5 && tips[currentTip].action === 'planet' && !hasChosenAction) {
-                hasChosenAction = true;
-                currentTip++;
-                updateProgress();
-                showCurrentTip();
-                
-                // Start timer for info tips
-                setTimeout(() => {
-                    if (currentTip === 6 && !hasSeenProbeLimit) {
-                        hasSeenProbeLimit = true;
-                        currentTip++;
-                        updateProgress();
-                        showCurrentTip();
-                        
-                        setTimeout(() => {
-                            if (currentTip === 7 && !hasSeenBuildInfo) {
-                                hasSeenBuildInfo = true;
-                                currentTip++;
-                                updateProgress();
-                                showCurrentTip();
-                                
-                                // No need for automatic progression - wait for hub click
-                            }
-                        }, 3000);
-                    }
-                }, 2000);
-            }
-        };
-        
-        // Track hub click for final tutorial step
-        const checkHubClick = () => {
-            if (currentTip === 8 && tips[currentTip].action === 'hubclick' && !hasClickedHubForBuild) {
-                hasClickedHubForBuild = true;
-                
-                // Mark tutorial as complete
-                this.completeTutorial();
-                
-                // Hide the tip
-                tipsElement.style.opacity = '0';
-                setTimeout(() => {
-                    tipsElement.style.display = 'none';
-                }, 500);
-                
-                // Highlight the BUILD PROBE button after a short delay
-                setTimeout(() => {
-                    this.highlightBuildProbeButton();
-                }, 1000);
-            }
-        };
-        
-        // Listen for game events
-        this.eventBus.on('probe:deployed', checkProbeDeployment);
-        this.eventBus.on('signal:identified', checkSignalCollection);
-        this.eventBus.on('exploration:screenShown', checkExplorationScreen);
-        this.eventBus.on('planet:actionChosen', checkPlanetAction);
-        this.eventBus.on('hub:clicked', checkHubClick);
-        
-        // Add event listeners
-        this.canvas.addEventListener('mousedown', handleMouseDown);
-        this.canvas.addEventListener('mousemove', handleMouseMove);
-        this.canvas.addEventListener('mouseup', handleMouseUp);
-        this.canvas.addEventListener('wheel', handleWheel);
-        
-        // Show first tip after a short delay
-        setTimeout(() => {
-            tipsElement.style.opacity = '1';
-            showCurrentTip();
-        }, 500);
     }
     
     generateStars() {

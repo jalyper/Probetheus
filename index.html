@@ -50,37 +50,6 @@
     </div>
 
     <div id="gameContainer" style="display: none;">
-        <!-- TRON-style Tips Display -->
-        <div id="gameTips" style="position: fixed; top: 100px; left: 50%; transform: translateX(-50%); z-index: 9999; pointer-events: none; opacity: 0; transition: opacity 0.5s ease-in-out;">
-            <div style="background: rgba(0, 0, 0, 0.8); border: 1px solid #00ffff; box-shadow: 0 0 20px #00ffff, inset 0 0 15px rgba(0, 255, 255, 0.3); padding: 20px 35px; text-align: center; position: relative; overflow: hidden;">
-                <!-- Animated corner decorations -->
-                <div style="position: absolute; top: 0; left: 0; width: 15px; height: 15px; border-top: 1px solid #00ffff; border-left: 1px solid #00ffff;"></div>
-                <div style="position: absolute; top: 0; right: 0; width: 15px; height: 15px; border-top: 1px solid #00ffff; border-right: 1px solid #00ffff;"></div>
-                <div style="position: absolute; bottom: 0; left: 0; width: 15px; height: 15px; border-bottom: 1px solid #00ffff; border-left: 1px solid #00ffff;"></div>
-                <div style="position: absolute; bottom: 0; right: 0; width: 15px; height: 15px; border-bottom: 1px solid #00ffff; border-right: 1px solid #00ffff;"></div>
-                
-                <!-- Scanning line effect -->
-                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 1px; background: linear-gradient(90deg, transparent, #00ffff, transparent); animation: scanLine 2s linear infinite;"></div>
-                
-                <div id="tipText" style="color: #00ffff; font-family: 'Courier New', monospace; font-size: 14px; text-shadow: 0 0 8px #00ffff, 0 0 15px rgba(0, 255, 255, 0.5); letter-spacing: 1.5px; line-height: 1.6;">
-                    CLICK AND DRAG TO MOVE
-                </div>
-                
-                <!-- Small progress indicator -->
-                <div id="tipProgress" style="position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; opacity: 0.5;">
-                    <div id="tipDot1" style="width: 6px; height: 6px; border-radius: 50%; background: #00ffff; box-shadow: 0 0 4px #00ffff;"></div>
-                    <div id="tipDot2" style="width: 6px; height: 6px; border-radius: 50%; border: 1px solid #00ffff;"></div>
-                    <div id="tipDot3" style="width: 6px; height: 6px; border-radius: 50%; border: 1px solid #00ffff;"></div>
-                    <div id="tipDot4" style="width: 6px; height: 6px; border-radius: 50%; border: 1px solid #00ffff;"></div>
-                    <div id="tipDot5" style="width: 6px; height: 6px; border-radius: 50%; border: 1px solid #00ffff;"></div>
-                    <div id="tipDot6" style="width: 6px; height: 6px; border-radius: 50%; border: 1px solid #00ffff;"></div>
-                    <div id="tipDot7" style="width: 6px; height: 6px; border-radius: 50%; border: 1px solid #00ffff;"></div>
-                    <div id="tipDot8" style="width: 6px; height: 6px; border-radius: 50%; border: 1px solid #00ffff;"></div>
-                    <div id="tipDot9" style="width: 6px; height: 6px; border-radius: 50%; border: 1px solid #00ffff;"></div>
-                </div>
-            </div>
-        </div>
-        
         <!-- Header with stats -->
         <div id="header">
             <!-- Power button for main menu -->

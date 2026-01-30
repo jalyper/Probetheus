@@ -11,16 +11,6 @@ body {
     overflow: hidden;
 }
 
-/* TRON-style scanning line animation */
-@keyframes scanLine {
-    0% {
-        top: 0;
-    }
-    100% {
-        top: 100%;
-    }
-}
-
 /* Subtle metallic shine animation */
 @keyframes metallicShine {
     0% {
