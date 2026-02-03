@@ -4,12 +4,12 @@
 
 **Milestone:** v1.3 Signal Distribution System
 **Phase:** Phase 5 - Signal Type System
-**Plan:** 01 of 01 complete
-**Status:** Phase 5 Plan 1 complete
-**Last activity:** 2026-02-03 - Completed 05-01-PLAN.md (Exclusive Signal Definitions)
+**Plan:** 02 of 02 complete
+**Status:** Phase 5 complete (ready for Phase 6)
+**Last activity:** 2026-02-03 - Completed 05-02-PLAN.md (Exclusive Signal Tests)
 **Next Milestone:** -
 
-Progress: [█░░░░░░░░░░░░░░░░░░░] 1/30 requirements (~3%)
+Progress: [██░░░░░░░░░░░░░░░░░░] 2/30 plans (~7%)
 
 ## Project Reference
 
@@ -23,7 +23,7 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 **Current milestone (v1.3):**
 - Phases: 6 (Phase 5 through Phase 10)
 - Requirements: 30 total
-- Completed: ~7 (SIG-01 through SIG-07 in Plan 05-01)
+- Completed: ~7 (SIG-01 through SIG-07 verified by tests)
 - Remaining: ~23
 - Progress: ~23%
 
@@ -42,11 +42,12 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 
 ### Current Roadmap (v1.3)
 
-**Phase 5: Signal Type System** (7 requirements) - IN PROGRESS
+**Phase 5: Signal Type System** (7 requirements) - COMPLETE
 - Goal: Exclusive signal types spawn correctly in designated sectors
 - Success: Ore Vein, Data Cache, Relic, Exotic Crystal signals spawn at 15-30% rate in home sectors only
 - Implementation: Add exclusiveSignalType to sector definitions, extend ProbeManager.determineSignalType()
 - **Plan 05-01 COMPLETE:** Exclusive signal definitions and spawn logic implemented
+- **Plan 05-02 COMPLETE:** 17 Playwright tests validating SIG-01 through SIG-07
 
 **Phase 6: Visual Rendering** (5 requirements)
 - Goal: Exclusive signals instantly recognizable through distinct visuals
@@ -79,6 +80,8 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 | 22.5% exclusive spawn rate | Base rate targeting 15-30% range with shell bonus headroom | Validated |
 | Resource profiles on discovery | Generates variety, distance-weighted RNG for progression feel | Applied |
 | exotic_crystal maps to 'mixed' | Collected by universal collectors, not requiring specific equipment | Applied |
+| Signals not persisted (by design) | Signals are temporary gameplay elements, not saved | Validated |
+| 5-40% test tolerance for spawn rates | Accounts for RNG variance in statistical tests | Applied |
 
 ### Tech Debt
 
@@ -96,18 +99,20 @@ None
 - Shell bonuses automatically apply to exclusive signals (type-agnostic design)
 - Save compatibility handled via defensive property checks with fallbacks
 - **Plan 05-01:** Exclusive signal types now spawn in designated sectors, equipment compatibility via base type mapping
+- **Plan 05-02:** 17 Playwright tests verify all Phase 5 requirements (SIG-01 through SIG-07)
 
 ## Session Continuity
 
 Last session: 2026-02-03
-Stopped at: Completed 05-01-PLAN.md
-Resume file: .planning/phases/05-signal-type-system/05-01-SUMMARY.md
+Stopped at: Completed 05-02-PLAN.md
+Resume file: .planning/phases/05-signal-type-system/05-02-SUMMARY.md
 
 **Next steps:**
-1. Continue Phase 5 or move to Phase 6 (Visual Rendering)
+1. Begin Phase 6 (Visual Rendering)
 2. Implement distinct visuals for exclusive signals (orange/cyan/gold/prismatic)
 3. Add 5-8s lifetime for exclusive signals
+4. Create particle effects for each exclusive signal type
 
 ---
 
-*Last updated: 2026-02-03 - Completed 05-01-PLAN.md*
+*Last updated: 2026-02-03 - Completed 05-02-PLAN.md*
