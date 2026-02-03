@@ -20,8 +20,8 @@ This milestone adds sector-specific signal types that are exclusive to designate
 **Requirements:** SIG-01, SIG-02, SIG-03, SIG-04, SIG-05, SIG-06, SIG-07
 
 **Plans:** 2 plans
-- [ ] 05-01-PLAN.md — Add exclusive signal definitions and extend generation logic
-- [ ] 05-02-PLAN.md — Create Playwright test suite for spawning and collection
+- [x] 05-01-PLAN.md — Add exclusive signal definitions and extend generation logic
+- [x] 05-02-PLAN.md — Create Playwright test suite for spawning and collection
 
 **Success Criteria:**
 1. Resource-Rich sectors spawn "Ore Vein" signals at 15-30% rate (not found elsewhere)
@@ -171,7 +171,7 @@ This milestone adds sector-specific signal types that are exclusive to designate
 
 | Phase | Requirements | Plans | Status | Completion |
 |-------|--------------|-------|--------|------------|
-| Phase 5: Signal Type System | 7 | 2 | Ready | 0% |
+| Phase 5: Signal Type System | 7 | 2 | Complete | 100% |
 | Phase 6: Visual Rendering | 5 | 0 | Pending | 0% |
 | Phase 7: Signal Rewards | 4 | 0 | Pending | 0% |
 | Phase 8: Sector Resource Profiles | 5 | 0 | Pending | 0% |
@@ -179,20 +179,20 @@ This milestone adds sector-specific signal types that are exclusive to designate
 | Phase 10: Testing & Integration | 5 | 0 | Pending | 0% |
 
 **Total Requirements:** 30
-**Completed:** 0
-**Remaining:** 30
+**Completed:** 7
+**Remaining:** 23
 
 ## Coverage Map
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SIG-01 | Phase 5 | Planned |
-| SIG-02 | Phase 5 | Planned |
-| SIG-03 | Phase 5 | Planned |
-| SIG-04 | Phase 5 | Planned |
-| SIG-05 | Phase 5 | Planned |
-| SIG-06 | Phase 5 | Planned |
-| SIG-07 | Phase 5 | Planned |
+| SIG-01 | Phase 5 | Complete |
+| SIG-02 | Phase 5 | Complete |
+| SIG-03 | Phase 5 | Complete |
+| SIG-04 | Phase 5 | Complete |
+| SIG-05 | Phase 5 | Complete |
+| SIG-06 | Phase 5 | Complete |
+| SIG-07 | Phase 5 | Complete |
 | VIS-01 | Phase 6 | Pending |
 | VIS-02 | Phase 6 | Pending |
 | VIS-03 | Phase 6 | Pending |

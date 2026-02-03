@@ -9,13 +9,13 @@ Requirements for sector-specific signals and sector resource randomization.
 
 ### Exclusive Signals
 
-- [ ] **SIG-01**: Resource-Rich sectors spawn exclusive "Ore Vein" signals not found elsewhere
-- [ ] **SIG-02**: Data Haven sectors spawn exclusive "Data Cache" signals not found elsewhere
-- [ ] **SIG-03**: Ancient sectors spawn exclusive "Relic" signals not found elsewhere
-- [ ] **SIG-04**: Asteroid Field sectors spawn exclusive "Exotic Crystal" signals not found elsewhere
-- [ ] **SIG-05**: Standard sectors have no exclusive signal type (baseline sector)
-- [ ] **SIG-06**: Exclusive signals use same rarity system as existing signals (common/uncommon/rare/epic/legendary)
-- [ ] **SIG-07**: Shell bonuses (dataSignalDiscovery, signalRange, rareSignalChance) apply to exclusive signals
+- [x] **SIG-01**: Resource-Rich sectors spawn exclusive "Ore Vein" signals not found elsewhere
+- [x] **SIG-02**: Data Haven sectors spawn exclusive "Data Cache" signals not found elsewhere
+- [x] **SIG-03**: Ancient sectors spawn exclusive "Relic" signals not found elsewhere
+- [x] **SIG-04**: Asteroid Field sectors spawn exclusive "Exotic Crystal" signals not found elsewhere
+- [x] **SIG-05**: Standard sectors have no exclusive signal type (baseline sector)
+- [x] **SIG-06**: Exclusive signals use same rarity system as existing signals (common/uncommon/rare/epic/legendary)
+- [x] **SIG-07**: Shell bonuses (dataSignalDiscovery, signalRange, rareSignalChance) apply to exclusive signals
 
 ### Signal Visuals
 
@@ -79,13 +79,13 @@ Requirements for sector-specific signals and sector resource randomization.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SIG-01 | Phase 5 | Pending |
-| SIG-02 | Phase 5 | Pending |
-| SIG-03 | Phase 5 | Pending |
-| SIG-04 | Phase 5 | Pending |
-| SIG-05 | Phase 5 | Pending |
-| SIG-06 | Phase 5 | Pending |
-| SIG-07 | Phase 5 | Pending |
+| SIG-01 | Phase 5 | Complete |
+| SIG-02 | Phase 5 | Complete |
+| SIG-03 | Phase 5 | Complete |
+| SIG-04 | Phase 5 | Complete |
+| SIG-05 | Phase 5 | Complete |
+| SIG-06 | Phase 5 | Complete |
+| SIG-07 | Phase 5 | Complete |
 | VIS-01 | Phase 6 | Pending |
 | VIS-02 | Phase 6 | Pending |
 | VIS-03 | Phase 6 | Pending |
