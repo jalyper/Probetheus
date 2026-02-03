@@ -2,21 +2,21 @@
 
 ## Current Position
 
-**Milestone:** Planning next milestone
-**Phase:** -
-**Plan:** -
-**Status:** v1.2 shipped, ready for next milestone
-**Last activity:** 2026-02-02 — v1.2 milestone complete
-**Next Milestone:** TBD
+**Milestone:** v1.3 Signal Distribution System
+**Phase:** Not started (defining requirements)
+**Plan:** —
+**Status:** Defining requirements
+**Last activity:** 2026-02-02 — Milestone v1.3 started
+**Next Milestone:** —
 
-Progress: v1.2 shipped (25/25 requirements)
+Progress: Defining requirements
 
 ## Project Reference
 
 See: .planning/PROJECT.md (updated 2026-02-02)
 
 **Core value:** Players explore, expand, and upgrade through satisfying resource collection and progression loops
-**Current focus:** Planning next milestone
+**Current focus:** Sector-specific signals and discovery moments
 
 ## Completed Milestones
 
@@ -34,5 +34,5 @@ None
 ## Session Continuity
 
 Last session: 2026-02-02
-Stopped at: v1.2 milestone archived
+Stopped at: Defining v1.3 requirements
 Resume file: None

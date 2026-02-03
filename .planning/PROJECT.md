@@ -31,13 +31,16 @@ Players explore, expand, and upgrade through satisfying resource collection and 
 
 <!-- Current scope. Building toward these. -->
 
-(Next milestone not yet planned)
+- [ ] Sector-specific signal types unique to each sector category
+- [ ] Discovery reveal moment when entering a new sector
+- [ ] Distinct visuals, rewards, and behaviors for sector-exclusive signals
+- [ ] Existing shell bonuses work with new signal types
 
 ### Out of Scope
 
 - Hub/mining station shell visuals — deferred tech debt from v1.1
 - Remnants story Phase 2 — separate milestone
-- Signal distribution system — separate milestone
+- New progression mechanics for signals — focus on feel, not new research/upgrades
 - Equipment slot upgrade to 3 slots via research — separate milestone
 
 ## Context
@@ -71,4 +74,4 @@ Players explore, expand, and upgrade through satisfying resource collection and 
 | 300ms tooltip delay | Standard UX pattern prevents accidental tooltips | ✓ Good |
 
 ---
-*Last updated: 2026-02-02 after v1.2 milestone*
+*Last updated: 2026-02-02 after v1.3 milestone start*
