@@ -166,40 +166,44 @@ class SectorManager {
                 artifactBonus: 1.0,
                 probeDestructionChance: 0
             },
-            { 
-                name: 'Resource-Rich', 
-                color: 'rgba(255, 200, 100, 0.3)', 
+            {
+                name: 'Resource-Rich',
+                color: 'rgba(255, 200, 100, 0.3)',
                 borderColor: '#fc8',
-                mineralBonus: 2.0, 
-                dataBonus: 1.5, 
+                mineralBonus: 2.0,
+                dataBonus: 1.5,
                 artifactBonus: 1.2,
+                exclusiveSignalType: 'ore_vein',
                 probeDestructionChance: 0
             },
-            { 
-                name: 'Data Haven', 
-                color: 'rgba(100, 255, 100, 0.3)', 
+            {
+                name: 'Data Haven',
+                color: 'rgba(100, 255, 100, 0.3)',
                 borderColor: '#6f6',
-                mineralBonus: 0.8, 
-                dataBonus: 3.0, 
+                mineralBonus: 0.8,
+                dataBonus: 3.0,
                 artifactBonus: 1.5,
+                exclusiveSignalType: 'data_cache',
                 probeDestructionChance: 0
             },
-            { 
-                name: 'Ancient', 
-                color: 'rgba(255, 100, 255, 0.3)', 
+            {
+                name: 'Ancient',
+                color: 'rgba(255, 100, 255, 0.3)',
                 borderColor: '#f6f',
-                mineralBonus: 1.2, 
-                dataBonus: 1.8, 
+                mineralBonus: 1.2,
+                dataBonus: 1.8,
                 artifactBonus: 4.0,
+                exclusiveSignalType: 'relic',
                 probeDestructionChance: 0
             },
-            { 
-                name: 'Asteroid Field', 
-                color: 'rgba(255, 100, 100, 0.3)', 
+            {
+                name: 'Asteroid Field',
+                color: 'rgba(255, 100, 100, 0.3)',
                 borderColor: '#f66',
-                mineralBonus: 3.0, 
-                dataBonus: 3.0, 
+                mineralBonus: 3.0,
+                dataBonus: 3.0,
                 artifactBonus: 3.0,
+                exclusiveSignalType: 'exotic_crystal',
                 probeDestructionChance: 0.1
             }
         ];
