@@ -1,0 +1,248 @@
+# Roadmap: v1.3 Signal Distribution System
+
+**Project:** Probetheus
+**Milestone:** v1.3 Signal Distribution System
+**Phases:** 6 (Phase 5 through Phase 10)
+**Requirements:** 30 total
+**Status:** Draft - Awaiting Approval
+
+## Overview
+
+This milestone adds sector-specific signal types that are exclusive to designated sector categories (Resource-Rich, Data Haven, Ancient, Asteroid Field). Each sector type spawns unique signals with distinct visuals, enhanced rewards, and behaviors that encourage strategic exploration. The feature extends existing signal generation, rendering, and reward systems through additive patterns rather than architectural changes.
+
+## Phase Structure
+
+### Phase 5: Signal Type System
+**Goal:** Exclusive signal types spawn correctly in their designated sectors
+
+**Dependencies:** None (foundation)
+
+**Requirements:** SIG-01, SIG-02, SIG-03, SIG-04, SIG-05, SIG-06, SIG-07
+
+**Success Criteria:**
+1. Resource-Rich sectors spawn "Ore Vein" signals at 15-30% rate (not found elsewhere)
+2. Data Haven sectors spawn "Data Cache" signals at 15-30% rate (not found elsewhere)
+3. Ancient sectors spawn "Relic" signals at 15-30% rate (not found elsewhere)
+4. Asteroid Field sectors spawn "Exotic Crystal" signals at 15-30% rate (not found elsewhere)
+5. Standard sectors continue spawning mixed/mineral/data/artifact signals (no exclusive type)
+6. Shell bonuses (dataSignalDiscovery, signalRange, rareSignalChance) affect exclusive signal generation and rarity
+
+**Implementation Notes:**
+- Add `exclusiveSignalType` field to sector type definitions in SectorManager.js
+- Extend ProbeManager.determineSignalType() with conditional check for exclusive types before fallback
+- Map exclusive types to base collection categories (Ore Vein → minerals, Data Cache → data, Relic → artifacts, Exotic Crystal → mixed)
+- Use existing rarity system (common/uncommon/rare/epic/legendary) for all exclusive types
+- Cache sector lookups to prevent performance degradation with 20+ probes
+
+---
+
+### Phase 6: Visual Rendering
+**Goal:** Exclusive signals are instantly recognizable through distinct visual theming
+
+**Dependencies:** Phase 5 (signals must spawn before they can be rendered)
+
+**Requirements:** VIS-01, VIS-02, VIS-03, VIS-04, VIS-05
+
+**Success Criteria:**
+1. Ore Vein signals display orange color scheme with radiating line particle effects
+2. Data Cache signals display cyan color scheme with rotating hexagon particle effects
+3. Relic signals display gold color scheme with orbiting dust particle effects
+4. Exotic Crystal signals display rainbow/prismatic color scheme with crystal facet particle effects
+5. Exclusive signals remain visible for 5-8 seconds (longer than standard 2-6 second signals)
+
+**Implementation Notes:**
+- Add switch cases for exclusive types in GameController.renderSignals()
+- Use 60+ degree hue separation between colors for colorblind accessibility
+- Particle effects conditional on signal count <50 to maintain performance
+- Test rendering at 45+ FPS with mixed signal types on screen
+- All exclusive types gracefully degrade to default rendering if visuals fail
+
+---
+
+### Phase 7: Signal Rewards
+**Goal:** Exclusive signals provide meaningful reward advantages over standard signals
+
+**Dependencies:** Phase 5 (reward logic needs signal types defined)
+
+**Requirements:** REW-01, REW-02, REW-03, REW-04
+
+**Success Criteria:**
+1. Ore Vein signals yield 2x minerals compared to standard mineral signals on exploration
+2. Data Cache signals yield 2x data compared to standard data signals on exploration
+3. Relic signals guarantee rare+ artifacts (no common artifacts) on exploration
+4. Exotic Crystal signals yield exotic minerals OR all three basic resources at once on exploration
+
+**Implementation Notes:**
+- Add exclusive type cases to GameController.explore() reward calculation
+- Stack multipliers: shell bonuses (explorationRewards, artifactDiscovery) → signal type bonuses → planet type bonuses
+- Exotic Crystal logic: 60% chance exotic minerals (existing system), 40% chance mixed reward (minerals + data + artifacts)
+- Relic rarity gating: filter artifact rewards to exclude common tier, redistribute probability to uncommon+
+- Track resource gain rates by sector type during testing for economy balance
+
+---
+
+### Phase 8: Sector Resource Profiles
+**Goal:** Each sector has unique resource richness that influences signal quality and probethium potential
+
+**Dependencies:** Phase 5 (profile system affects signal spawn rates)
+
+**Requirements:** PROF-01, PROF-02, PROF-03, PROF-04, PROF-05
+
+**Success Criteria:**
+1. Each sector receives a randomized resource profile on discovery with spawn rate multipliers (0.7x to 1.5x)
+2. Resource profile determines base signal spawn rate and rare signal frequency in that sector
+3. Sectors farther from starting hub have higher chance of richer profiles (distance-weighted RNG)
+4. Low-probability lucky discoveries allow probethium-rich sectors very early in game (1-5% chance within first 10 sectors)
+5. Probethium-rich sectors generate 1.5x to 2.5x probethium from mining stations
+
+**Implementation Notes:**
+- Add `resourceProfile` field to sector state: `{ signalRichness: float, rareSignalBonus: float, probethiumMultiplier: float }`
+- Generate profile on sector discovery in SectorManager.initializeSector()
+- Distance calculation: `Math.sqrt(sectorX^2 + sectorY^2)` from origin, apply weighted curve (0-5 distance = 0.7x-1.0x, 5-15 = 1.0x-1.3x, 15+ = 1.2x-1.5x)
+- RNG allows outliers: 10% chance ignore distance weighting for early lucky finds
+- Persist resource profile through save/load in SaveManager
+- Display profile in sector discovery modal and sector tooltip
+
+---
+
+### Phase 9: Discovery Reveal
+**Goal:** Players immediately understand sector specialization through discovery UI
+
+**Dependencies:** Phase 5 (UI displays exclusive signal types), Phase 8 (UI displays resource profiles)
+
+**Requirements:** DISC-01, DISC-02, DISC-03, DISC-04
+
+**Success Criteria:**
+1. Sector discovery modal highlights exclusive signal type available in that sector (or "Balanced Signals" for Standard)
+2. Discovery modal displays sector resource profile (signal richness %, probethium potential rating)
+3. First discovery of a sector with exclusive signals spawns 1 guaranteed exclusive signal (epic+ rarity)
+4. Standard sector discovery modal shows "Balanced exploration opportunities - all signal types available"
+
+**Implementation Notes:**
+- Extend SectorManager.showSectorDiscovery() with exclusive signal notification section
+- Add resource profile summary: "Signal Richness: High (1.3x spawn rate)", "Probethium Potential: Moderate (1.2x)"
+- Use color coding for richness (red = poor, yellow = standard, green = rich)
+- Spawn guaranteed exclusive signal in SectorManager.spawnDiscoveryBonusSignals() if sector has exclusiveSignalType
+- Discovery bonus exclusive signals use epic or legendary rarity (not common)
+- Add tutorial step for first non-Standard sector discovery explaining specialization strategy
+
+---
+
+### Phase 10: Testing & Integration
+**Goal:** All exclusive signal features verified through automated tests
+
+**Dependencies:** Phases 5-9 (tests validate implementation)
+
+**Requirements:** TEST-01, TEST-02, TEST-03, TEST-04, TEST-05
+
+**Success Criteria:**
+1. Playwright tests confirm exclusive signals spawn only in their designated sector types (not in other sectors)
+2. Tests verify shell bonuses (dataSignalDiscovery, rareSignalChance, explorationRewards) apply correctly to exclusive signals
+3. Tests validate discovery reveal modal displays correct exclusive signal info and resource profile
+4. Tests confirm sector resource profiles persist through save/load cycle
+5. Statistical tests verify distance-based richness produces expected distribution over 100+ sectors
+
+**Implementation Notes:**
+- New test file: `tests/sector-exclusive-signals.spec.js`
+- Test save compatibility: load pre-v1.3 saves, verify no errors on signals without new properties
+- Test auto-collection: verify equipment (mineral/data/artifact collectors) auto-collects exclusive types via base type mapping
+- Performance test: 20 probes in mixed sectors maintains 45+ FPS
+- Spawn rate validation: generate 1000 signals, verify 15-30% exclusive rate in home sectors
+- Distance distribution test: create 100 sectors at varying distances, verify richness correlation
+- Regression tests: existing signal types (mineral, data, artifact, mixed) continue working unchanged
+
+---
+
+## Progress Tracking
+
+| Phase | Requirements | Status | Completion |
+|-------|--------------|--------|------------|
+| Phase 5: Signal Type System | 7 | Pending | 0% |
+| Phase 6: Visual Rendering | 5 | Pending | 0% |
+| Phase 7: Signal Rewards | 4 | Pending | 0% |
+| Phase 8: Sector Resource Profiles | 5 | Pending | 0% |
+| Phase 9: Discovery Reveal | 4 | Pending | 0% |
+| Phase 10: Testing & Integration | 5 | Pending | 0% |
+
+**Total Requirements:** 30
+**Completed:** 0
+**Remaining:** 30
+
+## Coverage Map
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| SIG-01 | Phase 5 | Pending |
+| SIG-02 | Phase 5 | Pending |
+| SIG-03 | Phase 5 | Pending |
+| SIG-04 | Phase 5 | Pending |
+| SIG-05 | Phase 5 | Pending |
+| SIG-06 | Phase 5 | Pending |
+| SIG-07 | Phase 5 | Pending |
+| VIS-01 | Phase 6 | Pending |
+| VIS-02 | Phase 6 | Pending |
+| VIS-03 | Phase 6 | Pending |
+| VIS-04 | Phase 6 | Pending |
+| VIS-05 | Phase 6 | Pending |
+| REW-01 | Phase 7 | Pending |
+| REW-02 | Phase 7 | Pending |
+| REW-03 | Phase 7 | Pending |
+| REW-04 | Phase 7 | Pending |
+| PROF-01 | Phase 8 | Pending |
+| PROF-02 | Phase 8 | Pending |
+| PROF-03 | Phase 8 | Pending |
+| PROF-04 | Phase 8 | Pending |
+| PROF-05 | Phase 8 | Pending |
+| DISC-01 | Phase 9 | Pending |
+| DISC-02 | Phase 9 | Pending |
+| DISC-03 | Phase 9 | Pending |
+| DISC-04 | Phase 9 | Pending |
+| TEST-01 | Phase 10 | Pending |
+| TEST-02 | Phase 10 | Pending |
+| TEST-03 | Phase 10 | Pending |
+| TEST-04 | Phase 10 | Pending |
+| TEST-05 | Phase 10 | Pending |
+
+**Coverage:** 30/30 requirements mapped (100%)
+
+## Architecture Summary
+
+**Extension Points:**
+- ProbeManager.determineSignalType() - Add exclusive type conditional check
+- GameController.renderSignals() - Add exclusive type visual cases
+- GameController.explore() - Add exclusive type reward multipliers
+- SectorManager.initializeSector() - Generate resource profiles
+- SectorManager.showSectorDiscovery() - Display exclusive signals and profiles
+- SectorManager.spawnDiscoveryBonusSignals() - Include exclusive types
+
+**Key Patterns:**
+- Additive switch cases (no existing code paths modified)
+- Optional field checks with fallbacks (backward compatible)
+- Type-agnostic bonus system (shell bonuses automatically apply)
+- Defensive save loading (graceful degradation for old saves)
+
+**Performance Mitigations:**
+- Cache sector lookups (1-second refresh interval)
+- Conditional particle effects (only when signal count <50)
+- Pre-calculated spawn tables per sector type
+
+**Files Modified:**
+- SectorManager.js (sector types, discovery UI, bonus spawning)
+- ProbeManager.js (signal generation, type determination)
+- GameController.js (rendering, rewards)
+- SaveManager.js (resource profile persistence)
+- tests/sector-exclusive-signals.spec.js (NEW)
+
+## Research Flags
+
+**No deep research needed during planning.** Architecture analysis complete with HIGH confidence. All patterns established from existing codebase (EquipmentSystem, ShellSystem, signal pipeline). Extension points verified at line-level detail.
+
+**Validation needed during implementation:**
+- Phase 6: Colorblind accessibility testing for signal colors
+- Phase 7: Resource gain rate tracking for economy balance
+- Phase 8: Distance curve tuning based on playtesting
+
+---
+
+*Roadmap created: 2026-02-02*
+*Ready for: User approval and Phase 5 planning*
