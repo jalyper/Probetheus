@@ -4,7 +4,7 @@
 **Milestone:** v1.3 Signal Distribution System
 **Phases:** 6 (Phase 5 through Phase 10)
 **Requirements:** 30 total
-**Status:** Draft - Awaiting Approval
+**Status:** Phase 5 planned and ready for execution
 
 ## Overview
 
@@ -18,6 +18,10 @@ This milestone adds sector-specific signal types that are exclusive to designate
 **Dependencies:** None (foundation)
 
 **Requirements:** SIG-01, SIG-02, SIG-03, SIG-04, SIG-05, SIG-06, SIG-07
+
+**Plans:** 2 plans
+- [ ] 05-01-PLAN.md — Add exclusive signal definitions and extend generation logic
+- [ ] 05-02-PLAN.md — Create Playwright test suite for spawning and collection
 
 **Success Criteria:**
 1. Resource-Rich sectors spawn "Ore Vein" signals at 15-30% rate (not found elsewhere)
@@ -43,6 +47,8 @@ This milestone adds sector-specific signal types that are exclusive to designate
 
 **Requirements:** VIS-01, VIS-02, VIS-03, VIS-04, VIS-05
 
+**Plans:** 0 plans
+
 **Success Criteria:**
 1. Ore Vein signals display orange color scheme with radiating line particle effects
 2. Data Cache signals display cyan color scheme with rotating hexagon particle effects
@@ -66,6 +72,8 @@ This milestone adds sector-specific signal types that are exclusive to designate
 
 **Requirements:** REW-01, REW-02, REW-03, REW-04
 
+**Plans:** 0 plans
+
 **Success Criteria:**
 1. Ore Vein signals yield 2x minerals compared to standard mineral signals on exploration
 2. Data Cache signals yield 2x data compared to standard data signals on exploration
@@ -87,6 +95,8 @@ This milestone adds sector-specific signal types that are exclusive to designate
 **Dependencies:** Phase 5 (profile system affects signal spawn rates)
 
 **Requirements:** PROF-01, PROF-02, PROF-03, PROF-04, PROF-05
+
+**Plans:** 0 plans
 
 **Success Criteria:**
 1. Each sector receives a randomized resource profile on discovery with spawn rate multipliers (0.7x to 1.5x)
@@ -112,6 +122,8 @@ This milestone adds sector-specific signal types that are exclusive to designate
 
 **Requirements:** DISC-01, DISC-02, DISC-03, DISC-04
 
+**Plans:** 0 plans
+
 **Success Criteria:**
 1. Sector discovery modal highlights exclusive signal type available in that sector (or "Balanced Signals" for Standard)
 2. Discovery modal displays sector resource profile (signal richness %, probethium potential rating)
@@ -135,6 +147,8 @@ This milestone adds sector-specific signal types that are exclusive to designate
 
 **Requirements:** TEST-01, TEST-02, TEST-03, TEST-04, TEST-05
 
+**Plans:** 0 plans
+
 **Success Criteria:**
 1. Playwright tests confirm exclusive signals spawn only in their designated sector types (not in other sectors)
 2. Tests verify shell bonuses (dataSignalDiscovery, rareSignalChance, explorationRewards) apply correctly to exclusive signals
@@ -155,14 +169,14 @@ This milestone adds sector-specific signal types that are exclusive to designate
 
 ## Progress Tracking
 
-| Phase | Requirements | Status | Completion |
-|-------|--------------|--------|------------|
-| Phase 5: Signal Type System | 7 | Pending | 0% |
-| Phase 6: Visual Rendering | 5 | Pending | 0% |
-| Phase 7: Signal Rewards | 4 | Pending | 0% |
-| Phase 8: Sector Resource Profiles | 5 | Pending | 0% |
-| Phase 9: Discovery Reveal | 4 | Pending | 0% |
-| Phase 10: Testing & Integration | 5 | Pending | 0% |
+| Phase | Requirements | Plans | Status | Completion |
+|-------|--------------|-------|--------|------------|
+| Phase 5: Signal Type System | 7 | 2 | Ready | 0% |
+| Phase 6: Visual Rendering | 5 | 0 | Pending | 0% |
+| Phase 7: Signal Rewards | 4 | 0 | Pending | 0% |
+| Phase 8: Sector Resource Profiles | 5 | 0 | Pending | 0% |
+| Phase 9: Discovery Reveal | 4 | 0 | Pending | 0% |
+| Phase 10: Testing & Integration | 5 | 0 | Pending | 0% |
 
 **Total Requirements:** 30
 **Completed:** 0
@@ -172,13 +186,13 @@ This milestone adds sector-specific signal types that are exclusive to designate
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SIG-01 | Phase 5 | Pending |
-| SIG-02 | Phase 5 | Pending |
-| SIG-03 | Phase 5 | Pending |
-| SIG-04 | Phase 5 | Pending |
-| SIG-05 | Phase 5 | Pending |
-| SIG-06 | Phase 5 | Pending |
-| SIG-07 | Phase 5 | Pending |
+| SIG-01 | Phase 5 | Planned |
+| SIG-02 | Phase 5 | Planned |
+| SIG-03 | Phase 5 | Planned |
+| SIG-04 | Phase 5 | Planned |
+| SIG-05 | Phase 5 | Planned |
+| SIG-06 | Phase 5 | Planned |
+| SIG-07 | Phase 5 | Planned |
 | VIS-01 | Phase 6 | Pending |
 | VIS-02 | Phase 6 | Pending |
 | VIS-03 | Phase 6 | Pending |
@@ -231,7 +245,7 @@ This milestone adds sector-specific signal types that are exclusive to designate
 - ProbeManager.js (signal generation, type determination)
 - GameController.js (rendering, rewards)
 - SaveManager.js (resource profile persistence)
-- tests/sector-exclusive-signals.spec.js (NEW)
+- tests/exclusive-signals.spec.js (NEW)
 
 ## Research Flags
 
@@ -245,4 +259,5 @@ This milestone adds sector-specific signal types that are exclusive to designate
 ---
 
 *Roadmap created: 2026-02-02*
-*Ready for: User approval and Phase 5 planning*
+*Phase 5 planned: 2026-02-02*
+*Ready for: `/gsd:execute-phase 5`*
