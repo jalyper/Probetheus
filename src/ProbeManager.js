@@ -497,7 +497,7 @@ class ProbeManager {
                     const isDarkMarket = darkMarketSystem && darkMarketSystem.shouldSpawnDarkMarket();
                     
                     // Determine signal type based on sector
-                    const signalType = isDarkMarket ? 'dark_market' : this.determineSignalType(currentSector);
+                    const signalType = isDarkMarket ? 'dark_market' : this.determineSignalType(currentSector, probe);
                     
                     // Create signal directly since we don't have a signal manager yet
                     const signal = {
@@ -573,15 +573,35 @@ class ProbeManager {
 
     /**
      * Determine signal type based on current sector
+     * SIG-01 through SIG-05: Exclusive signals spawn in designated sectors at 15-30% rate
      */
-    determineSignalType(sector) {
+    determineSignalType(sector, probe = null) {
         if (!sector || !sector.type) {
             return 'mixed'; // Default for unknown sectors
         }
-        
+
+        // SIG-01 through SIG-04: Check for exclusive signal type spawning
+        if (sector.type.exclusiveSignalType) {
+            const exclusiveChance = 0.225; // 22.5% base rate (target: 15-30%)
+
+            // SIG-07: Apply shell bonuses to exclusive signal spawning
+            // dataSignalDiscovery bonus affects all signal types (type-agnostic design)
+            let adjustedChance = exclusiveChance;
+            if (probe && window.game?.shellSystem) {
+                const discoveryBonus = window.game.shellSystem.getEntityBonus('probes', probe, 'dataSignalDiscovery');
+                adjustedChance = exclusiveChance * (1 + discoveryBonus / 100);
+            }
+
+            if (Math.random() < adjustedChance) {
+                console.log(`Exclusive signal spawned: ${sector.type.exclusiveSignalType} in ${sector.type.name} sector`);
+                return sector.type.exclusiveSignalType;
+            }
+        }
+
+        // SIG-05: Fallback to standard signal distribution
         const sectorName = sector.type.name;
         const random = Math.random();
-        
+
         switch (sectorName) {
             case 'Resource-Rich':
                 // 60% mineral, 25% mixed, 15% others
@@ -615,6 +635,33 @@ class ProbeManager {
                 if (random < 0.8) return 'mineral';
                 if (random < 0.9) return 'data';
                 return 'artifact';
+        }
+    }
+
+    /**
+     * Get base resource type for signal type (for equipment auto-collection)
+     * Exclusive types map to standard collection categories
+     * SIG-06: Equipment compatibility via base type mapping
+     */
+    getSignalBaseType(signalType) {
+        switch (signalType) {
+            // Exclusive types -> base categories
+            case 'ore_vein':
+                return 'mineral';
+            case 'data_cache':
+                return 'data';
+            case 'relic':
+                return 'artifact';
+            case 'exotic_crystal':
+                return 'mixed';
+            // Standard types pass through
+            case 'mineral':
+            case 'data':
+            case 'artifact':
+            case 'mixed':
+                return signalType;
+            default:
+                return 'mixed';
         }
     }
 
@@ -714,16 +761,26 @@ class ProbeManager {
         }
         
         signalsInRange.forEach(signal => {
-            // Determine what can be collected based on rarity and research
-            console.log(`Signal found: rarity=${signal.rarity}, hasUniversal=${hasUniversal}`);
+            // SIG-06: Get base type for exclusive signal compatibility
+            // ore_vein->mineral, data_cache->data, relic->artifact, exotic_crystal->mixed
+            const signalBaseType = this.getSignalBaseType(signal.signalType);
+
+            // Determine what can be collected based on rarity, research, and signal type
+            console.log(`Signal found: rarity=${signal.rarity}, type=${signal.signalType}, baseType=${signalBaseType}, hasUniversal=${hasUniversal}`);
 
             const rarityOrder = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
             const signalRarityIndex = rarityOrder.indexOf(signal.rarity);
 
             // Check type-specific rarity limits for each collector type
+            // SIG-06: Filter based on signal's base type matching collector type
             let canCollectMineralsAtRarity = false;
             let canCollectDataAtRarity = false;
             let canCollectArtifactsAtRarity = false;
+
+            // Check if signal's base type is compatible with collector type
+            const signalIsMineralType = signalBaseType === 'mineral' || signalBaseType === 'mixed';
+            const signalIsDataType = signalBaseType === 'data' || signalBaseType === 'mixed';
+            const signalIsArtifactType = signalBaseType === 'artifact' || signalBaseType === 'mixed';
 
             if (hasUniversal) {
                 // Universal collection uses universal rarity progression for ALL types
@@ -731,29 +788,31 @@ class ProbeManager {
                 const universalMaxIndex = rarityOrder.indexOf(universalMaxRarity);
                 const universalCanCollect = signalRarityIndex <= universalMaxIndex;
 
+                // Universal collector can collect any signal type
                 canCollectMineralsAtRarity = canCollectMinerals && universalCanCollect;
                 canCollectDataAtRarity = canCollectData && universalCanCollect;
                 canCollectArtifactsAtRarity = canCollectArtifacts && universalCanCollect;
             } else {
                 // Individual collectors use type-specific rarity progression
-                if (canCollectMinerals) {
+                // AND must match signal's base type
+                if (canCollectMinerals && signalIsMineralType) {
                     const mineralsMaxRarity = this.getMaxCollectableRarity('minerals');
                     const mineralsMaxIndex = rarityOrder.indexOf(mineralsMaxRarity);
                     canCollectMineralsAtRarity = signalRarityIndex <= mineralsMaxIndex;
                 }
-                if (canCollectData) {
+                if (canCollectData && signalIsDataType) {
                     const dataMaxRarity = this.getMaxCollectableRarity('data');
                     const dataMaxIndex = rarityOrder.indexOf(dataMaxRarity);
                     canCollectDataAtRarity = signalRarityIndex <= dataMaxIndex;
                 }
-                if (canCollectArtifacts) {
+                if (canCollectArtifacts && signalIsArtifactType) {
                     const artifactsMaxRarity = this.getMaxCollectableRarity('artifacts');
                     const artifactsMaxIndex = rarityOrder.indexOf(artifactsMaxRarity);
                     canCollectArtifactsAtRarity = signalRarityIndex <= artifactsMaxIndex;
                 }
             }
 
-            // Can collect if ANY resource type can be collected at this rarity
+            // Can collect if ANY resource type can be collected at this rarity AND matches signal type
             const canCollect = canCollectMineralsAtRarity || canCollectDataAtRarity || canCollectArtifactsAtRarity;
 
             console.log(`Can collect signal: ${canCollect} (minerals: ${canCollectMineralsAtRarity}, data: ${canCollectDataAtRarity}, artifacts: ${canCollectArtifactsAtRarity})`);
