@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A browser-based space exploration game where players deploy probes to explore sectors, collect resources (minerals, data, artifacts), build hubs and mining stations, research upgrades, and interact with Remnant NPCs. Built with vanilla JavaScript and HTML5 Canvas.
+A browser-based space exploration game where players deploy probes to explore sectors, collect resources (minerals, data, artifacts), build hubs and mining stations, research upgrades, and interact with Remnant NPCs. Equipped shells provide cosmetic visuals and gameplay bonuses to probes, hubs, and mining stations. Built with vanilla JavaScript and HTML5 Canvas.
 
 ## Core Value
 
@@ -23,14 +23,15 @@ Players explore, expand, and upgrade through satisfying resource collection and 
 - ✓ Shell cosmetic system (50+ shells, visual effects, glow) — v1.1
 - ✓ Shell persistence through save/load — v1.1
 - ✓ Remnant NPC system Phase 1 (spawning, dialogue UI) — v1.0
+- ✓ All 12 shell bonus types functional in gameplay (per-entity) — v1.2
+- ✓ Bonus tooltips visible on hover in shell selection and detail panels — v1.2
+- ✓ Bonuses apply to probes, hubs, and mining stations — v1.2
 
 ### Active
 
 <!-- Current scope. Building toward these. -->
 
-- [ ] All 12 shell bonus types functional in gameplay (per-entity)
-- [ ] Bonus tooltips visible on hover in shell selection and detail panels
-- [ ] Bonuses apply to probes, hubs, and mining stations
+(Next milestone not yet planned)
 
 ### Out of Scope
 
@@ -41,11 +42,14 @@ Players explore, expand, and upgrade through satisfying resource collection and 
 
 ## Context
 
-- ShellSystem.js has complete bonus infrastructure: definitions, calculation methods (`getTotalBonuses`, `getBonus`, `applyBonus`), display helpers
-- 12 bonus types defined with labels, units, and icons
+- ShellSystem.js has complete bonus infrastructure: definitions, calculation methods (`getTotalBonuses`, `getBonus`, `applyBonus`, `getEntityBonus`, `applyBonusMultiplier`), display helpers
+- 12 bonus types defined with labels, units, and icons — all functional in gameplay
 - ~40 shells have bonuses, ~10 are cosmetic-only
-- Bonus calculation methods exist but are never called by game systems
 - Per-entity model: each shell's bonus only affects the entity it's equipped on
+- Bonus values normalized to rarity scale (10/15/20/25 primary, 5/8/10/12 secondary)
+- Tooltip system shows bonus info on hover across all detail panels and shell modal
+- 67 shell bonus tests across 8 test files
+- 181 total Playwright tests passing on Chromium
 
 ## Constraints
 
@@ -57,9 +61,14 @@ Players explore, expand, and upgrade through satisfying resource collection and 
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Per-entity bonuses (not global stacking) | Intuitive — each entity's shell affects only itself | — Pending |
-| All 12 bonus types in scope | Complete the system rather than partial implementation | — Pending |
-| All entity types (probe, hub, station) | Consistent experience across all shell-equippable entities | — Pending |
+| Per-entity bonuses (not global stacking) | Intuitive — each entity's shell affects only itself | ✓ Good |
+| All 12 bonus types in scope | Complete the system rather than partial implementation | ✓ Good |
+| All entity types (probe, hub, station) | Consistent experience across all shell-equippable entities | ✓ Good |
+| explorationRewards before artifactDiscovery | Multiplicative stacking: general boost then specific | ✓ Good |
+| baseMaxDamage tracking on probes | Prevents compounding when swapping shells | ✓ Good |
+| Research cost reduction: Math.max(1, Math.ceil(...)) | Conservative rounding; minimum 1 prevents free research | ✓ Good |
+| Category-appropriate bonuses only | Probes don't get researchSpeed; hubs don't get asteroidSurvival | ✓ Good |
+| 300ms tooltip delay | Standard UX pattern prevents accidental tooltips | ✓ Good |
 
 ---
-*Last updated: 2026-01-28 after milestone v1.2 initialization*
+*Last updated: 2026-02-02 after v1.2 milestone*
