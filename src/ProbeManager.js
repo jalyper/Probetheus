@@ -500,13 +500,18 @@ class ProbeManager {
                     const signalType = isDarkMarket ? 'dark_market' : this.determineSignalType(currentSector, probe);
                     
                     // Create signal directly since we don't have a signal manager yet
+                    const exclusiveTypes = ['ore_vein', 'data_cache', 'relic', 'exotic_crystal'];
+                    const isExclusive = exclusiveTypes.includes(signalType);
+
                     const signal = {
                         x: signalX,
                         y: signalY,
-                        radius: isDarkMarket ? 12 : 8 + Math.random() * 4,
+                        radius: isDarkMarket ? 12 : isExclusive ? 10 + Math.random() * 3 : 8 + Math.random() * 4,
                         rarity: isDarkMarket ? 'dark_market' : this.determineSignalRarity(isInAsteroidField, probe),
                         signalType: signalType,
-                        duration: isDarkMarket ? 5000 : 2000 + Math.random() * 1000, // Dark market signals last longer
+                        duration: isDarkMarket ? 5000
+                            : isExclusive ? 5000 + Math.random() * 3000  // VIS-05: 5-8 seconds
+                            : 2000 + Math.random() * 1000,                // Standard: 2-3 seconds
                         createdAt: Date.now()
                     };
                     

@@ -3209,7 +3209,26 @@ class GameController {
                         const darkMarketPulse = Math.sin(age * 0.008) * 0.5 + 1; // Scale between 0.5 and 1.5
                         signal.radius = 12 * darkMarketPulse; // Apply to radius
                         break;
-                        
+
+                    case 'ore_vein':
+                        color = '#ff6600'; // Orange (hue ~24)
+                        break;
+
+                    case 'data_cache':
+                        color = '#00ddff'; // Cyan (hue ~190)
+                        break;
+
+                    case 'relic':
+                        color = '#ffd700'; // Gold (hue ~51)
+                        break;
+
+                    case 'exotic_crystal': {
+                        // Rainbow/prismatic - cycle hue based on signal age
+                        const crystalHue = (age * 0.1) % 360;
+                        color = `hsl(${crystalHue}, 100%, 70%)`;
+                        break;
+                    }
+
                     case 'mixed':
                     default:
                         // Keep standard rarity colors for mixed signals
@@ -3233,9 +3252,25 @@ class GameController {
                 return `rgba(${r}, ${g}, ${b}, ${alpha})`;
             };
             
-            gradient.addColorStop(0, hexToRgba(color, 0.5 * fadeAlpha)); // Semi-transparent center
-            gradient.addColorStop(0.5, hexToRgba(color, 0.25 * fadeAlpha)); // More transparent middle
-            gradient.addColorStop(1, hexToRgba(color, 0)); // Fully transparent edge
+            // Handle both hex and HSL colors for gradient stops
+            if (color.startsWith('#')) {
+                gradient.addColorStop(0, hexToRgba(color, 0.5 * fadeAlpha));
+                gradient.addColorStop(0.5, hexToRgba(color, 0.25 * fadeAlpha));
+                gradient.addColorStop(1, hexToRgba(color, 0));
+            } else {
+                // HSL color (exotic_crystal) - extract components and use hsla()
+                const hslMatch = color.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+                if (hslMatch) {
+                    const [, h, s, l] = hslMatch;
+                    gradient.addColorStop(0, `hsla(${h}, ${s}%, ${l}%, ${0.5 * fadeAlpha})`);
+                    gradient.addColorStop(0.5, `hsla(${h}, ${s}%, ${l}%, ${0.25 * fadeAlpha})`);
+                    gradient.addColorStop(1, `hsla(${h}, ${s}%, ${l}%, 0)`);
+                } else {
+                    gradient.addColorStop(0, `rgba(255, 255, 255, ${0.5 * fadeAlpha})`);
+                    gradient.addColorStop(0.5, `rgba(255, 255, 255, ${0.25 * fadeAlpha})`);
+                    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                }
+            }
             
             this.ctx.fillStyle = gradient;
             this.ctx.beginPath();
@@ -3288,9 +3323,113 @@ class GameController {
                 this.ctx.setLineDash([]); // Reset line dash
             }
             
+            // Exclusive signal particle effects (performance-guarded)
+            const isExclusiveSignal = ['ore_vein', 'data_cache', 'relic', 'exotic_crystal'].includes(signal.signalType);
+            if (isExclusiveSignal && this.gameState.entities.signals.length < 50) {
+                try {
+                    this.renderExclusiveParticles(signal, screenX, screenY, age, radius, fadeAlpha);
+                } catch (e) {
+                    // Graceful degradation: signal already rendered with color, skip particles
+                }
+            }
+
             // Reset global alpha
             this.ctx.globalAlpha = 1;
         });
+    }
+
+    /**
+     * Render particle effects for exclusive signal types.
+     * Each exclusive signal type has a unique particle effect:
+     * - ore_vein: 8 radiating lines rotating slowly outward
+     * - data_cache: rotating hexagon outline
+     * - relic: 5 orbiting dust particles
+     * - exotic_crystal: 4 diamond facets with cycling rainbow colors
+     */
+    renderExclusiveParticles(signal, screenX, screenY, age, radius, fadeAlpha) {
+        this.ctx.save();
+
+        switch (signal.signalType) {
+            case 'ore_vein': {
+                // Radiating lines rotating slowly outward
+                const lineCount = 8;
+                for (let i = 0; i < lineCount; i++) {
+                    const angle = (age * 0.002) + (i * Math.PI * 2 / lineCount);
+                    const innerDist = radius * 1.5;
+                    const outerDist = radius * 3;
+                    const x1 = screenX + Math.cos(angle) * innerDist;
+                    const y1 = screenY + Math.sin(angle) * innerDist;
+                    const x2 = screenX + Math.cos(angle) * outerDist;
+                    const y2 = screenY + Math.sin(angle) * outerDist;
+                    this.ctx.strokeStyle = `rgba(255, 102, 0, ${0.6 * fadeAlpha})`;
+                    this.ctx.lineWidth = 1.5;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x1, y1);
+                    this.ctx.lineTo(x2, y2);
+                    this.ctx.stroke();
+                }
+                break;
+            }
+            case 'data_cache': {
+                // Rotating hexagon outline
+                const hexRadius = radius * 2.5;
+                const rotationAngle = age * 0.003;
+                this.ctx.strokeStyle = `rgba(0, 221, 255, ${0.5 * fadeAlpha})`;
+                this.ctx.lineWidth = 1.5;
+                this.ctx.beginPath();
+                for (let i = 0; i < 6; i++) {
+                    const angle = rotationAngle + (i * Math.PI / 3);
+                    const x = screenX + Math.cos(angle) * hexRadius;
+                    const y = screenY + Math.sin(angle) * hexRadius;
+                    if (i === 0) this.ctx.moveTo(x, y);
+                    else this.ctx.lineTo(x, y);
+                }
+                this.ctx.closePath();
+                this.ctx.stroke();
+                break;
+            }
+            case 'relic': {
+                // Orbiting dust particles
+                const dustCount = 5;
+                for (let i = 0; i < dustCount; i++) {
+                    const orbitSpeed = 0.002 + (i * 0.0005);
+                    const orbitRadius = radius * 2 + (i * 4);
+                    const angle = (age * orbitSpeed) + (i * Math.PI * 2 / dustCount);
+                    const dustX = screenX + Math.cos(angle) * orbitRadius;
+                    const dustY = screenY + Math.sin(angle) * orbitRadius;
+                    const dustSize = 1.5 + Math.sin(age * 0.004 + i) * 0.5;
+                    this.ctx.fillStyle = `rgba(255, 215, 0, ${0.7 * fadeAlpha})`;
+                    this.ctx.beginPath();
+                    this.ctx.arc(dustX, dustY, dustSize, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+                break;
+            }
+            case 'exotic_crystal': {
+                // Diamond shapes at cardinal positions with cycling rainbow
+                const facetCount = 4;
+                const hue = (age * 0.1) % 360;
+                for (let i = 0; i < facetCount; i++) {
+                    const angle = (age * 0.001) + (i * Math.PI / 2);
+                    const dist = radius * 2.5 + Math.sin(age * 0.005 + i) * 3;
+                    const cx = screenX + Math.cos(angle) * dist;
+                    const cy = screenY + Math.sin(angle) * dist;
+                    const facetHue = (hue + i * 90) % 360;
+                    const size = 3;
+                    this.ctx.fillStyle = `hsla(${facetHue}, 100%, 70%, ${0.6 * fadeAlpha})`;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(cx, cy - size);
+                    this.ctx.lineTo(cx + size * 0.6, cy);
+                    this.ctx.lineTo(cx, cy + size);
+                    this.ctx.lineTo(cx - size * 0.6, cy);
+                    this.ctx.closePath();
+                    this.ctx.fill();
+                }
+                break;
+            }
+        }
+
+        this.ctx.restore();
     }
 
     /**
