@@ -4,7 +4,7 @@
 **Milestone:** v1.3 Signal Distribution System
 **Phases:** 6 (Phase 5 through Phase 10)
 **Requirements:** 30 total
-**Status:** Phase 5 planned and ready for execution
+**Status:** Phase 5 complete, Phase 6 planned
 
 ## Overview
 
@@ -43,11 +43,12 @@ This milestone adds sector-specific signal types that are exclusive to designate
 ### Phase 6: Visual Rendering
 **Goal:** Exclusive signals are instantly recognizable through distinct visual theming
 
-**Dependencies:** Phase 5 (signals must spawn before they can be rendered)
+**Dependencies:** Phase 5 (signals must spawn before they can be rendered) - COMPLETE
 
 **Requirements:** VIS-01, VIS-02, VIS-03, VIS-04, VIS-05
 
-**Plans:** 0 plans
+**Plans:** 1 plan
+- [ ] 06-01-PLAN.md — Add exclusive signal colors, particle effects, duration override, and tests
 
 **Success Criteria:**
 1. Ore Vein signals display orange color scheme with radiating line particle effects
@@ -172,7 +173,7 @@ This milestone adds sector-specific signal types that are exclusive to designate
 | Phase | Requirements | Plans | Status | Completion |
 |-------|--------------|-------|--------|------------|
 | Phase 5: Signal Type System | 7 | 2 | Complete | 100% |
-| Phase 6: Visual Rendering | 5 | 0 | Pending | 0% |
+| Phase 6: Visual Rendering | 5 | 1 | Planned | 0% |
 | Phase 7: Signal Rewards | 4 | 0 | Pending | 0% |
 | Phase 8: Sector Resource Profiles | 5 | 0 | Pending | 0% |
 | Phase 9: Discovery Reveal | 4 | 0 | Pending | 0% |
@@ -260,4 +261,5 @@ This milestone adds sector-specific signal types that are exclusive to designate
 
 *Roadmap created: 2026-02-02*
 *Phase 5 planned: 2026-02-02*
-*Ready for: `/gsd:execute-phase 5`*
+*Phase 6 planned: 2026-02-04*
+*Ready for: `/gsd:execute-phase 6`*
