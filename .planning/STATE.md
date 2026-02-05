@@ -3,13 +3,13 @@
 ## Current Position
 
 **Milestone:** v1.3 Signal Distribution System
-**Phase:** Phase 5 - Signal Type System (COMPLETE)
-**Plan:** All plans complete, verified
-**Status:** Phase 5 verified, ready for Phase 6
-**Last activity:** 2026-02-03 - Phase 5 verified (7/7 must-haves passed)
+**Phase:** Phase 6 - Visual Rendering (IN PROGRESS)
+**Plan:** 06-01 complete
+**Status:** Phase 6 Plan 01 complete (VIS-01 through VIS-05)
+**Last activity:** 2026-02-05 - Completed 06-01-PLAN.md
 **Next Milestone:** -
 
-Progress: [█████░░░░░░░░░░░░░░░] 7/30 requirements (23%)
+Progress: [███████░░░░░░░░░░░░░] 12/30 requirements (40%)
 
 ## Project Reference
 
@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 **Current milestone (v1.3):**
 - Phases: 6 (Phase 5 through Phase 10)
 - Requirements: 30 total
-- Completed: ~7 (SIG-01 through SIG-07 verified by tests)
-- Remaining: ~23
-- Progress: ~23%
+- Completed: ~12 (SIG-01 through SIG-07, VIS-01 through VIS-05)
+- Remaining: ~18
+- Progress: ~40%
 
 **Previous milestone (v1.2):**
 - Duration: ~5 days (2026-01-28 to 2026-02-02)
@@ -49,9 +49,10 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 - **Plan 05-01 COMPLETE:** Exclusive signal definitions and spawn logic implemented
 - **Plan 05-02 COMPLETE:** 17 Playwright tests validating SIG-01 through SIG-07
 
-**Phase 6: Visual Rendering** (5 requirements)
+**Phase 6: Visual Rendering** (5 requirements) - IN PROGRESS
 - Goal: Exclusive signals instantly recognizable through distinct visuals
 - Success: Orange/cyan/gold/prismatic color schemes with unique particle effects, 5-8s lifetime
+- **Plan 06-01 COMPLETE:** 4 color cases, renderExclusiveParticles(), HSL gradient handling, duration override, 16 Playwright tests
 
 **Phase 7: Signal Rewards** (4 requirements)
 - Goal: Exclusive signals provide meaningful reward advantages
@@ -82,6 +83,9 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 | exotic_crystal maps to 'mixed' | Collected by universal collectors, not requiring specific equipment | Applied |
 | Signals not persisted (by design) | Signals are temporary gameplay elements, not saved | Validated |
 | 5-40% test tolerance for spawn rates | Accounts for RNG variance in statistical tests | Applied |
+| HSL detection before gradient stops | exotic_crystal uses cycling HSL which crashes hexToRgba | Applied |
+| Performance guard at 50 signals | Prevent frame drops from particle calculations | Applied |
+| ctx.save()/restore() for particles | Isolated canvas state prevents rendering artifacts | Applied |
 
 ### Tech Debt
 
@@ -100,19 +104,19 @@ None
 - Save compatibility handled via defensive property checks with fallbacks
 - **Plan 05-01:** Exclusive signal types now spawn in designated sectors, equipment compatibility via base type mapping
 - **Plan 05-02:** 17 Playwright tests verify all Phase 5 requirements (SIG-01 through SIG-07)
+- **Plan 06-01:** Distinct visuals for 4 exclusive signal types with colors, particles, HSL handling, and 5-8s duration
 
 ## Session Continuity
 
-Last session: 2026-02-03
-Stopped at: Completed 05-02-PLAN.md
-Resume file: .planning/phases/05-signal-type-system/05-02-SUMMARY.md
+Last session: 2026-02-05
+Stopped at: Completed 06-01-PLAN.md
+Resume file: .planning/phases/06-visual-rendering/06-01-SUMMARY.md
 
 **Next steps:**
-1. Begin Phase 6 (Visual Rendering)
-2. Implement distinct visuals for exclusive signals (orange/cyan/gold/prismatic)
-3. Add 5-8s lifetime for exclusive signals
-4. Create particle effects for each exclusive signal type
+1. Check if Phase 6 has additional plans (06-02, etc.)
+2. If Phase 6 complete, begin Phase 7 (Signal Rewards)
+3. Implement 2x resource yields, rare+ artifact guarantees, exotic mineral options
 
 ---
 
-*Last updated: 2026-02-03 - Completed 05-02-PLAN.md*
+*Last updated: 2026-02-05 - Completed 06-01-PLAN.md*
