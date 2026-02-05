@@ -6,7 +6,9 @@ const config = {
   DISCORD_BOT_TOKEN: process.env.DISCORD_BOT_TOKEN,
   DISCORD_OWNER_ID: process.env.DISCORD_OWNER_ID,
   BOT_STATUS: process.env.BOT_STATUS || 'Working on Probetheus',
-  OPENCLAW_GATEWAY_URL: process.env.OPENCLAW_GATEWAY_URL || 'ws://127.0.0.1:18789'
+  WORKSPACE_DIR: process.env.WORKSPACE_DIR || '/mnt/e/repos/Probetheus',
+  SOFT_TIMEOUT_MS: parseInt(process.env.SOFT_TIMEOUT_MS) || 120000,
+  STATUS_INTERVAL_MS: parseInt(process.env.STATUS_INTERVAL_MS) || 30000
 };
 
 // Validate required configuration
