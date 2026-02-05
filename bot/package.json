@@ -1,0 +1,22 @@
+{
+  "name": "probetheus-bot",
+  "version": "1.0.0",
+  "description": "Discord bot for Probetheus project - routes owner messages to OpenClaw Gateway",
+  "main": "src/bot.js",
+  "scripts": {
+    "start": "node src/bot.js",
+    "dev": "node src/bot.js"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "openclaw",
+    "probetheus"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.7"
+  }
+}
