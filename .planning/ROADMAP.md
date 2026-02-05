@@ -48,7 +48,7 @@ This milestone adds sector-specific signal types that are exclusive to designate
 **Requirements:** VIS-01, VIS-02, VIS-03, VIS-04, VIS-05
 
 **Plans:** 1 plan
-- [ ] 06-01-PLAN.md — Add exclusive signal colors, particle effects, duration override, and tests
+- [x] 06-01-PLAN.md — Add exclusive signal colors, particle effects, duration override, and tests
 
 **Success Criteria:**
 1. Ore Vein signals display orange color scheme with radiating line particle effects
@@ -173,15 +173,15 @@ This milestone adds sector-specific signal types that are exclusive to designate
 | Phase | Requirements | Plans | Status | Completion |
 |-------|--------------|-------|--------|------------|
 | Phase 5: Signal Type System | 7 | 2 | Complete | 100% |
-| Phase 6: Visual Rendering | 5 | 1 | Planned | 0% |
+| Phase 6: Visual Rendering | 5 | 1 | Complete | 100% |
 | Phase 7: Signal Rewards | 4 | 0 | Pending | 0% |
 | Phase 8: Sector Resource Profiles | 5 | 0 | Pending | 0% |
 | Phase 9: Discovery Reveal | 4 | 0 | Pending | 0% |
 | Phase 10: Testing & Integration | 5 | 0 | Pending | 0% |
 
 **Total Requirements:** 30
-**Completed:** 7
-**Remaining:** 23
+**Completed:** 12
+**Remaining:** 18
 
 ## Coverage Map
 
@@ -194,11 +194,11 @@ This milestone adds sector-specific signal types that are exclusive to designate
 | SIG-05 | Phase 5 | Complete |
 | SIG-06 | Phase 5 | Complete |
 | SIG-07 | Phase 5 | Complete |
-| VIS-01 | Phase 6 | Pending |
-| VIS-02 | Phase 6 | Pending |
-| VIS-03 | Phase 6 | Pending |
-| VIS-04 | Phase 6 | Pending |
-| VIS-05 | Phase 6 | Pending |
+| VIS-01 | Phase 6 | Complete |
+| VIS-02 | Phase 6 | Complete |
+| VIS-03 | Phase 6 | Complete |
+| VIS-04 | Phase 6 | Complete |
+| VIS-05 | Phase 6 | Complete |
 | REW-01 | Phase 7 | Pending |
 | REW-02 | Phase 7 | Pending |
 | REW-03 | Phase 7 | Pending |

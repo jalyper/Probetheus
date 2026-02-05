@@ -19,11 +19,11 @@ Requirements for sector-specific signals and sector resource randomization.
 
 ### Signal Visuals
 
-- [ ] **VIS-01**: Ore Vein signals have unique orange color scheme with radiating line particles
-- [ ] **VIS-02**: Data Cache signals have unique cyan color scheme with rotating hexagon particles
-- [ ] **VIS-03**: Relic signals have unique gold color scheme with orbiting dust particles
-- [ ] **VIS-04**: Exotic Crystal signals have unique rainbow/prismatic color scheme with crystal facet particles
-- [ ] **VIS-05**: Exclusive signals have longer lifetime (5-8 seconds) than standard signals (2-6 seconds)
+- [x] **VIS-01**: Ore Vein signals have unique orange color scheme with radiating line particles
+- [x] **VIS-02**: Data Cache signals have unique cyan color scheme with rotating hexagon particles
+- [x] **VIS-03**: Relic signals have unique gold color scheme with orbiting dust particles
+- [x] **VIS-04**: Exotic Crystal signals have unique rainbow/prismatic color scheme with crystal facet particles
+- [x] **VIS-05**: Exclusive signals have longer lifetime (5-8 seconds) than standard signals (2-6 seconds)
 
 ### Signal Rewards
 
@@ -86,11 +86,11 @@ Requirements for sector-specific signals and sector resource randomization.
 | SIG-05 | Phase 5 | Complete |
 | SIG-06 | Phase 5 | Complete |
 | SIG-07 | Phase 5 | Complete |
-| VIS-01 | Phase 6 | Pending |
-| VIS-02 | Phase 6 | Pending |
-| VIS-03 | Phase 6 | Pending |
-| VIS-04 | Phase 6 | Pending |
-| VIS-05 | Phase 6 | Pending |
+| VIS-01 | Phase 6 | Complete |
+| VIS-02 | Phase 6 | Complete |
+| VIS-03 | Phase 6 | Complete |
+| VIS-04 | Phase 6 | Complete |
+| VIS-05 | Phase 6 | Complete |
 | REW-01 | Phase 7 | Pending |
 | REW-02 | Phase 7 | Pending |
 | REW-03 | Phase 7 | Pending |
