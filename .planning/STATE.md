@@ -3,13 +3,13 @@
 ## Current Position
 
 **Milestone:** v1.3 Signal Distribution System
-**Phase:** Phase 8.5 - Probethium Synthesis (COMPLETE)
-**Plan:** 02 of 02 complete
-**Status:** Phase 8.5 complete - synthesis implementation and comprehensive test coverage
-**Last activity:** 2026-02-06 - Completed 085-02-PLAN.md (probethium synthesis tests)
+**Phase:** Phase 9 - Discovery Reveal
+**Plan:** 01 of 01 complete
+**Status:** Phase 9 complete - comprehensive sector survey report with discovery tracking
+**Last activity:** 2026-02-06 - Completed 09-01-PLAN.md (discovery modal overhaul)
 **Next Milestone:** -
 
-Progress: [██████████░░░░░░░░░░] 28/35 requirements (80%)
+Progress: [████████████░░░░░░░░] 32/35 requirements (91%)
 
 ## Project Reference
 
@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 **Current milestone (v1.3):**
 - Phases: 6 (Phase 5 through Phase 10)
 - Requirements: 35 total (expanded with PROF-06, SYNTH-01 through SYNTH-04)
-- Completed: 28 (SIG-01 through SIG-07, VIS-01 through VIS-05, REW-01 through REW-04, PROF-01 through PROF-06, SYNTH-01 through SYNTH-04)
-- Remaining: 7
-- Progress: 80%
+- Completed: 32 (SIG-01 through SIG-07, VIS-01 through VIS-05, REW-01 through REW-04, PROF-01 through PROF-06, SYNTH-01 through SYNTH-04, DISC-01 through DISC-04)
+- Remaining: 3
+- Progress: 91%
 
 **Previous milestone (v1.2):**
 - Duration: ~5 days (2026-01-28 to 2026-02-02)
@@ -73,11 +73,13 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 - **Plan 085-01 COMPLETE:** Research node, hub button with batch conversion, 3-phase purple-to-gold animation, queue system, 8 tests
 - **Plan 085-02 COMPLETE:** 11 Playwright tests validating SYNTH-01 through SYNTH-04 (research, button, conversion, animation)
 
-**Phase 9: Discovery Reveal** (4 requirements)
+**Phase 9: Discovery Reveal** (4 requirements) - COMPLETE
 - Goal: Players understand sector specialization through discovery UI
 - Success: Discovery modal highlights exclusive signals and resource profiles
+- Context: 09-CONTEXT.md captures "Sector Survey Report" design decisions
+- **Plan 09-01 COMPLETE:** 8-section modal with exclusive signal info, resource profile bars, discovery log tracking, guaranteed epic/legendary exclusive bonus signals
 
-**Phase 10: Testing & Integration** (5 requirements)
+**Phase 10: Testing & Integration** (3 requirements)
 - Goal: All features verified through automated tests
 - Success: Playwright tests for spawning, bonuses, persistence, distribution
 
@@ -114,6 +116,13 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 | Animation queue sequential | Animations queue sequentially (not overlapping/simultaneous) | Applied |
 | Screen shake via property | getShakeOffset() property (not viewOffset mutation) | Applied |
 | Three-phase synthesis animation | Spiral, flash/shake, drift (3 seconds total) | Applied |
+| Modal dynamic content injection | Restructure modal HTML for dynamic content above static button | Applied |
+| Helper method extraction | Extract 3 helpers: buildExclusiveSignalSection, buildResourceProfileSection, buildDiscoveryLogSection | Applied |
+| Unicode visual bars | Use █░ characters for signal richness and probethium potential bars | Applied |
+| Discovery log pips as divs | Inline-styled divs for colored pips (not Unicode circles) for glow control | Applied |
+| Standard sector positive framing | "Open Frequency" messaging positions Standard as strategic choice | Applied |
+| Exclusive bonus additive | Push exclusive signal to bonusSignals array before forEach loop | Applied |
+| initializeSector spawn fix | Added missing spawnDiscoveryBonusSignals call to new sector path | Applied |
 
 ### Tech Debt
 
@@ -139,18 +148,18 @@ None
 - **Plan 08-03:** 14 Playwright tests validate all Phase 8 requirements (PROF-01 through PROF-06)
 - **Plan 085-01:** Probethium synthesis system: research node in alien tech, hub button with batch conversion (5 exotics → 0.001 probethium), 3-phase animation (spiral/flash/drift), sequential queue, 8 Playwright tests
 - **Plan 085-02:** Comprehensive synthesis testing: 11 Playwright tests covering research gating, button states, conversion math (single/multiple batches, remainders), animation queue, and viability
+- **Plan 09-01:** Sector Survey Report: 8-section modal (header, research award, exclusive signal, resource profile, bonuses, discovery log, hazard, button), Unicode progress bars (signal richness, probethium potential), discovery tracking with colored pips, guaranteed epic/legendary exclusive bonus signals for non-Standard sectors
 
 ## Session Continuity
 
 Last session: 2026-02-06
-Stopped at: Completed 085-02-PLAN.md (Phase 8.5 complete with full test coverage)
+Stopped at: Completed 09-01-PLAN.md (Phase 9 complete - comprehensive sector discovery modal)
 Resume file: None
 
 **Next steps:**
-1. Begin Phase 9: Discovery Reveal (4 requirements)
-2. Then Phase 10: Testing & Integration (5 requirements)
-3. Complete v1.3 milestone (7 requirements remaining)
+1. Begin Phase 10: Testing & Integration (3 requirements remaining)
+2. Complete v1.3 milestone (3 requirements remaining)
 
 ---
 
-*Last updated: 2026-02-06 - Phase 8.5 complete (2 plans, 19 tests), 28/35 requirements done (80%)*
+*Last updated: 2026-02-06 - Phase 9 complete (1 plan, comprehensive discovery modal), 32/35 requirements done (91%)*
