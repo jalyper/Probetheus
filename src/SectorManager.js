@@ -140,9 +140,9 @@ class SectorManager {
                 
                 // Emit event to trigger research unlock check
                 this.eventBus.emit('research:pointAwarded', { source: 'sector_discovery' });
-                
-                this.showSectorDiscovery(sector.type, sector.name);
-                
+
+                this.showSectorDiscovery(sector.type, sector.name, sector);
+
                 // Spawn discovery bonus signals
                 this.spawnDiscoveryBonusSignals(x, y, sector.type);
                 
@@ -255,10 +255,11 @@ class SectorManager {
             
             // Emit event to trigger research unlock check
             this.eventBus.emit('research:pointAwarded', { source: 'sector_discovery' });
-            
-            this.showSectorDiscovery(selectedType, name);
+
+            this.showSectorDiscovery(selectedType, name, sector);
+            this.spawnDiscoveryBonusSignals(x, y, selectedType);
         }
-        
+
         return sector;
     }
 
@@ -338,52 +339,258 @@ class SectorManager {
     /**
      * Show sector discovery modal
      */
-    showSectorDiscovery(sectorType, sectorName) {
+    showSectorDiscovery(sectorType, sectorName, sector) {
         const modal = document.getElementById('sectorModal');
         if (!modal) {
             console.error('Sector modal not found!');
             return;
         }
-        
+
         console.log(`Showing sector discovery modal for ${sectorName} (${sectorType.name} Sector)`);
-        
-        const sectorNameElement = document.getElementById('sectorName');
-        const sectorTypeElement = document.getElementById('sectorType');
-        const sectorBonusElement = document.getElementById('sectorBonus');
-        
-        if (sectorNameElement) sectorNameElement.textContent = sectorName;
-        if (sectorTypeElement) sectorTypeElement.textContent = sectorType.name + ' Sector';
-        
-        let bonusHTML = `
-            <p style="color: #0f0; font-weight: bold; margin-bottom: 10px;">🎯 +1 Research Point Awarded</p>
-            <p>Resource Bonuses:</p>
-            <p>Minerals: x${sectorType.mineralBonus}</p>
-            <p>Data: x${sectorType.dataBonus}</p>
-            <p>Artifacts: x${sectorType.artifactBonus}</p>
+
+        // Calculate distance from origin
+        const distance = Math.sqrt(sector.x * sector.x + sector.y * sector.y).toFixed(1);
+
+        // Build comprehensive "Sector Survey Report" HTML
+        let surveyHTML = `
+            <h2 style="color: #ff0; text-align: center; margin-bottom: 5px;">SECTOR SURVEY: ${sectorName}</h2>
+            <p style="color: #aaa; text-align: center; margin-bottom: 20px;">${sectorType.name} Sector &middot; ${distance} sectors from HQ</p>
+
+            <p style="color: #0f0; font-weight: bold; margin-bottom: 15px; text-align: center;">+1 Research Point Awarded</p>
+
+            <div style="border-top: 1px solid #444; padding-top: 15px; margin-bottom: 15px;">
+                <p style="color: #888; text-align: center; margin-bottom: 8px; font-size: 12px; letter-spacing: 2px;">── SIGNAL ENVIRONMENT ──</p>
+                ${this.buildExclusiveSignalSection(sectorType)}
+            </div>
+
+            <div style="border-top: 1px solid #444; padding-top: 15px; margin-bottom: 15px;">
+                ${this.buildResourceProfileSection(sector)}
+            </div>
+
+            <div style="border-top: 1px solid #444; padding-top: 15px; margin-bottom: 15px;">
+                <p style="color: #888; margin-bottom: 8px; font-weight: bold;">Exploration Bonuses:</p>
+                <p style="line-height: 1.8;">
+                    Minerals: x${sectorType.mineralBonus} &middot;
+                    Data: x${sectorType.dataBonus} &middot;
+                    Artifacts: x${sectorType.artifactBonus}
+                </p>
+            </div>
+
+            <div style="border-top: 1px solid #444; padding-top: 15px; margin-bottom: 15px;">
+                ${this.buildDiscoveryLogSection()}
+            </div>
         `;
-        
-        if (sectorType.probeDestructionChance) {
-            bonusHTML += `<p style="color: #ff6b35;">⚠ WARNING: ${Math.floor(sectorType.probeDestructionChance * 100)}% probe destruction risk!</p>`;
+
+        // Add hazard warning if applicable
+        if (sectorType.probeDestructionChance > 0) {
+            surveyHTML += `
+                <p style="color: #ff6b35; font-weight: bold; text-align: center; margin-top: 10px;">
+                    WARNING: ${Math.floor(sectorType.probeDestructionChance * 100)}% probe destruction risk!
+                </p>
+            `;
         }
-        
-        if (sectorBonusElement) sectorBonusElement.innerHTML = bonusHTML;
-        
+
+        // Inject content into modal
+        const modalContent = document.getElementById('sectorModalContent');
+        if (modalContent) {
+            // Find or create wrapper div for survey content
+            let surveyDiv = document.getElementById('sectorSurveyContent');
+            if (!surveyDiv) {
+                surveyDiv = document.createElement('div');
+                surveyDiv.id = 'sectorSurveyContent';
+                // Insert before the button
+                const okBtn = document.getElementById('sectorOkBtn');
+                modalContent.insertBefore(surveyDiv, okBtn);
+            }
+            surveyDiv.innerHTML = surveyHTML;
+        }
+
         modal.classList.add('active');
         console.log('Modal should now be visible with class "active"');
-        
-        // Add click handler for OK button
+
+        // Add click handler for Continue button
         const okBtn = document.getElementById('sectorOkBtn');
         if (okBtn) {
             // Remove any existing listeners to prevent duplicates
             const newOkBtn = okBtn.cloneNode(true);
             okBtn.parentNode.replaceChild(newOkBtn, okBtn);
-            
+
             // Add new click listener
             newOkBtn.addEventListener('click', () => {
                 modal.classList.remove('active');
                 console.log('Sector discovery modal closed by user');
             });
         }
+    }
+
+    /**
+     * Build exclusive signal section for sector survey
+     */
+    buildExclusiveSignalSection(sectorType) {
+        const exclusiveInfo = {
+            'ore_vein': {
+                emoji: '⛏️',
+                name: 'Ore Vein',
+                color: '#ff6600',
+                description: 'Dense mineral formations unique to Resource-Rich sectors',
+                yields: 'Yields: 2x Minerals'
+            },
+            'data_cache': {
+                emoji: '📡',
+                name: 'Data Cache',
+                color: '#00ddff',
+                description: 'Concentrated data streams unique to Data Haven sectors',
+                yields: 'Yields: 2x Data'
+            },
+            'relic': {
+                emoji: '🏛️',
+                name: 'Relic',
+                color: '#ffd700',
+                description: 'Ancient technology fragments unique to Ancient sectors',
+                yields: 'Yields: Guaranteed Rare+ Artifacts'
+            },
+            'exotic_crystal': {
+                emoji: '💎',
+                name: 'Exotic Crystal',
+                color: '#ee82ee',
+                description: 'Volatile crystalline deposits unique to Asteroid Fields',
+                yields: 'Yields: Exotic Minerals or Mixed Resources'
+            }
+        };
+
+        const exclusiveType = sectorType.exclusiveSignalType;
+
+        if (!exclusiveType) {
+            // Standard sector - "Open Frequency" messaging (DISC-04)
+            return `
+                <p style="text-align: center; margin-bottom: 8px; font-size: 18px;">
+                    🌐 <span style="color: #0ff; font-weight: bold;">Open Frequency</span>
+                </p>
+                <p style="color: #aaa; text-align: center; line-height: 1.6; font-size: 14px; font-style: italic;">
+                    "All signal types can be detected here &mdash;<br>
+                    ideal for balanced resource gathering"
+                </p>
+                <p style="color: #888; text-align: center; margin-top: 8px; font-size: 13px;">
+                    Yields: Standard rates across all types
+                </p>
+            `;
+        }
+
+        const info = exclusiveInfo[exclusiveType];
+        if (!info) return '<p style="color: #666;">Unknown signal type</p>';
+
+        return `
+            <p style="text-align: center; margin-bottom: 8px; font-size: 18px;">
+                ${info.emoji} <span style="color: ${info.color}; font-weight: bold;">${info.name}</span>
+            </p>
+            <p style="color: #aaa; text-align: center; line-height: 1.6; font-size: 14px; font-style: italic;">
+                "${info.description}"
+            </p>
+            <p style="color: #888; text-align: center; margin-top: 8px; font-size: 13px;">
+                ${info.yields}
+            </p>
+        `;
+    }
+
+    /**
+     * Build resource profile section for sector survey
+     */
+    buildResourceProfileSection(sector) {
+        if (!sector || !sector.resourceProfile) {
+            return '<p style="color: #666;">Profile data unavailable</p>';
+        }
+
+        const profile = sector.resourceProfile;
+        const profileNames = {
+            'mineral-rich': 'Mineral-Rich',
+            'data-rich': 'Data-Rich',
+            'artifact-rich': 'Artifact-Rich',
+            'probethium-rich': 'Probethium-Rich',
+            'balanced': 'Balanced'
+        };
+
+        // Signal richness: map spawnRateMultiplier to 5-segment bar
+        // 0.8x = 4 segments, 1.0x = 5 segments, 1.5x = 5 (capped)
+        const richnessSegments = Math.min(5, Math.max(1, Math.ceil(profile.spawnRateMultiplier * 5)));
+        const richnessBar = '█'.repeat(richnessSegments) + '░'.repeat(5 - richnessSegments);
+
+        // Probethium potential: map profile type to bar and label
+        let probSegments = 0;
+        let probLabel = 'None';
+        if (profile.type === 'probethium-rich') {
+            probSegments = 5;
+            probLabel = 'Rich';
+        } else if (profile.type === 'balanced') {
+            probSegments = 1;
+            probLabel = 'Low';
+        }
+        const probBar = '█'.repeat(probSegments) + '░'.repeat(5 - probSegments);
+
+        return `
+            <p style="color: #888; margin-bottom: 8px; font-weight: bold;">Resource Profile:</p>
+            <p style="margin-bottom: 5px;">
+                <strong>${profileNames[profile.type] || 'Unknown'}</strong>
+            </p>
+            <p style="line-height: 1.8; font-family: monospace;">
+                Signal Richness: <span style="color: #0ff; letter-spacing: 2px;">${richnessBar}</span>
+                <span style="margin-left: 8px;">${profile.spawnRateMultiplier}x</span>
+            </p>
+            <p style="line-height: 1.8; font-family: monospace;">
+                Probethium Potential: <span style="color: #ffd700; letter-spacing: 2px;">${probBar}</span>
+                <span style="margin-left: 8px;">${probLabel}</span>
+            </p>
+        `;
+    }
+
+    /**
+     * Build discovery log section for sector survey
+     */
+    buildDiscoveryLogSection() {
+        const world = this.gameState.getWorld();
+
+        let exploredCount = 0;
+        const foundTypes = new Set();
+
+        world.sectors.forEach(sector => {
+            if (sector.explored) {
+                exploredCount++;
+                foundTypes.add(sector.type.name);
+            }
+        });
+
+        const sectorTypes = [
+            { name: 'Standard', color: '#66f' },
+            { name: 'Resource-Rich', color: '#fc8' },
+            { name: 'Data Haven', color: '#6f6' },
+            { name: 'Ancient', color: '#f6f' },
+            { name: 'Asteroid Field', color: '#f66' }
+        ];
+
+        const pipsHtml = sectorTypes.map(type => {
+            const found = foundTypes.has(type.name);
+            return `<div style="
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: ${found ? type.color : '#444'};
+                opacity: ${found ? '1' : '0.3'};
+                display: inline-block;
+                margin: 0 3px;
+                vertical-align: middle;
+                box-shadow: ${found ? `0 0 6px ${type.color}` : 'none'};
+            " title="${type.name}${found ? ' (found)' : ''}"></div>`;
+        }).join('');
+
+        return `
+            <p style="color: #888; margin-bottom: 8px; font-weight: bold;">Discovery Progress:</p>
+            <p style="line-height: 1.8;">
+                Sectors Explored: <span style="color: #0ff; font-weight: bold;">${exploredCount}</span>
+            </p>
+            <p style="line-height: 1.8;">
+                Types Found: <span style="color: #0ff; font-weight: bold;">${foundTypes.size}/5</span>
+                <span style="margin-left: 10px;">${pipsHtml}</span>
+            </p>
+        `;
     }
 
     /**

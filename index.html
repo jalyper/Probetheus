@@ -397,12 +397,9 @@
 
         <!-- Sector Discovery Modal -->
         <div id="sectorModal" class="modal">
-            <div class="modal-content">
-                <h2 style="color: #ff0;">New Sector Discovered!</h2>
-                <h3 id="sectorName" style="color: #0ff; margin: 10px 0;"></h3>
-                <h4 id="sectorType" style="color: #aaa; margin: 10px 0;"></h4>
-                <div id="sectorBonus" style="color: #fff; line-height: 1.8;"></div>
-                <button id="sectorOkBtn" class="control-btn" style="margin-top: 20px;">OK</button>
+            <div class="modal-content" id="sectorModalContent">
+                <!-- Dynamic content injected by SectorManager.showSectorDiscovery() -->
+                <button id="sectorOkBtn" class="control-btn" style="margin-top: 20px;">Continue</button>
             </div>
         </div>
 
