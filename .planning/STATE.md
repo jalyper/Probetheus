@@ -3,13 +3,13 @@
 ## Current Position
 
 **Milestone:** v1.3 Signal Distribution System
-**Phase:** Phase 7 - Signal Rewards (COMPLETE)
-**Plan:** All plans complete, verified
-**Status:** Phase 7 verified, ready for Phase 8
-**Last activity:** 2026-02-05 - Phase 7 verified (7/7 must-haves passed)
+**Phase:** Phase 8 - Sector Resource Profiles (IN PROGRESS)
+**Plan:** 02 of 03 complete
+**Status:** Mining output rework complete, ready for plan 08-03
+**Last activity:** 2026-02-05 - Completed 08-02-PLAN.md (mining station resource output)
 **Next Milestone:** -
 
-Progress: [████████░░░░░░░░░░░░] 16/30 requirements (53%)
+Progress: [████████░░░░░░░░░░░░] 18/35 requirements (51%)
 
 ## Project Reference
 
@@ -22,10 +22,10 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 
 **Current milestone (v1.3):**
 - Phases: 6 (Phase 5 through Phase 10)
-- Requirements: 30 total
-- Completed: 16 (SIG-01 through SIG-07, VIS-01 through VIS-05, REW-01 through REW-04)
-- Remaining: 14
-- Progress: 53%
+- Requirements: 35 total (expanded with PROF-06, SYNTH-01 through SYNTH-04)
+- Completed: 18 (SIG-01 through SIG-07, VIS-01 through VIS-05, REW-01 through REW-04, PROF-01, PROF-05, PROF-06)
+- Remaining: 17
+- Progress: 51%
 
 **Previous milestone (v1.2):**
 - Duration: ~5 days (2026-01-28 to 2026-02-02)
@@ -59,9 +59,16 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 - Success: 2x resource yields, rare+ artifact guarantees, exotic mineral options
 - **Plan 07-01 COMPLETE:** Exclusive signal reward bonuses implemented, relic rarity gating, exotic crystal dual outcomes, 9 Playwright tests
 
-**Phase 8: Sector Resource Profiles** (5 requirements)
-- Goal: Sectors have unique resource richness influencing signal quality
-- Success: Random profiles on discovery, distance-based richness, probethium-rich sectors
+**Phase 8: Sector Resource Profiles** (6 requirements) - IN PROGRESS
+- Goal: Sectors have unique resource richness, mining stations mine sector specialty
+- Success: Random profiles on discovery, distance-based richness, mining rework, probethium-rich sectors are rare
+- Context: 08-CONTEXT.md captures mining station rework design decisions
+- **Plan 08-01 COMPLETE:** Resource profile assignment with distance-weighted distribution (PROF-01)
+- **Plan 08-02 COMPLETE:** Mining stations produce sector specialty resource (PROF-05, PROF-06)
+
+**Phase 8.5: Probethium Synthesis** (4 requirements)
+- Goal: Players synthesize probethium at hubs using exotic materials
+- Success: Hub synthesis button, research unlock, animation, alternative probethium path
 
 **Phase 9: Discovery Reveal** (4 requirements)
 - Goal: Players understand sector specialization through discovery UI
@@ -91,6 +98,8 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 | Relic minimum uncommon (not rare) | Prevents worthless drops while maintaining rarity spectrum | Applied |
 | Exotic Crystal 60/40 split | 60% enhanced exotics maintains scarcity, 40% mixed provides variety | Applied |
 | Secondary rewards with variance | Consistency with primary reward calculation (base + 0-100% random) | Applied |
+| Balanced sector output | 0.3x mixed resources maintains usefulness without being optimal | Applied |
+| Old saves default probethium | Backward compatibility for saves without sector profiles | Applied |
 
 ### Tech Debt
 
@@ -111,18 +120,20 @@ None
 - **Plan 05-02:** 17 Playwright tests verify all Phase 5 requirements (SIG-01 through SIG-07)
 - **Plan 06-01:** Distinct visuals for 4 exclusive signal types with colors, particles, HSL handling, and 5-8s duration
 - **Plan 07-01:** Exclusive signal reward bonuses: 2x yields for ore_vein/data_cache/relic, exotic_crystal dual outcomes, relic rarity gating
+- **Plan 08-01:** Resource profiles assigned on sector discovery with distance-weighted distribution
+- **Plan 08-02:** Mining stations produce sector specialty (minerals/data/artifacts/probethium/mixed), UI shows output type
 
 ## Session Continuity
 
 Last session: 2026-02-05
-Stopped at: Phase 7 verified
-Resume file: .planning/phases/07-signal-rewards/07-VERIFICATION.md
+Stopped at: Completed 08-02-PLAN.md
+Resume file: None
 
 **Next steps:**
-1. Begin Phase 8 (Sector Resource Profiles)
-2. Implement random resource profiles on sector discovery
-3. Add distance-based richness modifiers
+1. Continue Phase 8: Plan 08-03 (sector profile spawn rate multipliers - PROF-03, PROF-04)
+2. Testing and verification for Phase 8
+3. Begin Phase 8.5 (Probethium Synthesis)
 
 ---
 
-*Last updated: 2026-02-05 - Phase 7 verified*
+*Last updated: 2026-02-05 - Roadmap expanded with PROF-06, Phase 8.5 (Probethium Synthesis)*
