@@ -3,6 +3,7 @@ module.exports = {
     name: 'probetheus-bot',
     script: './src/bot.js',
     cwd: '/mnt/e/repos/Probetheus/bot',
+    exec_mode: 'fork',  // MUST be fork, not cluster - cluster breaks WebSocket connections
     instances: 1,
     autorestart: true,
     watch: false,

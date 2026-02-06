@@ -36,12 +36,20 @@ class MessageQueue {
   async processMessage(discordMessage, userMessage, discordClient) {
     this.isProcessing = true;
     let lastStatusTime = 0; // Start at 0 so first tool event always sends status
+    let typingInterval = null;
 
     try {
-      // Send initial typing indicator
-      await discordMessage.channel.sendTyping().catch(err =>
-        console.error('[messageQueue] Failed to send typing indicator:', err.message)
+      // Send initial acknowledgement
+      await discordMessage.channel.send('⏳ Processing your request...').catch(err =>
+        console.error('[messageQueue] Failed to send acknowledgement:', err.message)
       );
+
+      // Keep typing indicator active (refreshes every 8 seconds)
+      const refreshTyping = () => {
+        discordMessage.channel.sendTyping().catch(() => {});
+      };
+      refreshTyping();
+      typingInterval = setInterval(refreshTyping, 8000);
 
       const result = runClaudeCode(userMessage, {
         workspacePath: config.WORKSPACE_DIR,
@@ -49,13 +57,22 @@ class MessageQueue {
 
         onToolUse: ({ tool, detail }) => {
           const now = Date.now();
-          if (now - lastStatusTime >= config.STATUS_INTERVAL_MS) {
+          // Send status updates every 10 seconds (more frequent for better feedback)
+          if (now - lastStatusTime >= 10000) {
             const statusMessage = formatToolStatus({ tool, detail });
             discordMessage.channel.send(statusMessage).catch(err =>
               console.error('[messageQueue] Failed to send tool status:', err.message)
             );
             lastStatusTime = now;
           }
+        },
+
+        onAgentSpawn: (agentInfo) => {
+          // Called when Claude spawns a subagent/task
+          const agentMessage = `🤖 Spawning agent: **${agentInfo.type || 'worker'}** — ${agentInfo.description || 'working...'}`;
+          discordMessage.channel.send(agentMessage).catch(err =>
+            console.error('[messageQueue] Failed to send agent status:', err.message)
+          );
         },
 
         onTextDelta: (text) => {
@@ -92,6 +109,10 @@ class MessageQueue {
       this.currentProcess = result.process;
       await result.promise;
     } finally {
+      // Clear typing indicator interval
+      if (typingInterval) {
+        clearInterval(typingInterval);
+      }
       this.currentProcess = null;
       this.isProcessing = false;
     }

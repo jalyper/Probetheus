@@ -10,10 +10,11 @@ const { formatErrorMessage } = require('./responseFormatter.js');
 // Initialize Discord client with required intents for DMs
 const client = new Client({
   intents: [
+    GatewayIntentBits.Guilds,           // Required for guild-related caching
     GatewayIntentBits.DirectMessages,
-    GatewayIntentBits.MessageContent  // Privileged intent - must be enabled in Portal
+    GatewayIntentBits.MessageContent    // Privileged intent - must be enabled in Portal
   ],
-  partials: [Partials.Channel]  // CRITICAL for DM support
+  partials: [Partials.Channel, Partials.Message]  // CRITICAL for DM support
 });
 
 // Initialize message queue

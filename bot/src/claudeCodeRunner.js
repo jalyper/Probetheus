@@ -28,6 +28,7 @@ function runClaudeCode(message, options) {
   const {
     workspacePath,
     onToolUse,
+    onAgentSpawn,
     onTextDelta,
     onComplete,
     onError,
@@ -35,10 +36,18 @@ function runClaudeCode(message, options) {
     isRetry = false
   } = options;
 
+  // Add GSD workflow context to the prompt
+  const gsdPrefix = `You are Probetheus, a development assistant for this project. Use the GSD workflow (/gsd:* skills) for planning and development tasks. Available commands include /gsd:progress, /gsd:plan-phase, /gsd:execute-phase, /gsd:verify-work, and others. For simple questions, respond directly. For development work, use GSD.
+
+User request: `;
+  const fullPrompt = gsdPrefix + message;
+
   const args = [
-    '-p', message,
+    '-p', fullPrompt,
     '--output-format', 'stream-json',
-    '--verbose'
+    '--verbose',
+    '--max-turns', '25',
+    '--dangerously-skip-permissions'  // Skip permission prompts in headless mode
   ];
 
   // Continue conversation after first message
@@ -47,12 +56,31 @@ function runClaudeCode(message, options) {
   }
   sessionStarted = true;
 
-  // Try 'claude' first, fall back to full path if ENOENT
-  let claudeCommand = 'claude';
+  // Use full path to claude binary — PM2 may not have it in PATH
+  const claudeBinary = '/home/keato/.local/bin/claude';
 
-  const childProcess = spawn(claudeCommand, args, {
+  // Ensure PATH includes claude's directory
+  const env = { ...process.env };
+  if (!env.PATH || !env.PATH.includes('/home/keato/.local/bin')) {
+    env.PATH = `/home/keato/.local/bin:${env.PATH || ''}`;
+  }
+
+  // Clear any Claude-specific env vars that might interfere
+  delete env.CLAUDE_CODE_SESSION;
+  delete env.CLAUDE_SESSION_ID;
+
+  // Build the full command as a string for script wrapper
+  // Escape single quotes in arguments for shell: ' -> '\''
+  const escapeForShell = (str) => str.replace(/'/g, "'\\''");
+  const fullCommand = `${claudeBinary} ${args.map(a => `'${escapeForShell(a)}'`).join(' ')}`;
+  console.log(`[claudeCodeRunner] Command: ${claudeBinary} -p '...' (${fullPrompt.length} chars)`);
+  console.log(`[claudeCodeRunner] CWD: ${workspacePath}`);
+
+  // Use 'script' to provide a pseudo-TTY - Claude CLI requires it for output
+  const childProcess = spawn('script', ['-q', '-c', fullCommand, '/dev/null'], {
     cwd: workspacePath,
-    env: { ...process.env }
+    env,
+    stdio: ['pipe', 'pipe', 'pipe']
   });
 
   // Track accumulated output
@@ -79,10 +107,32 @@ function runClaudeCode(message, options) {
   });
 
   rl.on('line', (line) => {
+    // Skip terminal escape sequences from 'script' wrapper
+    if (!line.startsWith('{')) {
+      return;
+    }
+
     try {
       const event = JSON.parse(line);
 
-      // Handle text deltas
+      // Handle assistant message (contains final response text)
+      if (event.type === 'assistant' && event.message?.content) {
+        for (const block of event.message.content) {
+          if (block.type === 'text' && block.text) {
+            fullOutput += block.text;
+            if (onTextDelta) {
+              onTextDelta(block.text);
+            }
+          }
+        }
+      }
+
+      // Handle result event (fallback if assistant didn't have text)
+      if (event.type === 'result' && event.result && !fullOutput) {
+        fullOutput = event.result;
+      }
+
+      // Handle text deltas (legacy format, keep for compatibility)
       if (event.type === 'text_delta' && event.text) {
         fullOutput += event.text;
         if (onTextDelta) {
@@ -123,9 +173,17 @@ function runClaudeCode(message, options) {
       if (event.type === 'content_block_stop') {
         const index = event.index || 0;
         const block = contentBlocks.get(index);
-        if (block && block.type === 'tool_use' && onToolUse) {
+        if (block && block.type === 'tool_use') {
           const toolName = block.name;
           let detail = '';
+
+          // Special handling for Task tool (agent spawning)
+          if (toolName === 'Task' && onAgentSpawn) {
+            onAgentSpawn({
+              type: block.input?.subagent_type || 'worker',
+              description: block.input?.description || block.input?.prompt?.substring(0, 80) || 'Working...'
+            });
+          }
 
           // Extract detail based on tool type
           if (toolName === 'Edit' || toolName === 'Write' || toolName === 'Read') {
@@ -136,11 +194,17 @@ function runClaudeCode(message, options) {
             detail = command.substring(0, 60);
           } else if (toolName === 'Grep' || toolName === 'Glob') {
             detail = 'Searching files...';
+          } else if (toolName === 'Task') {
+            detail = `Agent: ${block.input?.subagent_type || 'worker'}`;
+          } else if (toolName === 'Skill') {
+            detail = `Skill: ${block.input?.skill || 'unknown'}`;
           } else {
             detail = 'Working...';
           }
 
-          onToolUse({ tool: toolName, detail });
+          if (onToolUse) {
+            onToolUse({ tool: toolName, detail });
+          }
         }
       }
 
@@ -150,9 +214,14 @@ function runClaudeCode(message, options) {
     }
   });
 
+  // Log process PID
+  console.log(`[claudeCodeRunner] Process spawned, PID: ${childProcess.pid}`);
+
   // Collect stderr (used for progress, not necessarily errors)
   childProcess.stderr.on('data', (data) => {
-    stderrOutput += data.toString();
+    const text = data.toString();
+    stderrOutput += text;
+    console.log(`[claudeCodeRunner] stderr: ${text.trim()}`);
   });
 
   // Handle process exit
