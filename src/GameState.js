@@ -436,7 +436,7 @@ class GameState {
                     researched: false,
                     available: true,
                     icon: '👽',
-                    children: ['phase_shift', 'energy_shields', 'quantum_sensors'],
+                    children: ['phase_shift', 'energy_shields', 'quantum_sensors', 'probethium_synthesis'],
                     tree: 'alien'
                 },
                 'phase_shift': {
@@ -524,6 +524,19 @@ class GameState {
                     available: false,
                     icon: '🔮',
                     parent: 'quantum_sensors',
+                    tree: 'alien'
+                },
+                'probethium_synthesis': {
+                    id: 'probethium_synthesis',
+                    name: 'Probethium Synthesis',
+                    description: 'Unlocks the ability to synthesize Probethium from exotic materials at hubs',
+                    cost: 3,
+                    position: { x: 350, y: 920 },
+                    researched: false,
+                    available: false,
+                    icon: '⚗️',
+                    parent: 'alien_tech',
+                    children: [],
                     tree: 'alien'
                 }
             }

@@ -236,6 +236,12 @@ class DetailsPanel {
                         </svg>
                         <span style="text-decoration: underline;">S</span>huttle (50M, 25D)
                     </button>
+                    ${this.gameState.researchSystem.tree.probethium_synthesis.researched ? `
+                    <button id="synthesizeBtn" class="control-btn" style="font-size: 12px; padding: 8px 12px; width: 100%; display: flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #9400d3 0%, #ffd700 100%); color: #fff;">
+                        <span style="font-size: 16px; flex-shrink: 0;">⚗️</span>
+                        <span>Synthesize Probethium (5 Exotic)</span>
+                    </button>
+                    ` : ''}
                 </div>
             </div>
 
@@ -565,10 +571,36 @@ class DetailsPanel {
         const buildShuttleBtn = document.getElementById('buildShuttleBtn');
         if (buildShuttleBtn) {
             const canAfford = resources.minerals >= 50 && resources.data >= 25;
-            
+
             buildShuttleBtn.classList.toggle('resource-button', true);
             buildShuttleBtn.classList.toggle('insufficient', !canAfford);
             buildShuttleBtn.disabled = !canAfford;
+        }
+
+        // Synthesize Probethium button (5 exotic minerals)
+        const synthesizeBtn = document.getElementById('synthesizeBtn');
+        if (synthesizeBtn) {
+            const canAfford = resources.exoticMinerals >= 5;
+            const batchCount = Math.floor(resources.exoticMinerals / 5);
+
+            synthesizeBtn.classList.toggle('resource-button', true);
+            synthesizeBtn.classList.toggle('insufficient', !canAfford);
+            synthesizeBtn.disabled = !canAfford;
+
+            // Update button text to show batch count
+            if (canAfford) {
+                const textSpan = synthesizeBtn.querySelector('span:last-child');
+                if (textSpan) {
+                    textSpan.textContent = `Synthesize Probethium (${batchCount}x batches)`;
+                }
+                synthesizeBtn.title = `Convert ${batchCount * 5} exotic minerals to ${(batchCount * 0.001).toFixed(3)} probethium`;
+            } else {
+                const textSpan = synthesizeBtn.querySelector('span:last-child');
+                if (textSpan) {
+                    textSpan.textContent = 'Synthesize Probethium (5 Exotic)';
+                }
+                synthesizeBtn.title = 'Not enough exotic minerals (need 5)';
+            }
         }
     }
     
@@ -686,28 +718,46 @@ class DetailsPanel {
         if (buildShuttleBtn) {
             buildShuttleBtn.addEventListener('click', () => {
                 if (!hub) {
-                    this.eventBus.emit('ui:message', { 
-                        text: 'Select a hub first!', 
-                        type: 'error' 
+                    this.eventBus.emit('ui:message', {
+                        text: 'Select a hub first!',
+                        type: 'error'
                     });
                     return;
                 }
-                
+
                 console.log('Starting shuttle placement mode for hub:', hub.id);
-                
+
                 // Enter shuttle placement mode
                 this.gameState.ui.shuttlePlacementMode = true;
                 this.gameState.ui.selectedHub = hub;
-                
+
                 const canvas = document.getElementById('galaxyCanvas');
                 if (canvas) canvas.style.cursor = 'crosshair';
-                
+
                 const probeStatus = document.getElementById('probeStatus');
                 if (probeStatus) {
                     probeStatus.textContent = 'Click on a mining station to connect shuttle...';
                 }
-                
+
                 this.hide(); // Close details panel
+            });
+        }
+
+        // Synthesis button
+        const synthesizeBtn = document.getElementById('synthesizeBtn');
+        if (synthesizeBtn) {
+            synthesizeBtn.addEventListener('click', () => {
+                const resources = this.gameState.getResources();
+
+                if (resources.exoticMinerals < 5) {
+                    this.eventBus.emit('ui:message', {
+                        text: 'Not enough exotic minerals! Need 5 exotic minerals to synthesize.',
+                        type: 'error'
+                    });
+                    return;
+                }
+
+                this.eventBus.emit('synthesis:triggered', { hub });
             });
         }
     }

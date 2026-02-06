@@ -69,6 +69,30 @@ class GameController {
             this.openDarkMarketForNPC(data.npcId, data.npcType);
         });
 
+        // Listen for probethium synthesis
+        this.eventBus.on('synthesis:triggered', (data) => {
+            const resources = this.gameState.getResources();
+            const batchCount = Math.floor(resources.exoticMinerals / 5);
+
+            if (batchCount > 0) {
+                const exoticsConsumed = batchCount * 5;
+                const probethiumGained = batchCount * 0.001;
+
+                // Update resources
+                resources.exoticMinerals -= exoticsConsumed;
+                this.gameState.probethium += probethiumGained;
+
+                // Emit updates
+                this.eventBus.emit('ui:update');
+                this.eventBus.emit('ui:message', {
+                    text: `Synthesized ${probethiumGained.toFixed(3)} Probethium from ${exoticsConsumed} exotic minerals!`,
+                    type: 'success'
+                });
+
+                console.log(`[Synthesis] Converted ${exoticsConsumed} exotics -> ${probethiumGained.toFixed(3)} probethium`);
+            }
+        });
+
         // Canvas elements
         this.canvas = document.getElementById('galaxyCanvas');
         this.ctx = this.canvas.getContext('2d');
