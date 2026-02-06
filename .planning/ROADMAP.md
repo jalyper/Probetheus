@@ -99,9 +99,9 @@ This milestone adds sector-specific signal types that are exclusive to designate
 **Requirements:** PROF-01, PROF-02, PROF-03, PROF-04, PROF-05, PROF-06
 
 **Plans:** 3 plans
-- [ ] 08-01-PLAN.md — Add resource profile assignment with distance-weighted RNG and spawn rate multipliers
-- [ ] 08-02-PLAN.md — Rework mining station output based on sector profile and update station UI
-- [ ] 08-03-PLAN.md — Playwright tests for PROF-01 through PROF-06
+- [x] 08-01-PLAN.md — Add resource profile assignment with distance-weighted RNG and spawn rate multipliers
+- [x] 08-02-PLAN.md — Rework mining station output based on sector profile and update station UI
+- [x] 08-03-PLAN.md — Playwright tests for PROF-01 through PROF-06
 
 **Success Criteria:**
 1. Each sector receives a randomized resource profile on discovery (mineral-rich, data-rich, artifact-rich, probethium-rich, or balanced) with spawn rate multipliers
@@ -205,14 +205,14 @@ This milestone adds sector-specific signal types that are exclusive to designate
 | Phase 5: Signal Type System | 7 | 2 | Complete | 100% |
 | Phase 6: Visual Rendering | 5 | 1 | Complete | 100% |
 | Phase 7: Signal Rewards | 4 | 1 | Complete | 100% |
-| Phase 8: Sector Resource Profiles | 6 | 3 | Planned | 0% |
+| Phase 8: Sector Resource Profiles | 6 | 3 | Complete | 100% |
 | Phase 8.5: Probethium Synthesis | 4 | 0 | Pending | 0% |
 | Phase 9: Discovery Reveal | 4 | 0 | Pending | 0% |
 | Phase 10: Testing & Integration | 5 | 0 | Pending | 0% |
 
 **Total Requirements:** 35
-**Completed:** 16
-**Remaining:** 19
+**Completed:** 22
+**Remaining:** 13
 
 ## Coverage Map
 
@@ -234,12 +234,12 @@ This milestone adds sector-specific signal types that are exclusive to designate
 | REW-02 | Phase 7 | Complete |
 | REW-03 | Phase 7 | Complete |
 | REW-04 | Phase 7 | Complete |
-| PROF-01 | Phase 8 | Pending |
-| PROF-02 | Phase 8 | Pending |
-| PROF-03 | Phase 8 | Pending |
-| PROF-04 | Phase 8 | Pending |
-| PROF-05 | Phase 8 | Pending |
-| PROF-06 | Phase 8 | Pending |
+| PROF-01 | Phase 8 | Complete |
+| PROF-02 | Phase 8 | Complete |
+| PROF-03 | Phase 8 | Complete |
+| PROF-04 | Phase 8 | Complete |
+| PROF-05 | Phase 8 | Complete |
+| PROF-06 | Phase 8 | Complete |
 | SYNTH-01 | Phase 8.5 | Pending |
 | SYNTH-02 | Phase 8.5 | Pending |
 | SYNTH-03 | Phase 8.5 | Pending |

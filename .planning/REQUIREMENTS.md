@@ -34,11 +34,19 @@ Requirements for sector-specific signals and sector resource randomization.
 
 ### Sector Resource Profiles
 
-- [ ] **PROF-01**: Each sector gets a randomized resource profile on discovery
-- [ ] **PROF-02**: Resource profile determines base signal spawn rates and rare signal frequency
-- [ ] **PROF-03**: Distance from starting hub influences profile richness (farther = richer signals more likely)
-- [ ] **PROF-04**: RNG allows rare lucky discoveries early (probethium-rich sector very early is possible but extremely rare)
-- [ ] **PROF-05**: Sectors can be probethium-rich (high probethium generation potential)
+- [x] **PROF-01**: Each sector gets a randomized resource profile on discovery (mineral-rich, data-rich, artifact-rich, probethium-rich, or balanced)
+- [x] **PROF-02**: Resource profile determines base signal spawn rates and rare signal frequency
+- [x] **PROF-03**: Distance from starting hub influences profile richness (farther = richer signals more likely)
+- [x] **PROF-04**: RNG allows rare lucky discoveries early (probethium-rich sector very early is possible but extremely rare)
+- [x] **PROF-05**: Mining stations mine the sector's specialty resource (mineral-rich → minerals, data-rich → data, probethium-rich → probethium)
+- [x] **PROF-06**: Probethium-rich sectors are rare and the only way to directly mine probethium
+
+### Probethium Synthesis
+
+- [ ] **SYNTH-01**: Hub menu has "Synthesize Probethium" button that converts exotic materials to probethium
+- [ ] **SYNTH-02**: Synthesis ability is unlocked via research tree
+- [ ] **SYNTH-03**: Hub plays a synthesis animation when converting exotics to probethium
+- [ ] **SYNTH-04**: Synthesis provides an alternative probethium source for players who haven't found probethium-rich sectors
 
 ### Discovery Reveal
 
@@ -95,11 +103,16 @@ Requirements for sector-specific signals and sector resource randomization.
 | REW-02 | Phase 7 | Complete |
 | REW-03 | Phase 7 | Complete |
 | REW-04 | Phase 7 | Complete |
-| PROF-01 | Phase 8 | Pending |
-| PROF-02 | Phase 8 | Pending |
-| PROF-03 | Phase 8 | Pending |
-| PROF-04 | Phase 8 | Pending |
-| PROF-05 | Phase 8 | Pending |
+| PROF-01 | Phase 8 | Complete |
+| PROF-02 | Phase 8 | Complete |
+| PROF-03 | Phase 8 | Complete |
+| PROF-04 | Phase 8 | Complete |
+| PROF-05 | Phase 8 | Complete |
+| PROF-06 | Phase 8 | Complete |
+| SYNTH-01 | Phase 8.5 | Pending |
+| SYNTH-02 | Phase 8.5 | Pending |
+| SYNTH-03 | Phase 8.5 | Pending |
+| SYNTH-04 | Phase 8.5 | Pending |
 | DISC-01 | Phase 9 | Pending |
 | DISC-02 | Phase 9 | Pending |
 | DISC-03 | Phase 9 | Pending |
@@ -111,10 +124,10 @@ Requirements for sector-specific signals and sector resource randomization.
 | TEST-05 | Phase 10 | Pending |
 
 **Coverage:**
-- v1.3 requirements: 30 total
-- Mapped to phases: 30 (100%)
+- v1.3 requirements: 35 total
+- Mapped to phases: 35 (100%)
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-02*
-*Last updated: 2026-02-02 after roadmap creation*
+*Last updated: 2026-02-05 — added PROF-06, SYNTH-01 through SYNTH-04 (mining rework + probethium synthesis)*
