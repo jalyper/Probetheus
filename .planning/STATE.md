@@ -4,9 +4,9 @@
 
 **Milestone:** v1.3 Signal Distribution System
 **Phase:** Phase 8.5 - Probethium Synthesis (COMPLETE)
-**Plan:** 01 of 01 complete
-**Status:** Phase 8.5 complete - synthesis system with research, button, conversion, and animation
-**Last activity:** 2026-02-06 - Completed 085-01-PLAN.md (probethium synthesis)
+**Plan:** 02 of 02 complete
+**Status:** Phase 8.5 complete - synthesis implementation and comprehensive test coverage
+**Last activity:** 2026-02-06 - Completed 085-02-PLAN.md (probethium synthesis tests)
 **Next Milestone:** -
 
 Progress: [██████████░░░░░░░░░░] 28/35 requirements (80%)
@@ -71,6 +71,7 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 - Goal: Players synthesize probethium at hubs using exotic materials
 - Success: Hub synthesis button, research unlock, animation, alternative probethium path
 - **Plan 085-01 COMPLETE:** Research node, hub button with batch conversion, 3-phase purple-to-gold animation, queue system, 8 tests
+- **Plan 085-02 COMPLETE:** 11 Playwright tests validating SYNTH-01 through SYNTH-04 (research, button, conversion, animation)
 
 **Phase 9: Discovery Reveal** (4 requirements)
 - Goal: Players understand sector specialization through discovery UI
@@ -137,11 +138,12 @@ None
 - **Plan 08-02:** Mining stations produce sector specialty (minerals/data/artifacts/probethium/mixed), UI shows output type
 - **Plan 08-03:** 14 Playwright tests validate all Phase 8 requirements (PROF-01 through PROF-06)
 - **Plan 085-01:** Probethium synthesis system: research node in alien tech, hub button with batch conversion (5 exotics → 0.001 probethium), 3-phase animation (spiral/flash/drift), sequential queue, 8 Playwright tests
+- **Plan 085-02:** Comprehensive synthesis testing: 11 Playwright tests covering research gating, button states, conversion math (single/multiple batches, remainders), animation queue, and viability
 
 ## Session Continuity
 
 Last session: 2026-02-06
-Stopped at: Completed 085-01-PLAN.md (Phase 8.5 complete)
+Stopped at: Completed 085-02-PLAN.md (Phase 8.5 complete with full test coverage)
 Resume file: None
 
 **Next steps:**
@@ -151,4 +153,4 @@ Resume file: None
 
 ---
 
-*Last updated: 2026-02-06 - Phase 8.5 complete, 28/35 requirements done (80%)*
+*Last updated: 2026-02-06 - Phase 8.5 complete (2 plans, 19 tests), 28/35 requirements done (80%)*
