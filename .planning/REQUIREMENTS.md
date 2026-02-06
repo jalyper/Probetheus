@@ -27,10 +27,10 @@ Requirements for sector-specific signals and sector resource randomization.
 
 ### Signal Rewards
 
-- [ ] **REW-01**: Ore Vein signals yield 2x minerals on exploration compared to standard mineral signals
-- [ ] **REW-02**: Data Cache signals yield 2x data on exploration compared to standard data signals
-- [ ] **REW-03**: Relic signals yield guaranteed rare+ artifacts (no common artifacts)
-- [ ] **REW-04**: Exotic Crystal signals yield exotic minerals or all three basic resources at once
+- [x] **REW-01**: Ore Vein signals yield 2x minerals on exploration compared to standard mineral signals
+- [x] **REW-02**: Data Cache signals yield 2x data on exploration compared to standard data signals
+- [x] **REW-03**: Relic signals yield guaranteed rare+ artifacts (no common artifacts)
+- [x] **REW-04**: Exotic Crystal signals yield exotic minerals or all three basic resources at once
 
 ### Sector Resource Profiles
 
@@ -91,10 +91,10 @@ Requirements for sector-specific signals and sector resource randomization.
 | VIS-03 | Phase 6 | Complete |
 | VIS-04 | Phase 6 | Complete |
 | VIS-05 | Phase 6 | Complete |
-| REW-01 | Phase 7 | Pending |
-| REW-02 | Phase 7 | Pending |
-| REW-03 | Phase 7 | Pending |
-| REW-04 | Phase 7 | Pending |
+| REW-01 | Phase 7 | Complete |
+| REW-02 | Phase 7 | Complete |
+| REW-03 | Phase 7 | Complete |
+| REW-04 | Phase 7 | Complete |
 | PROF-01 | Phase 8 | Pending |
 | PROF-02 | Phase 8 | Pending |
 | PROF-03 | Phase 8 | Pending |

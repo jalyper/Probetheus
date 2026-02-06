@@ -4,7 +4,7 @@
 **Milestone:** v1.3 Signal Distribution System
 **Phases:** 6 (Phase 5 through Phase 10)
 **Requirements:** 30 total
-**Status:** Phase 5 complete, Phase 6 planned
+**Status:** Phase 7 complete, Phase 8 pending
 
 ## Overview
 
@@ -73,7 +73,8 @@ This milestone adds sector-specific signal types that are exclusive to designate
 
 **Requirements:** REW-01, REW-02, REW-03, REW-04
 
-**Plans:** 0 plans
+**Plans:** 1 plan
+- [x] 07-01-PLAN.md — Add exclusive signal reward bonuses, relic rarity gating, and tests
 
 **Success Criteria:**
 1. Ore Vein signals yield 2x minerals compared to standard mineral signals on exploration
@@ -174,14 +175,14 @@ This milestone adds sector-specific signal types that are exclusive to designate
 |-------|--------------|-------|--------|------------|
 | Phase 5: Signal Type System | 7 | 2 | Complete | 100% |
 | Phase 6: Visual Rendering | 5 | 1 | Complete | 100% |
-| Phase 7: Signal Rewards | 4 | 0 | Pending | 0% |
+| Phase 7: Signal Rewards | 4 | 1 | Complete | 100% |
 | Phase 8: Sector Resource Profiles | 5 | 0 | Pending | 0% |
 | Phase 9: Discovery Reveal | 4 | 0 | Pending | 0% |
 | Phase 10: Testing & Integration | 5 | 0 | Pending | 0% |
 
 **Total Requirements:** 30
-**Completed:** 12
-**Remaining:** 18
+**Completed:** 16
+**Remaining:** 14
 
 ## Coverage Map
 
@@ -199,10 +200,10 @@ This milestone adds sector-specific signal types that are exclusive to designate
 | VIS-03 | Phase 6 | Complete |
 | VIS-04 | Phase 6 | Complete |
 | VIS-05 | Phase 6 | Complete |
-| REW-01 | Phase 7 | Pending |
-| REW-02 | Phase 7 | Pending |
-| REW-03 | Phase 7 | Pending |
-| REW-04 | Phase 7 | Pending |
+| REW-01 | Phase 7 | Complete |
+| REW-02 | Phase 7 | Complete |
+| REW-03 | Phase 7 | Complete |
+| REW-04 | Phase 7 | Complete |
 | PROF-01 | Phase 8 | Pending |
 | PROF-02 | Phase 8 | Pending |
 | PROF-03 | Phase 8 | Pending |
@@ -262,4 +263,5 @@ This milestone adds sector-specific signal types that are exclusive to designate
 *Roadmap created: 2026-02-02*
 *Phase 5 planned: 2026-02-02*
 *Phase 6 planned: 2026-02-04*
-*Ready for: `/gsd:execute-phase 6`*
+*Phase 7 complete: 2026-02-05*
+*Ready for: `/gsd:plan-phase 8`*
