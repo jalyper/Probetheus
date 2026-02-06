@@ -147,7 +147,7 @@ test.describe('Probethium Synthesis System', () => {
 
     // Record initial probethium
     const initialProbethium = await page.evaluate(() => {
-      return window.game.gameState.probethium;
+      return window.game.gameState.probethium.current;
     });
 
     // Trigger synthesis
@@ -162,7 +162,7 @@ test.describe('Probethium Synthesis System', () => {
     const afterState = await page.evaluate(() => {
       return {
         exoticMinerals: window.game.gameState.getResources().exoticMinerals,
-        probethium: window.game.gameState.probethium
+        probethium: window.game.gameState.probethium.current
       };
     });
 
@@ -182,7 +182,7 @@ test.describe('Probethium Synthesis System', () => {
     });
 
     const initialProbethium = await page.evaluate(() => {
-      return window.game.gameState.probethium;
+      return window.game.gameState.probethium.current;
     });
 
     // Trigger synthesis
@@ -196,7 +196,7 @@ test.describe('Probethium Synthesis System', () => {
     const afterState = await page.evaluate(() => {
       return {
         exoticMinerals: window.game.gameState.getResources().exoticMinerals,
-        probethium: window.game.gameState.probethium
+        probethium: window.game.gameState.probethium.current
       };
     });
 
@@ -218,7 +218,7 @@ test.describe('Probethium Synthesis System', () => {
     const beforeState = await page.evaluate(() => {
       return {
         exoticMinerals: window.game.gameState.getResources().exoticMinerals,
-        probethium: window.game.gameState.probethium
+        probethium: window.game.gameState.probethium.current
       };
     });
 
@@ -233,7 +233,7 @@ test.describe('Probethium Synthesis System', () => {
     const afterState = await page.evaluate(() => {
       return {
         exoticMinerals: window.game.gameState.getResources().exoticMinerals,
-        probethium: window.game.gameState.probethium
+        probethium: window.game.gameState.probethium.current
       };
     });
 
@@ -335,7 +335,7 @@ test.describe('Probethium Synthesis System', () => {
     });
 
     const initialProbethium = await page.evaluate(() => {
-      return window.game.gameState.probethium;
+      return window.game.gameState.probethium.current;
     });
 
     // Trigger synthesis
@@ -348,7 +348,7 @@ test.describe('Probethium Synthesis System', () => {
 
     const finalState = await page.evaluate(() => {
       return {
-        probethium: window.game.gameState.probethium,
+        probethium: window.game.gameState.probethium.current,
         exoticsRemaining: window.game.gameState.getResources().exoticMinerals
       };
     });

@@ -1090,6 +1090,17 @@ class UIManager {
                 researchBtn.style.display = 'inline-block';
             }
         }
+
+        // Show sector report button if any sectors are explored
+        const world = this.gameState.getWorld();
+        if (world && world.sectors) {
+            let hasExplored = false;
+            world.sectors.forEach(s => { if (s.explored) hasExplored = true; });
+            if (hasExplored) {
+                const sectorReportBtn = document.getElementById('sectorReportBtn');
+                if (sectorReportBtn) sectorReportBtn.style.display = 'inline-block';
+            }
+        }
     }
 
 

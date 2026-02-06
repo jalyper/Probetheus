@@ -81,7 +81,7 @@ class GameController {
 
                 // Update resources
                 resources.exoticMinerals -= exoticsConsumed;
-                this.gameState.probethium += probethiumGained;
+                this.gameState.probethium.current += probethiumGained;
 
                 // Emit updates
                 this.eventBus.emit('ui:update');
@@ -889,6 +889,14 @@ class GameController {
             researchBtn.addEventListener('click', () => {
                 this.showScreen('researchScreen');
                 this.eventBus.emit('research:showTree');
+            });
+        }
+
+        // Sector Report button
+        const sectorReportBtn = document.getElementById('sectorReportBtn');
+        if (sectorReportBtn) {
+            sectorReportBtn.addEventListener('click', () => {
+                this.showSectorReport();
             });
         }
 
@@ -2097,6 +2105,137 @@ class GameController {
         } else {
             console.error(`Screen not found: ${screenId}`);
         }
+    }
+
+    /**
+     * Show sector report modal with all discovered sectors
+     */
+    showSectorReport() {
+        const modal = document.getElementById('sectorModal');
+        if (!modal) return;
+
+        const world = this.gameState.getWorld();
+        const sectors = [];
+
+        world.sectors.forEach(sector => {
+            if (sector.explored) {
+                sectors.push(sector);
+            }
+        });
+
+        if (sectors.length === 0) {
+            this.eventBus.emit('ui:message', { text: 'No sectors discovered yet!', type: 'info' });
+            return;
+        }
+
+        // Sort by discovery order (distance from origin as proxy)
+        sectors.sort((a, b) => {
+            const distA = Math.abs(a.x) + Math.abs(a.y);
+            const distB = Math.abs(b.x) + Math.abs(b.y);
+            return distA - distB;
+        });
+
+        // Build sector list HTML
+        let sectorsHTML = sectors.map(sector => {
+            const sectorType = sector.type;
+            const distance = Math.sqrt(sector.x * sector.x + sector.y * sector.y).toFixed(1);
+
+            // Color by sector type
+            const typeColors = {
+                'Standard': '#66f',
+                'Resource-Rich': '#fc8',
+                'Data Haven': '#6f6',
+                'Ancient': '#f6f',
+                'Asteroid Field': '#f66'
+            };
+            const color = typeColors[sectorType.name] || '#aaa';
+
+            // Resource profile info
+            const profile = sector.resourceProfile;
+            const profileNames = {
+                'mineral-rich': 'Mineral-Rich',
+                'data-rich': 'Data-Rich',
+                'artifact-rich': 'Artifact-Rich',
+                'probethium-rich': 'Probethium-Rich',
+                'balanced': 'Balanced'
+            };
+            const profileName = profile ? (profileNames[profile.type] || profile.type) : '—';
+
+            // Probethium indicator
+            const hasProbethium = profile && profile.type === 'probethium-rich';
+
+            return `
+                <div style="display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-bottom: 1px solid #333; cursor: pointer;" onclick="window.game.sectorManager.snapToSector(${sector.x}, ${sector.y}); document.getElementById('sectorModal').classList.remove('active');" title="Click to navigate">
+                    <div style="width: 10px; height: 10px; border-radius: 50%; background: ${color}; box-shadow: 0 0 6px ${color}; flex-shrink: 0;"></div>
+                    <div style="flex: 1; min-width: 0;">
+                        <span style="color: #fff; font-weight: bold;">${sector.name}</span>
+                        <span style="color: ${color}; font-size: 12px; margin-left: 6px;">${sectorType.name}</span>
+                    </div>
+                    <div style="color: #888; font-size: 12px; white-space: nowrap;">
+                        ${profileName}${hasProbethium ? ' <span style="color: #ffd700;">★</span>' : ''}
+                    </div>
+                    <div style="color: #666; font-size: 11px; width: 50px; text-align: right;">
+                        ${distance}ly
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Build discovery progress (reuse SectorManager logic)
+        const foundTypes = new Set();
+        sectors.forEach(s => foundTypes.add(s.type.name));
+        const sectorTypeInfo = [
+            { name: 'Standard', color: '#66f' },
+            { name: 'Resource-Rich', color: '#fc8' },
+            { name: 'Data Haven', color: '#6f6' },
+            { name: 'Ancient', color: '#f6f' },
+            { name: 'Asteroid Field', color: '#f66' }
+        ];
+        const pipsHtml = sectorTypeInfo.map(type => {
+            const found = foundTypes.has(type.name);
+            return `<span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: ${found ? type.color : '#444'}; opacity: ${found ? '1' : '0.3'}; margin: 0 3px; vertical-align: middle; box-shadow: ${found ? `0 0 6px ${type.color}` : 'none'};" title="${type.name}${found ? ' (found)' : ''}"></span>`;
+        }).join('');
+
+        const reportHTML = `
+            <h2 style="color: #0ff; text-align: center; margin-bottom: 5px;">SECTOR REPORT</h2>
+            <p style="color: #888; text-align: center; margin-bottom: 15px;">
+                ${sectors.length} sector${sectors.length !== 1 ? 's' : ''} explored &middot;
+                ${foundTypes.size}/5 types found ${pipsHtml}
+            </p>
+
+            <div style="max-height: 400px; overflow-y: auto; border: 1px solid #333; border-radius: 6px; margin-bottom: 15px;">
+                ${sectorsHTML}
+            </div>
+
+            <p style="color: #666; text-align: center; font-size: 12px; font-style: italic;">Click a sector to navigate there</p>
+        `;
+
+        const modalContent = document.getElementById('sectorModalContent');
+        if (modalContent) {
+            let surveyDiv = document.getElementById('sectorSurveyContent');
+            if (!surveyDiv) {
+                surveyDiv = document.createElement('div');
+                surveyDiv.id = 'sectorSurveyContent';
+                const okBtn = document.getElementById('sectorOkBtn');
+                modalContent.insertBefore(surveyDiv, okBtn);
+            }
+            surveyDiv.innerHTML = reportHTML;
+        }
+
+        // Set button text to "Close"
+        const okBtn = document.getElementById('sectorOkBtn');
+        if (okBtn) {
+            okBtn.textContent = 'Close';
+            const newOkBtn = okBtn.cloneNode(true);
+            okBtn.parentNode.replaceChild(newOkBtn, okBtn);
+            newOkBtn.addEventListener('click', () => {
+                modal.classList.remove('active');
+                // Reset button text for sector discovery usage
+                newOkBtn.textContent = 'Continue';
+            });
+        }
+
+        modal.classList.add('active');
     }
 
     /**

@@ -143,6 +143,10 @@ class SectorManager {
 
                 this.showSectorDiscovery(sector.type, sector.name, sector);
 
+                // Show sector report button
+                const sectorReportBtn = document.getElementById('sectorReportBtn');
+                if (sectorReportBtn) sectorReportBtn.style.display = 'inline-block';
+
                 // Spawn discovery bonus signals
                 this.spawnDiscoveryBonusSignals(x, y, sector.type);
                 

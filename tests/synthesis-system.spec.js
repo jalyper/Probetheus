@@ -93,7 +93,7 @@ test.describe('Synthesis System', () => {
     });
 
     const beforeProbethium = await page.evaluate(() => {
-      return window.game.gameState.probethium;
+      return window.game.gameState.probethium.current;
     });
 
     // Trigger synthesis
@@ -105,7 +105,7 @@ test.describe('Synthesis System', () => {
     await page.waitForTimeout(100);
 
     const afterProbethium = await page.evaluate(() => {
-      return window.game.gameState.probethium;
+      return window.game.gameState.probethium.current;
     });
 
     const afterExotics = await page.evaluate(() => {
