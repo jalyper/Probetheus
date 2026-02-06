@@ -480,8 +480,13 @@ class ProbeManager {
             const signalDiscoveryBonus = window.game?.shellSystem ? window.game.shellSystem.getEntityBonus('probes', probe, 'dataSignalDiscovery') : 0;
             const signalChance = 0.3 * (1 + signalDiscoveryBonus / 100);
 
-            // Generate signals with base 30% chance (modified by shell bonus)
-            if (Math.random() < signalChance) {
+            // PROF-02: Apply sector resource profile spawn rate multiplier
+            const currentSector = this.getCurrentSector(probe);
+            const spawnMultiplier = currentSector?.resourceProfile?.spawnRateMultiplier || 1.0;
+            const adjustedSignalChance = signalChance * spawnMultiplier;
+
+            // Generate signals with base 30% chance (modified by shell bonus and sector profile)
+            if (Math.random() < adjustedSignalChance) {
                 try {
                     const signalX = probe.current.x + (Math.random() - 0.5) * 160;
                     const signalY = probe.current.y + (Math.random() - 0.5) * 160;

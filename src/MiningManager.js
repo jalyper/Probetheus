@@ -266,7 +266,7 @@ class MiningManager {
             const cycleElapsed = currentTime - station.cycleStartTime;
             station.operationCycleProgress = Math.min(1, cycleElapsed / stationType.operationDuration);
             
-            // Continuous Probethium production and resource consumption during mining
+            // Continuous production and resource consumption during mining
             // Check if station is in an asteroid field for 3x bonus
             const sectorBonus = this.getStationSectorBonus(station);
             // Shell bonus: miningEfficiency increases output
@@ -274,21 +274,41 @@ class MiningManager {
             const efficiencyShellMultiplier = 1 + efficiencyShellBonus / 100;
             const productionPerMs = (stationType.output * station.level * station.efficiency * this.gameState.mining.efficiencyBonus * sectorBonus * efficiencyShellMultiplier) / stationType.operationDuration;
             const continuousProduction = productionPerMs * deltaTime;
-            
+
             // Consume resources continuously during the cycle
             Object.entries(stationType.requirements).forEach(([resource, totalRequired]) => {
                 const consumptionPerMs = totalRequired / stationType.operationDuration;
                 const continuousConsumption = consumptionPerMs * deltaTime;
-                
+
                 if (station.stationInventory[resource] > 0 && continuousConsumption > 0) {
                     station.stationInventory[resource] = Math.max(0, station.stationInventory[resource] - continuousConsumption);
                 }
             });
-            
+
+            // PROF-05: Apply production based on sector resource profile
             if (continuousProduction > 0) {
                 station.totalProduced += continuousProduction;
-                this.gameState.mining.totalProbetheum += continuousProduction;
-                this.gameState.probethium.current += continuousProduction;
+
+                const outputResource = this.getStationOutputResource(station);
+
+                if (outputResource === 'probethium') {
+                    // Probethium-rich sectors produce probethium (backward compatible)
+                    this.gameState.mining.totalProbetheum += continuousProduction;
+                    this.gameState.probethium.current += continuousProduction;
+                } else if (outputResource === 'mixed') {
+                    // Balanced sectors produce reduced mixed resources (0.3x to each type)
+                    const mixedProduction = continuousProduction * 0.3;
+                    const resources = this.gameState.getResources();
+                    resources.minerals = (resources.minerals || 0) + mixedProduction;
+                    resources.data = (resources.data || 0) + mixedProduction;
+                    resources.artifacts = (resources.artifacts || 0) + mixedProduction;
+                    this.gameState.updateResources(resources, this.eventBus);
+                } else {
+                    // Specific resource output (minerals, data, artifacts)
+                    const resources = this.gameState.getResources();
+                    resources[outputResource] = (resources[outputResource] || 0) + continuousProduction;
+                    this.gameState.updateResources(resources, this.eventBus);
+                }
             }
             
             // Trigger periodic UI updates to show resource depletion
@@ -670,6 +690,44 @@ class MiningManager {
     }
 
     /**
+     * Get output resource type for a mining station based on sector resource profile
+     * PROF-05: Mining stations produce sector specialty resource
+     */
+    getStationOutputResource(station) {
+        // Determine which sector the station is in
+        const world = this.gameState.getWorld();
+        const sectorX = Math.floor(station.position.x / world.standardSectorWidth);
+        const sectorY = Math.floor(station.position.y / world.standardSectorHeight);
+        const key = `${sectorX},${sectorY}`;
+        const sector = world.sectors.get(key);
+
+        // Backward compatibility: if no sector or no profile, default to probethium
+        if (!sector || !sector.resourceProfile || !sector.resourceProfile.type) {
+            console.log(`[PROF-05] Station ${station.id} in unknown sector, defaulting to probethium`);
+            return 'probethium';
+        }
+
+        // Map resource profile type to output resource
+        const profileType = sector.resourceProfile.type;
+
+        switch (profileType) {
+            case 'mineral-rich':
+                return 'minerals';
+            case 'data-rich':
+                return 'data';
+            case 'artifact-rich':
+                return 'artifacts';
+            case 'probethium-rich':
+                return 'probethium';
+            case 'balanced':
+                return 'mixed';
+            default:
+                console.warn(`[PROF-05] Unknown profile type ${profileType}, defaulting to probethium`);
+                return 'probethium';
+        }
+    }
+
+    /**
      * Get sector bonus for mining station
      */
     getStationSectorBonus(station) {
@@ -679,7 +737,7 @@ class MiningManager {
         const sectorY = Math.floor(station.position.y / world.standardSectorHeight);
         const key = `${sectorX},${sectorY}`;
         const sector = world.sectors.get(key);
-        
+
         // Return 3x bonus for asteroid fields, 1x for others
         if (sector && sector.type && sector.type.name === 'Asteroid Field') {
             return 3.0;
