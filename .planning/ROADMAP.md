@@ -4,7 +4,7 @@
 **Milestone:** v1.3 Signal Distribution System
 **Phases:** 7 (Phase 5 through Phase 10, plus Phase 8.5)
 **Requirements:** 35 total
-**Status:** Phase 8 complete, Phase 8.5 planned
+**Status:** Phase 8.5 complete, Phase 9 pending
 
 ## Overview
 
@@ -130,8 +130,8 @@ This milestone adds sector-specific signal types that are exclusive to designate
 **Requirements:** SYNTH-01, SYNTH-02, SYNTH-03, SYNTH-04
 
 **Plans:** 2 plans
-- [ ] 085-01-PLAN.md — Research node, hub button, conversion logic, and 3-second canvas animation
-- [ ] 085-02-PLAN.md — Playwright tests for SYNTH-01 through SYNTH-04
+- [x] 085-01-PLAN.md — Research node, hub button, conversion logic, and 3-second canvas animation
+- [x] 085-02-PLAN.md — Playwright tests for SYNTH-01 through SYNTH-04
 
 **Success Criteria:**
 1. Hub menu has "Synthesize Probethium" button that converts exotic materials to probethium
@@ -209,13 +209,13 @@ This milestone adds sector-specific signal types that are exclusive to designate
 | Phase 6: Visual Rendering | 5 | 1 | Complete | 100% |
 | Phase 7: Signal Rewards | 4 | 1 | Complete | 100% |
 | Phase 8: Sector Resource Profiles | 6 | 3 | Complete | 100% |
-| Phase 8.5: Probethium Synthesis | 4 | 2 | Planned | 0% |
+| Phase 8.5: Probethium Synthesis | 4 | 2 | Complete | 100% |
 | Phase 9: Discovery Reveal | 4 | 0 | Pending | 0% |
 | Phase 10: Testing & Integration | 5 | 0 | Pending | 0% |
 
 **Total Requirements:** 35
-**Completed:** 22
-**Remaining:** 13
+**Completed:** 26
+**Remaining:** 9
 
 ## Coverage Map
 
@@ -243,10 +243,10 @@ This milestone adds sector-specific signal types that are exclusive to designate
 | PROF-04 | Phase 8 | Complete |
 | PROF-05 | Phase 8 | Complete |
 | PROF-06 | Phase 8 | Complete |
-| SYNTH-01 | Phase 8.5 | Planned |
-| SYNTH-02 | Phase 8.5 | Planned |
-| SYNTH-03 | Phase 8.5 | Planned |
-| SYNTH-04 | Phase 8.5 | Planned |
+| SYNTH-01 | Phase 8.5 | Complete |
+| SYNTH-02 | Phase 8.5 | Complete |
+| SYNTH-03 | Phase 8.5 | Complete |
+| SYNTH-04 | Phase 8.5 | Complete |
 | DISC-01 | Phase 9 | Pending |
 | DISC-02 | Phase 9 | Pending |
 | DISC-03 | Phase 9 | Pending |
@@ -305,3 +305,4 @@ This milestone adds sector-specific signal types that are exclusive to designate
 *Phase 8.5 added: 2026-02-05 (probethium synthesis -- mining rework + exotic material economy)*
 *Phase 8 planned: 2026-02-05*
 *Phase 8.5 planned: 2026-02-05*
+*Phase 8.5 complete: 2026-02-06*

@@ -43,10 +43,10 @@ Requirements for sector-specific signals and sector resource randomization.
 
 ### Probethium Synthesis
 
-- [ ] **SYNTH-01**: Hub menu has "Synthesize Probethium" button that converts exotic materials to probethium
-- [ ] **SYNTH-02**: Synthesis ability is unlocked via research tree
-- [ ] **SYNTH-03**: Hub plays a synthesis animation when converting exotics to probethium
-- [ ] **SYNTH-04**: Synthesis provides an alternative probethium source for players who haven't found probethium-rich sectors
+- [x] **SYNTH-01**: Hub menu has "Synthesize Probethium" button that converts exotic materials to probethium
+- [x] **SYNTH-02**: Synthesis ability is unlocked via research tree
+- [x] **SYNTH-03**: Hub plays a synthesis animation when converting exotics to probethium
+- [x] **SYNTH-04**: Synthesis provides an alternative probethium source for players who haven't found probethium-rich sectors
 
 ### Discovery Reveal
 
@@ -109,10 +109,10 @@ Requirements for sector-specific signals and sector resource randomization.
 | PROF-04 | Phase 8 | Complete |
 | PROF-05 | Phase 8 | Complete |
 | PROF-06 | Phase 8 | Complete |
-| SYNTH-01 | Phase 8.5 | Pending |
-| SYNTH-02 | Phase 8.5 | Pending |
-| SYNTH-03 | Phase 8.5 | Pending |
-| SYNTH-04 | Phase 8.5 | Pending |
+| SYNTH-01 | Phase 8.5 | Complete |
+| SYNTH-02 | Phase 8.5 | Complete |
+| SYNTH-03 | Phase 8.5 | Complete |
+| SYNTH-04 | Phase 8.5 | Complete |
 | DISC-01 | Phase 9 | Pending |
 | DISC-02 | Phase 9 | Pending |
 | DISC-03 | Phase 9 | Pending |
