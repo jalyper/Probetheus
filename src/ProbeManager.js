@@ -503,11 +503,23 @@ class ProbeManager {
                     const exclusiveTypes = ['ore_vein', 'data_cache', 'relic', 'exotic_crystal'];
                     const isExclusive = exclusiveTypes.includes(signalType);
 
+                    // Determine rarity with REW-03 gating for relic signals
+                    let signalRarity;
+                    if (isDarkMarket) {
+                        signalRarity = 'dark_market';
+                    } else {
+                        signalRarity = this.determineSignalRarity(isInAsteroidField, probe);
+                        // REW-03: Relic signals guarantee rare+ artifacts (no common rarity)
+                        if (signalType === 'relic' && signalRarity === 'common') {
+                            signalRarity = 'uncommon';
+                        }
+                    }
+
                     const signal = {
                         x: signalX,
                         y: signalY,
                         radius: isDarkMarket ? 12 : isExclusive ? 10 + Math.random() * 3 : 8 + Math.random() * 4,
-                        rarity: isDarkMarket ? 'dark_market' : this.determineSignalRarity(isInAsteroidField, probe),
+                        rarity: signalRarity,
                         signalType: signalType,
                         duration: isDarkMarket ? 5000
                             : isExclusive ? 5000 + Math.random() * 3000  // VIS-05: 5-8 seconds
