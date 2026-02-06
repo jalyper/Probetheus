@@ -292,10 +292,24 @@ class DetailsPanel {
         const efficiency = Math.round(station.efficiency * 100);
         const activeStatus = station.active ? '🟢 Active' : '🔴 Inactive';
         const productionRate = station.active ? '0.001' : '0';
-        
+
         // Get mining station type data
         const miningManager = this.gameState.miningManager;
         const fullStationType = miningManager ? miningManager.getStationTypes()[station.type] : null;
+
+        // PROF-06: Get station output resource based on sector profile
+        const outputResource = miningManager ? miningManager.getStationOutputResource(station) : 'probethium';
+
+        // Map output resource to display labels with icons
+        const outputResourceLabels = {
+            'probethium': { name: 'Probetheum', icon: '⚛️' },
+            'minerals': { name: 'Minerals', icon: '⛽' },
+            'data': { name: 'Data', icon: '📊' },
+            'artifacts': { name: 'Artifacts', icon: '🏺' },
+            'mixed': { name: 'Mixed Resources (reduced)', icon: '📦' }
+        };
+
+        const outputLabel = outputResourceLabels[outputResource] || { name: 'Unknown', icon: '❓' };
         
         // Resource requirements display
         let requirementsHtml = '';
@@ -357,7 +371,11 @@ class DetailsPanel {
             <div style="background: rgba(100,200,255,0.05); border: 1px solid rgba(100,200,255,0.2); border-radius: 5px; padding: 10px; margin-bottom: 12px;">
                 <div style="color: #64c8ff; font-size: 12px; font-weight: bold; margin-bottom: 6px;">📊 Production</div>
                 <div style="color: #ccc; font-size: 12px; line-height: 1.6;">
-                    <div>Probetheum/min: ${productionRate}</div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span>${outputLabel.icon}</span>
+                        <span>Mining Output: <span style="color: #0f8; font-weight: bold;">${outputLabel.name}</span></span>
+                    </div>
+                    <div>Production Rate: ${productionRate}/min</div>
                     <div>Total Produced: ${station.totalProduced?.toFixed(6) || '0.000000'}</div>
                     <div>Connected Shuttles: ${connectedShuttles.length}</div>
                 </div>
@@ -383,7 +401,7 @@ class DetailsPanel {
             </div>
 
             <div style="color: #666; font-size: 10px; margin-top: 8px; line-height: 1.3;">
-                ${!station.active ? '⚠️ Station needs resources to operate' : '✅ Station is producing Probetheum'}
+                ${!station.active ? '⚠️ Station needs resources to operate' : `✅ Station is producing ${outputLabel.name}`}
             </div>
         `;
         
