@@ -4,7 +4,7 @@
 **Milestone:** v1.3 Signal Distribution System
 **Phases:** 7 (Phase 5 through Phase 10, plus Phase 8.5)
 **Requirements:** 35 total
-**Status:** Phase 8.5 complete, Phase 9 planned
+**Status:** Phase 9 complete, Phase 10 planned
 
 ## Overview
 
@@ -34,7 +34,7 @@ This milestone adds sector-specific signal types that are exclusive to designate
 **Implementation Notes:**
 - Add `exclusiveSignalType` field to sector type definitions in SectorManager.js
 - Extend ProbeManager.determineSignalType() with conditional check for exclusive types before fallback
-- Map exclusive types to base collection categories (Ore Vein → minerals, Data Cache → data, Relic → artifacts, Exotic Crystal → mixed)
+- Map exclusive types to base collection categories (Ore Vein -> minerals, Data Cache -> data, Relic -> artifacts, Exotic Crystal -> mixed)
 - Use existing rarity system (common/uncommon/rare/epic/legendary) for all exclusive types
 - Cache sector lookups to prevent performance degradation with 20+ probes
 
@@ -84,7 +84,7 @@ This milestone adds sector-specific signal types that are exclusive to designate
 
 **Implementation Notes:**
 - Add exclusive type cases to GameController.explore() reward calculation
-- Stack multipliers: shell bonuses (explorationRewards, artifactDiscovery) → signal type bonuses → planet type bonuses
+- Stack multipliers: shell bonuses (explorationRewards, artifactDiscovery) -> signal type bonuses -> planet type bonuses
 - Exotic Crystal logic: 60% chance exotic minerals (existing system), 40% chance mixed reward (minerals + data + artifacts)
 - Relic rarity gating: filter artifact rewards to exclude common tier, redistribute probability to uncommon+
 - Track resource gain rates by sector type during testing for economy balance
@@ -108,7 +108,7 @@ This milestone adds sector-specific signal types that are exclusive to designate
 2. Resource profile determines base signal spawn rate and rare signal frequency in that sector
 3. Sectors farther from starting hub have higher chance of richer profiles (distance-weighted RNG)
 4. Low-probability lucky discoveries allow probethium-rich sectors very early in game (1-5% chance within first 10 sectors)
-5. Mining stations mine the sector's specialty resource (mineral-rich → minerals, data-rich → data, probethium-rich → probethium)
+5. Mining stations mine the sector's specialty resource (mineral-rich -> minerals, data-rich -> data, probethium-rich -> probethium)
 6. Probethium-rich sectors are rare and the only way to directly mine probethium
 
 **Implementation Notes:**
@@ -157,8 +157,8 @@ This milestone adds sector-specific signal types that are exclusive to designate
 **Requirements:** DISC-01, DISC-02, DISC-03, DISC-04
 
 **Plans:** 2 plans
-- [ ] 09-01-PLAN.md — Rewrite discovery modal into Sector Survey Report with 8 sections and exclusive signal spawning
-- [ ] 09-02-PLAN.md — Playwright tests for DISC-01 through DISC-04
+- [x] 09-01-PLAN.md — Rewrite discovery modal into Sector Survey Report with 8 sections and exclusive signal spawning
+- [x] 09-02-PLAN.md — Playwright tests for DISC-01 through DISC-04
 
 **Success Criteria:**
 1. Sector discovery modal highlights exclusive signal type available in that sector (or "Balanced Signals" for Standard)
@@ -177,13 +177,18 @@ This milestone adds sector-specific signal types that are exclusive to designate
 ---
 
 ### Phase 10: Testing & Integration
-**Goal:** All exclusive signal features verified through automated tests
+**Goal:** All exclusive signal features verified through automated integration tests
 
 **Dependencies:** Phases 5-9 (tests validate implementation)
 
 **Requirements:** TEST-01, TEST-02, TEST-03, TEST-04, TEST-05
 
-**Plans:** 0 plans
+**Plans:** 3 plans
+
+Plans:
+- [ ] 10-01-PLAN.md — Progression gate tests (20-25 prerequisite gating tests)
+- [ ] 10-02-PLAN.md — Happy path integration tests (8-12 end-to-end flow tests)
+- [ ] 10-03-PLAN.md — Statistical validation tests (5-8 RNG distribution tests)
 
 **Success Criteria:**
 1. Playwright tests confirm exclusive signals spawn only in their designated sector types (not in other sectors)
@@ -193,13 +198,13 @@ This milestone adds sector-specific signal types that are exclusive to designate
 5. Statistical tests verify distance-based richness produces expected distribution over 100+ sectors
 
 **Implementation Notes:**
-- New test file: `tests/sector-exclusive-signals.spec.js`
-- Test save compatibility: load pre-v1.3 saves, verify no errors on signals without new properties
-- Test auto-collection: verify equipment (mineral/data/artifact collectors) auto-collects exclusive types via base type mapping
-- Performance test: 20 probes in mixed sectors maintains 45+ FPS
-- Spawn rate validation: generate 1000 signals, verify 15-30% exclusive rate in home sectors
-- Distance distribution test: create 100 sectors at varying distances, verify richness correlation
-- Regression tests: existing signal types (mineral, data, artifact, mixed) continue working unchanged
+- Three test files: progression-gates.spec.js, happy-path-integration.spec.js, statistical-validation.spec.js
+- Target 35-50 total integration tests across all three files
+- Heavy emphasis on "can't do X before Y" gating tests
+- Full player progression flows crossing 3+ game systems
+- Large-sample RNG validation (500+ signals, 200+ sectors, 100+ rarity samples)
+- No backward compatibility testing (dropped per user decision)
+- No duplicating per-phase unit tests (integration combines features into flows)
 
 ---
 
@@ -212,12 +217,12 @@ This milestone adds sector-specific signal types that are exclusive to designate
 | Phase 7: Signal Rewards | 4 | 1 | Complete | 100% |
 | Phase 8: Sector Resource Profiles | 6 | 3 | Complete | 100% |
 | Phase 8.5: Probethium Synthesis | 4 | 2 | Complete | 100% |
-| Phase 9: Discovery Reveal | 4 | 2 | Planned | 0% |
-| Phase 10: Testing & Integration | 5 | 0 | Pending | 0% |
+| Phase 9: Discovery Reveal | 4 | 2 | Complete | 100% |
+| Phase 10: Testing & Integration | 5 | 3 | Planned | 0% |
 
 **Total Requirements:** 35
-**Completed:** 26
-**Remaining:** 9
+**Completed:** 30
+**Remaining:** 5
 
 ## Coverage Map
 
@@ -249,15 +254,15 @@ This milestone adds sector-specific signal types that are exclusive to designate
 | SYNTH-02 | Phase 8.5 | Complete |
 | SYNTH-03 | Phase 8.5 | Complete |
 | SYNTH-04 | Phase 8.5 | Complete |
-| DISC-01 | Phase 9 | Pending |
-| DISC-02 | Phase 9 | Pending |
-| DISC-03 | Phase 9 | Pending |
-| DISC-04 | Phase 9 | Pending |
-| TEST-01 | Phase 10 | Pending |
-| TEST-02 | Phase 10 | Pending |
-| TEST-03 | Phase 10 | Pending |
-| TEST-04 | Phase 10 | Pending |
-| TEST-05 | Phase 10 | Pending |
+| DISC-01 | Phase 9 | Complete |
+| DISC-02 | Phase 9 | Complete |
+| DISC-03 | Phase 9 | Complete |
+| DISC-04 | Phase 9 | Complete |
+| TEST-01 | Phase 10 | Planned |
+| TEST-02 | Phase 10 | Planned |
+| TEST-03 | Phase 10 | Planned |
+| TEST-04 | Phase 10 | Planned |
+| TEST-05 | Phase 10 | Planned |
 
 **Coverage:** 35/35 requirements mapped (100%)
 
@@ -309,3 +314,5 @@ This milestone adds sector-specific signal types that are exclusive to designate
 *Phase 8.5 planned: 2026-02-05*
 *Phase 8.5 complete: 2026-02-06*
 *Phase 9 planned: 2026-02-05*
+*Phase 9 complete: 2026-02-06*
+*Phase 10 planned: 2026-02-06*
