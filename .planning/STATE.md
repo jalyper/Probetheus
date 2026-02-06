@@ -4,9 +4,9 @@
 
 **Milestone:** v1.3 Signal Distribution System
 **Phase:** Phase 9 - Discovery Reveal
-**Plan:** 01 of 01 complete
-**Status:** Phase 9 complete - comprehensive sector survey report with discovery tracking
-**Last activity:** 2026-02-06 - Completed 09-01-PLAN.md (discovery modal overhaul)
+**Plan:** 02 of 02 complete
+**Status:** Phase 9 complete - comprehensive discovery modal with automated test coverage
+**Last activity:** 2026-02-06 - Completed 09-02-PLAN.md (discovery reveal tests)
 **Next Milestone:** -
 
 Progress: [████████████░░░░░░░░] 32/35 requirements (91%)
@@ -78,6 +78,7 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 - Success: Discovery modal highlights exclusive signals and resource profiles
 - Context: 09-CONTEXT.md captures "Sector Survey Report" design decisions
 - **Plan 09-01 COMPLETE:** 8-section modal with exclusive signal info, resource profile bars, discovery log tracking, guaranteed epic/legendary exclusive bonus signals
+- **Plan 09-02 COMPLETE:** 18 Playwright tests validating DISC-01 through DISC-04 (exclusive signal display, resource profile bars, bonus spawning, Standard messaging)
 
 **Phase 10: Testing & Integration** (3 requirements)
 - Goal: All features verified through automated tests
@@ -123,6 +124,10 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 | Standard sector positive framing | "Open Frequency" messaging positions Standard as strategic choice | Applied |
 | Exclusive bonus additive | Push exclusive signal to bonusSignals array before forEach loop | Applied |
 | initializeSector spawn fix | Added missing spawnDiscoveryBonusSignals call to new sector path | Applied |
+| Programmatic sector creation | Tests create sectors programmatically for deterministic control (no RNG flakiness) | Applied |
+| Profile override testing | triggerSectorDiscovery helper accepts profileOverride param for specific profile tests | Applied |
+| Dual content validation | Tests check both textContent and innerHTML (content + styles/colors) | Applied |
+| Signal array isolation | DISC-03 tests clear signals array before spawning to prevent test pollution | Applied |
 
 ### Tech Debt
 
@@ -149,11 +154,12 @@ None
 - **Plan 085-01:** Probethium synthesis system: research node in alien tech, hub button with batch conversion (5 exotics → 0.001 probethium), 3-phase animation (spiral/flash/drift), sequential queue, 8 Playwright tests
 - **Plan 085-02:** Comprehensive synthesis testing: 11 Playwright tests covering research gating, button states, conversion math (single/multiple batches, remainders), animation queue, and viability
 - **Plan 09-01:** Sector Survey Report: 8-section modal (header, research award, exclusive signal, resource profile, bonuses, discovery log, hazard, button), Unicode progress bars (signal richness, probethium potential), discovery tracking with colored pips, guaranteed epic/legendary exclusive bonus signals for non-Standard sectors
+- **Plan 09-02:** Discovery reveal tests: 18 Playwright tests with programmatic sector creation pattern, validates exclusive signal display (4 tests), resource profile bars (4 tests), bonus signal spawning (3 tests), Standard sector messaging (2 tests), plus 5 general modal tests
 
 ## Session Continuity
 
 Last session: 2026-02-06
-Stopped at: Completed 09-01-PLAN.md (Phase 9 complete - comprehensive sector discovery modal)
+Stopped at: Completed 09-02-PLAN.md (Phase 9 complete - discovery modal + automated tests)
 Resume file: None
 
 **Next steps:**
@@ -162,4 +168,4 @@ Resume file: None
 
 ---
 
-*Last updated: 2026-02-06 - Phase 9 complete (1 plan, comprehensive discovery modal), 32/35 requirements done (91%)*
+*Last updated: 2026-02-06 - Phase 9 complete (2 plans, comprehensive discovery modal + 18 automated tests), 32/35 requirements done (91%)*
