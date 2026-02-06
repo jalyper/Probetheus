@@ -5,8 +5,8 @@
 **Milestone:** v1.3 Signal Distribution System
 **Phase:** Phase 8 - Sector Resource Profiles (IN PROGRESS)
 **Plan:** 02 of 03 complete
-**Status:** Mining output rework complete, ready for plan 08-03
-**Last activity:** 2026-02-05 - Completed 08-02-PLAN.md (mining station resource output)
+**Status:** Resource profiles and mining rework complete, ready for plan 08-03
+**Last activity:** 2026-02-05 - Completed 08-01-PLAN.md (resource profile assignment)
 **Next Milestone:** -
 
 Progress: [████████░░░░░░░░░░░░] 18/35 requirements (51%)
@@ -100,6 +100,10 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 | Secondary rewards with variance | Consistency with primary reward calculation (base + 0-100% random) | Applied |
 | Balanced sector output | 0.3x mixed resources maintains usefulness without being optimal | Applied |
 | Old saves default probethium | Backward compatibility for saves without sector profiles | Applied |
+| Profiles independent from types | Resource-Rich sector can be data-rich profile (maximizes variety) | Applied |
+| Distance-weighted profile RNG | Near origin: 60% balanced, Far out: 30% balanced (progression feel) | Applied |
+| Spawn multipliers stack with bonuses | Sector multiplier * shell bonus = combined effect (multiplicative) | Applied |
+| Profile serialization automatic | Spread operator in SaveManager handles resourceProfile without changes | Applied |
 
 ### Tech Debt
 
@@ -126,11 +130,11 @@ None
 ## Session Continuity
 
 Last session: 2026-02-05
-Stopped at: Completed 08-02-PLAN.md
-Resume file: None
+Stopped at: Completed 08-01-PLAN.md
+Resume file: .planning/phases/08-sector-resource-profiles/08-01-SUMMARY.md
 
 **Next steps:**
-1. Continue Phase 8: Plan 08-03 (sector profile spawn rate multipliers - PROF-03, PROF-04)
+1. Continue Phase 8: Plan 08-03 (balanced sector mixed resource output - PROF-02, PROF-03, PROF-04)
 2. Testing and verification for Phase 8
 3. Begin Phase 8.5 (Probethium Synthesis)
 
