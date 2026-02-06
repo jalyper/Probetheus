@@ -3,13 +3,13 @@
 ## Current Position
 
 **Milestone:** v1.3 Signal Distribution System
-**Phase:** Phase 8 - Sector Resource Profiles (COMPLETE)
-**Plan:** 03 of 03 complete
-**Status:** Phase 8 complete - resource profiles, mining rework, and tests done
-**Last activity:** 2026-02-06 - Completed 08-03-PLAN.md (sector profile tests)
+**Phase:** Phase 8.5 - Probethium Synthesis (COMPLETE)
+**Plan:** 01 of 01 complete
+**Status:** Phase 8.5 complete - synthesis system with research, button, conversion, and animation
+**Last activity:** 2026-02-06 - Completed 085-01-PLAN.md (probethium synthesis)
 **Next Milestone:** -
 
-Progress: [█████████░░░░░░░░░░░] 24/35 requirements (69%)
+Progress: [██████████░░░░░░░░░░] 28/35 requirements (80%)
 
 ## Project Reference
 
@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 **Current milestone (v1.3):**
 - Phases: 6 (Phase 5 through Phase 10)
 - Requirements: 35 total (expanded with PROF-06, SYNTH-01 through SYNTH-04)
-- Completed: 24 (SIG-01 through SIG-07, VIS-01 through VIS-05, REW-01 through REW-04, PROF-01 through PROF-06)
-- Remaining: 11
-- Progress: 69%
+- Completed: 28 (SIG-01 through SIG-07, VIS-01 through VIS-05, REW-01 through REW-04, PROF-01 through PROF-06, SYNTH-01 through SYNTH-04)
+- Remaining: 7
+- Progress: 80%
 
 **Previous milestone (v1.2):**
 - Duration: ~5 days (2026-01-28 to 2026-02-02)
@@ -67,9 +67,10 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 - **Plan 08-02 COMPLETE:** Mining stations produce sector specialty resource (PROF-05, PROF-06)
 - **Plan 08-03 COMPLETE:** 14 Playwright tests validating PROF-01 through PROF-06
 
-**Phase 8.5: Probethium Synthesis** (4 requirements)
+**Phase 8.5: Probethium Synthesis** (4 requirements) - COMPLETE
 - Goal: Players synthesize probethium at hubs using exotic materials
 - Success: Hub synthesis button, research unlock, animation, alternative probethium path
+- **Plan 085-01 COMPLETE:** Research node, hub button with batch conversion, 3-phase purple-to-gold animation, queue system, 8 tests
 
 **Phase 9: Discovery Reveal** (4 requirements)
 - Goal: Players understand sector specialization through discovery UI
@@ -107,6 +108,11 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 | Profile serialization automatic | Spread operator in SaveManager handles resourceProfile without changes | Applied |
 | Statistical test sample sizes | 200 samples for distribution, 500 for rare events (reliable RNG validation) | Applied |
 | Test tolerance ranges for RNG | 40% threshold for balanced sectors (60% weight + variance) | Applied |
+| Synthesis batch processing | Process all available batches at once (not one-at-a-time) | Applied |
+| Synthesis button visibility | Hide before research unlock (not greyed out) | Applied |
+| Animation queue sequential | Animations queue sequentially (not overlapping/simultaneous) | Applied |
+| Screen shake via property | getShakeOffset() property (not viewOffset mutation) | Applied |
+| Three-phase synthesis animation | Spiral, flash/shake, drift (3 seconds total) | Applied |
 
 ### Tech Debt
 
@@ -130,18 +136,19 @@ None
 - **Plan 08-01:** Resource profiles assigned on sector discovery with distance-weighted distribution
 - **Plan 08-02:** Mining stations produce sector specialty (minerals/data/artifacts/probethium/mixed), UI shows output type
 - **Plan 08-03:** 14 Playwright tests validate all Phase 8 requirements (PROF-01 through PROF-06)
+- **Plan 085-01:** Probethium synthesis system: research node in alien tech, hub button with batch conversion (5 exotics → 0.001 probethium), 3-phase animation (spiral/flash/drift), sequential queue, 8 Playwright tests
 
 ## Session Continuity
 
 Last session: 2026-02-06
-Stopped at: Completed 08-03-PLAN.md (Phase 8 complete)
+Stopped at: Completed 085-01-PLAN.md (Phase 8.5 complete)
 Resume file: None
 
 **Next steps:**
-1. Begin Phase 8.5: Probethium Synthesis (4 requirements: SYNTH-01 through SYNTH-04)
-2. Then Phase 9: Discovery Reveal (4 requirements)
-3. Then Phase 10: Testing & Integration (5 requirements)
+1. Begin Phase 9: Discovery Reveal (4 requirements)
+2. Then Phase 10: Testing & Integration (5 requirements)
+3. Complete v1.3 milestone (7 requirements remaining)
 
 ---
 
-*Last updated: 2026-02-05 - Phase 8 complete, 24/35 requirements done (69%)*
+*Last updated: 2026-02-06 - Phase 8.5 complete, 28/35 requirements done (80%)*
