@@ -2,6 +2,36 @@
 
 ## Completed Milestones
 
+### v1.3 - Signal Distribution System
+**Completed:** 2026-02-06
+**Phases:** 7 (Phases 5-10, plus 8.5)
+**Plans:** 14
+**Requirements:** 35/35
+
+**Delivered:** Sector-specific exclusive signals with distinct visuals, enhanced rewards, resource profiles, probethium synthesis, discovery reveal UI, and 45 integration tests validating the complete player progression.
+
+**Key accomplishments:**
+- Exclusive signal types (Ore Vein, Data Cache, Relic, Exotic Crystal) spawn at 15-30% rate in designated sectors with distinct colors and particle effects
+- 2x resource yields and rarity gating for exclusive signal rewards
+- Sector resource profiles assigned on discovery with distance-weighted RNG for progression feel
+- Probethium synthesis system: research-gated hub button converting exotic minerals to probethium with 3-phase canvas animation
+- Sector Survey Report modal with 8 sections, Unicode progress bars, discovery log, and guaranteed epic+ bonus signals
+- 45 integration tests: 27 progression gates, 11 happy path flows, 7 statistical validation tests
+
+**Stats:**
+- 56 files created/modified
+- 27,253 lines added, 11,303 removed
+- 7 phases, 14 plans
+- 2 days (2026-02-05 to 2026-02-06)
+- Git range: `7f704f3` -> `3b39853`
+
+**Tech Debt:**
+- Hub and mining station shells not visually applied (carried from v1.1)
+
+**Archive:** `.planning/milestones/v1.3-ROADMAP.md`
+
+---
+
 ### v1.2 - Shell Bonuses & Effects
 **Completed:** 2026-02-02
 **Phases:** 4 (Phases 1-4)

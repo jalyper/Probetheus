@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A browser-based space exploration game where players deploy probes to explore sectors, collect resources (minerals, data, artifacts), build hubs and mining stations, research upgrades, and interact with Remnant NPCs. Equipped shells provide cosmetic visuals and gameplay bonuses to probes, hubs, and mining stations. Built with vanilla JavaScript and HTML5 Canvas.
+A browser-based space exploration game where players deploy probes to explore sectors, collect resources (minerals, data, artifacts), build hubs and mining stations, research upgrades, and interact with Remnant NPCs. Sectors have unique exclusive signal types with distinct visuals and enhanced rewards, resource profiles that influence mining and signal quality, and probethium synthesis for late-game progression. Equipped shells provide cosmetic visuals and gameplay bonuses to probes, hubs, and mining stations. Built with vanilla JavaScript and HTML5 Canvas.
 
 ## Core Value
 
@@ -26,33 +26,37 @@ Players explore, expand, and upgrade through satisfying resource collection and 
 - ✓ All 12 shell bonus types functional in gameplay (per-entity) — v1.2
 - ✓ Bonus tooltips visible on hover in shell selection and detail panels — v1.2
 - ✓ Bonuses apply to probes, hubs, and mining stations — v1.2
+- ✓ Sector-specific exclusive signal types (Ore Vein, Data Cache, Relic, Exotic Crystal) — v1.3
+- ✓ Distinct visuals with unique colors and particle effects per exclusive type — v1.3
+- ✓ Enhanced rewards: 2x yields, rarity gating, exotic mineral paths — v1.3
+- ✓ Sector resource profiles with distance-weighted richness — v1.3
+- ✓ Mining stations produce sector specialty resource — v1.3
+- ✓ Probethium synthesis via hub (research-gated, batch conversion, animation) — v1.3
+- ✓ Discovery reveal modal (Sector Survey Report with 8 sections) — v1.3
+- ✓ Shell bonuses apply to exclusive signal generation and collection — v1.3
+- ✓ 45 integration tests validating progression, happy path, and statistical distributions — v1.3
 
 ### Active
 
 <!-- Current scope. Building toward these. -->
 
-- [ ] Sector-specific signal types unique to each sector category
-- [ ] Discovery reveal moment when entering a new sector
-- [ ] Distinct visuals, rewards, and behaviors for sector-exclusive signals
-- [ ] Existing shell bonuses work with new signal types
+(None yet — define with `/gsd:new-milestone`)
 
 ### Out of Scope
 
 - Hub/mining station shell visuals — deferred tech debt from v1.1
 - Remnants story Phase 2 — separate milestone
-- New progression mechanics for signals — focus on feel, not new research/upgrades
 - Equipment slot upgrade to 3 slots via research — separate milestone
+- Cross-sector synergies — high complexity, defer to future
+- Sector streak bonuses — conflicts with "focus on feel" constraint
 
 ## Context
 
-- ShellSystem.js has complete bonus infrastructure: definitions, calculation methods (`getTotalBonuses`, `getBonus`, `applyBonus`, `getEntityBonus`, `applyBonusMultiplier`), display helpers
-- 12 bonus types defined with labels, units, and icons — all functional in gameplay
-- ~40 shells have bonuses, ~10 are cosmetic-only
-- Per-entity model: each shell's bonus only affects the entity it's equipped on
-- Bonus values normalized to rarity scale (10/15/20/25 primary, 5/8/10/12 secondary)
-- Tooltip system shows bonus info on hover across all detail panels and shell modal
-- 67 shell bonus tests across 8 test files
-- 181 total Playwright tests passing on Chromium
+- Shipped v1.3 with sector-specific signals, resource profiles, probethium synthesis, and discovery UI
+- 56 files modified in v1.3 milestone (27,253 lines added)
+- Tech stack: Vanilla JS, HTML5 Canvas, no frameworks
+- 30+ test files with 200+ Playwright tests covering all game systems
+- Asteroidz Hazard Fields sketched as potential v1.4 (HAZ-01 through HAZ-05 in v1.3 requirements archive)
 
 ## Constraints
 
@@ -72,6 +76,12 @@ Players explore, expand, and upgrade through satisfying resource collection and 
 | Research cost reduction: Math.max(1, Math.ceil(...)) | Conservative rounding; minimum 1 prevents free research | ✓ Good |
 | Category-appropriate bonuses only | Probes don't get researchSpeed; hubs don't get asteroidSurvival | ✓ Good |
 | 300ms tooltip delay | Standard UX pattern prevents accidental tooltips | ✓ Good |
+| Extension pattern for v1.3 (not new systems) | 95% infrastructure exists, add conditional logic | ✓ Good |
+| 22.5% exclusive spawn rate | 15-30% range with shell bonus headroom | ✓ Good |
+| Exclusive 2x multiplier (not additive) | Cleaner reward curve for ore_vein/data_cache | ✓ Good |
+| Resource profiles on discovery | Distance-weighted RNG for progression feel | ✓ Good |
+| Probethium synthesis batch processing | All available batches at once (not one-at-a-time) | ✓ Good |
+| Programmatic sector creation in tests | Deterministic control, no RNG flakiness | ✓ Good |
 
 ---
-*Last updated: 2026-02-02 after v1.3 milestone start*
+*Last updated: 2026-02-06 after v1.3 milestone*
