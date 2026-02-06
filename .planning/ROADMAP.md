@@ -2,9 +2,9 @@
 
 **Project:** Probetheus
 **Milestone:** v1.3 Signal Distribution System
-**Phases:** 6 (Phase 5 through Phase 10)
-**Requirements:** 30 total
-**Status:** Phase 7 complete, Phase 8 pending
+**Phases:** 7 (Phase 5 through Phase 10, plus Phase 8.5)
+**Requirements:** 35 total
+**Status:** Phase 7 complete, Phase 8 planned
 
 ## Overview
 
@@ -92,28 +92,57 @@ This milestone adds sector-specific signal types that are exclusive to designate
 ---
 
 ### Phase 8: Sector Resource Profiles
-**Goal:** Each sector has unique resource richness that influences signal quality and probethium potential
+**Goal:** Each sector has unique resource richness that influences signal quality, and mining stations mine the sector's specialty resource
 
 **Dependencies:** Phase 5 (profile system affects signal spawn rates)
 
-**Requirements:** PROF-01, PROF-02, PROF-03, PROF-04, PROF-05
+**Requirements:** PROF-01, PROF-02, PROF-03, PROF-04, PROF-05, PROF-06
+
+**Plans:** 3 plans
+- [ ] 08-01-PLAN.md — Add resource profile assignment with distance-weighted RNG and spawn rate multipliers
+- [ ] 08-02-PLAN.md — Rework mining station output based on sector profile and update station UI
+- [ ] 08-03-PLAN.md — Playwright tests for PROF-01 through PROF-06
+
+**Success Criteria:**
+1. Each sector receives a randomized resource profile on discovery (mineral-rich, data-rich, artifact-rich, probethium-rich, or balanced) with spawn rate multipliers
+2. Resource profile determines base signal spawn rate and rare signal frequency in that sector
+3. Sectors farther from starting hub have higher chance of richer profiles (distance-weighted RNG)
+4. Low-probability lucky discoveries allow probethium-rich sectors very early in game (1-5% chance within first 10 sectors)
+5. Mining stations mine the sector's specialty resource (mineral-rich → minerals, data-rich → data, probethium-rich → probethium)
+6. Probethium-rich sectors are rare and the only way to directly mine probethium
+
+**Implementation Notes:**
+- Add `resourceProfile` field to sector state with specialty type and richness multiplier
+- Generate profile on sector discovery in SectorManager.initializeSector()
+- Distance-weighted RNG for profile assignment (farther = richer, with outlier chance)
+- Rework MiningManager to check sector profile and produce the specialty resource
+- Probethium-rich sectors are rare (~5-10% of sectors); finding one is a major discovery
+- Persist resource profile through save/load in SaveManager
+- Display profile in sector discovery modal and sector tooltip
+
+---
+
+### Phase 8.5: Probethium Synthesis
+**Goal:** Players can synthesize probethium at hubs using exotic materials, providing an alternative to finding rare probethium-rich sectors
+
+**Dependencies:** Phase 8 (synthesis is the alternative path when mining isn't available)
+
+**Requirements:** SYNTH-01, SYNTH-02, SYNTH-03, SYNTH-04
 
 **Plans:** 0 plans
 
 **Success Criteria:**
-1. Each sector receives a randomized resource profile on discovery with spawn rate multipliers (0.7x to 1.5x)
-2. Resource profile determines base signal spawn rate and rare signal frequency in that sector
-3. Sectors farther from starting hub have higher chance of richer profiles (distance-weighted RNG)
-4. Low-probability lucky discoveries allow probethium-rich sectors very early in game (1-5% chance within first 10 sectors)
-5. Probethium-rich sectors generate 1.5x to 2.5x probethium from mining stations
+1. Hub menu has "Synthesize Probethium" button that converts exotic materials to probethium
+2. Synthesis ability is unlocked via a research node
+3. Hub plays a visual synthesis animation when converting exotics to probethium
+4. Synthesis provides a viable alternative probethium source for players who haven't found probethium-rich sectors
 
 **Implementation Notes:**
-- Add `resourceProfile` field to sector state: `{ signalRichness: float, rareSignalBonus: float, probethiumMultiplier: float }`
-- Generate profile on sector discovery in SectorManager.initializeSector()
-- Distance calculation: `Math.sqrt(sectorX^2 + sectorY^2)` from origin, apply weighted curve (0-5 distance = 0.7x-1.0x, 5-15 = 1.0x-1.3x, 15+ = 1.2x-1.5x)
-- RNG allows outliers: 10% chance ignore distance weighting for early lucky finds
-- Persist resource profile through save/load in SaveManager
-- Display profile in sector discovery modal and sector tooltip
+- Add "Synthesize Probethium" button to hub detail panel / hub menu
+- Research unlock gates the button (greyed out / hidden until researched)
+- Exotic materials are collected from exotic crystal signals (Phase 5/7 systems)
+- Hub animation: visual effect on the hub entity during synthesis (glow, particles, etc.)
+- Conversion rate TBD during planning (balance exotic rarity vs probethium need)
 
 ---
 
@@ -176,13 +205,14 @@ This milestone adds sector-specific signal types that are exclusive to designate
 | Phase 5: Signal Type System | 7 | 2 | Complete | 100% |
 | Phase 6: Visual Rendering | 5 | 1 | Complete | 100% |
 | Phase 7: Signal Rewards | 4 | 1 | Complete | 100% |
-| Phase 8: Sector Resource Profiles | 5 | 0 | Pending | 0% |
+| Phase 8: Sector Resource Profiles | 6 | 3 | Planned | 0% |
+| Phase 8.5: Probethium Synthesis | 4 | 0 | Pending | 0% |
 | Phase 9: Discovery Reveal | 4 | 0 | Pending | 0% |
 | Phase 10: Testing & Integration | 5 | 0 | Pending | 0% |
 
-**Total Requirements:** 30
+**Total Requirements:** 35
 **Completed:** 16
-**Remaining:** 14
+**Remaining:** 19
 
 ## Coverage Map
 
@@ -209,6 +239,11 @@ This milestone adds sector-specific signal types that are exclusive to designate
 | PROF-03 | Phase 8 | Pending |
 | PROF-04 | Phase 8 | Pending |
 | PROF-05 | Phase 8 | Pending |
+| PROF-06 | Phase 8 | Pending |
+| SYNTH-01 | Phase 8.5 | Pending |
+| SYNTH-02 | Phase 8.5 | Pending |
+| SYNTH-03 | Phase 8.5 | Pending |
+| SYNTH-04 | Phase 8.5 | Pending |
 | DISC-01 | Phase 9 | Pending |
 | DISC-02 | Phase 9 | Pending |
 | DISC-03 | Phase 9 | Pending |
@@ -219,7 +254,7 @@ This milestone adds sector-specific signal types that are exclusive to designate
 | TEST-04 | Phase 10 | Pending |
 | TEST-05 | Phase 10 | Pending |
 
-**Coverage:** 30/30 requirements mapped (100%)
+**Coverage:** 35/35 requirements mapped (100%)
 
 ## Architecture Summary
 
@@ -264,4 +299,5 @@ This milestone adds sector-specific signal types that are exclusive to designate
 *Phase 5 planned: 2026-02-02*
 *Phase 6 planned: 2026-02-04*
 *Phase 7 complete: 2026-02-05*
-*Ready for: `/gsd:plan-phase 8`*
+*Phase 8.5 added: 2026-02-05 (probethium synthesis -- mining rework + exotic material economy)*
+*Phase 8 planned: 2026-02-05*
