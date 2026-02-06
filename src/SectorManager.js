@@ -119,11 +119,16 @@ class SectorManager {
                 console.log(`Exploring existing sector [${x}, ${y}]: ${sector.name}`);
                 sector.explored = true;
                 sector.stars = this.generateSectorStars(x, y);
-                
+
                 // Ensure sector has required arrays
                 if (!sector.outposts) sector.outposts = [];
                 if (!sector.facilities) sector.facilities = [];
                 if (!sector.hubs) sector.hubs = [];
+
+                // PROF-01: Backward compatibility - assign profile if missing
+                if (!sector.resourceProfile) {
+                    sector.resourceProfile = this.assignResourceProfile(x, y);
+                }
                 
                 // Award research point for sector discovery
                 const research = this.gameState.getResearchSystem();
@@ -236,7 +241,10 @@ class SectorManager {
             facilities: [],
             hubs: []
         };
-        
+
+        // PROF-01: Assign resource profile on sector creation
+        sector.resourceProfile = this.assignResourceProfile(x, y);
+
         world.sectors.set(`${x},${y}`, sector);
         
         if (discovered) {
@@ -252,6 +260,58 @@ class SectorManager {
         }
         
         return sector;
+    }
+
+    /**
+     * Assign resource profile to a sector based on distance from origin
+     * PROF-01, PROF-03, PROF-04: Distance-weighted profile assignment
+     */
+    assignResourceProfile(x, y) {
+        // Calculate distance from origin
+        const distance = Math.sqrt(x * x + y * y);
+
+        // Define profile types and their spawn rate multipliers
+        const profileTypes = [
+            { type: 'balanced', spawnRateMultiplier: 1.0 },
+            { type: 'mineral-rich', spawnRateMultiplier: 1.5 },
+            { type: 'data-rich', spawnRateMultiplier: 1.5 },
+            { type: 'artifact-rich', spawnRateMultiplier: 1.5 },
+            { type: 'probethium-rich', spawnRateMultiplier: 0.8 }
+        ];
+
+        // Distance-based weight tables (PROF-03, PROF-04)
+        let weights;
+        if (distance < 5) {
+            // Near origin: mostly balanced, rare probethium-rich (~2%)
+            weights = [60, 20, 10, 8, 2];
+        } else if (distance < 10) {
+            // Mid-range: more variety, ~5% probethium-rich
+            weights = [45, 25, 15, 10, 5];
+        } else {
+            // Far from origin: rich profiles common, ~10% probethium-rich
+            weights = [30, 25, 20, 15, 10];
+        }
+
+        // Weighted random selection (same pattern as sector type selection)
+        const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+        let random = Math.random() * totalWeight;
+
+        let selectedProfile = profileTypes[0];
+        for (let i = 0; i < profileTypes.length; i++) {
+            random -= weights[i];
+            if (random <= 0) {
+                selectedProfile = profileTypes[i];
+                break;
+            }
+        }
+
+        console.log(`[PROF-01] Assigned ${selectedProfile.type} profile to sector [${x}, ${y}] (distance: ${distance.toFixed(1)})`);
+
+        return {
+            type: selectedProfile.type,
+            spawnRateMultiplier: selectedProfile.spawnRateMultiplier,
+            assignedDistance: distance
+        };
     }
 
     /**
