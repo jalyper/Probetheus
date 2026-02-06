@@ -817,7 +817,16 @@ class SectorManager {
                 bonusSignals.push({ rarity: 'epic', type: 'mixed' });
                 break;
         }
-        
+
+        // DISC-03: Add guaranteed epic/legendary exclusive signal for non-Standard sectors
+        if (sectorType.exclusiveSignalType) {
+            const rarity = Math.random() < 0.8 ? 'epic' : 'legendary';
+            bonusSignals.push({
+                rarity: rarity,
+                type: sectorType.exclusiveSignalType
+            });
+        }
+
         // Spawn the bonus signals
         bonusSignals.forEach((signalInfo, index) => {
             // Spread signals around the sector center
