@@ -26,6 +26,7 @@ class GameController {
         this.remnantManager = new RemnantManager(this.gameState, this.eventBus);
         this.dialogueSystem = new DialogueSystem(this.gameState, this.eventBus);
         this.musicManager = new MusicManager(this.gameState, this.eventBus);
+        this.synthesisAnimation = new SynthesisAnimationManager(this.eventBus);
         this.uiManager = new UIManager(this.gameState, this.eventBus, this.probeManager, this.buildingSystem);
         
         // Make managers available to gameState for easy access
@@ -2681,6 +2682,9 @@ class GameController {
 
         // Probe detail panel positioning now handled by DetailsPanel.js
 
+        // Update synthesis animation
+        this.synthesisAnimation.update(deltaTime);
+
         // Render
         this.render();
         
@@ -2711,6 +2715,10 @@ class GameController {
         // Save context and apply zoom
         this.ctx.save();
         this.ctx.scale(this.gameState.world.zoomLevel, this.gameState.world.zoomLevel);
+
+        // Apply screen shake from synthesis animation
+        const shakeOffset = this.synthesisAnimation.getShakeOffset();
+        this.ctx.translate(shakeOffset.x, shakeOffset.y);
 
         // Render stars
         this.renderStars();
@@ -2745,6 +2753,9 @@ class GameController {
         if (this.gameState.ui.deployMode && this.gameState.ui.selectedHub) {
             this.renderDeploymentPreview();
         }
+
+        // Render synthesis animation
+        this.synthesisAnimation.render(this.ctx, this.gameState.world.viewOffset);
 
         // Restore context
         this.ctx.restore();
