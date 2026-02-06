@@ -295,6 +295,7 @@ class MiningManager {
                     // Probethium-rich sectors produce probethium (backward compatible)
                     this.gameState.mining.totalProbetheum += continuousProduction;
                     this.gameState.probethium.current += continuousProduction;
+                    this.eventBus.emit('probetheum:collected');
                 } else if (outputResource === 'mixed') {
                     // Balanced sectors produce reduced mixed resources (0.3x to each type)
                     const mixedProduction = continuousProduction * 0.3;

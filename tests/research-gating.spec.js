@@ -269,7 +269,7 @@ test.describe('Research Gating System', () => {
         expect(accessAllowed).toBe(true);
     });
 
-    test('completing place_hub tutorial step allows research access', async ({ page }) => {
+    test('completing build_hub tutorial step allows research access', async ({ page }) => {
         await page.locator('#newGameBtn').click();
 
         try {
@@ -285,12 +285,12 @@ test.describe('Research Gating System', () => {
             if (tutorialPanel) tutorialPanel.style.display = 'none';
         });
 
-        // Mark the place_hub step as completed
+        // Mark the build_hub step as completed
         await page.evaluate(() => {
             const tm = window.game.tutorialManager;
-            const placeHubStep = tm.steps.find(s => s.id === 'place_hub');
-            if (placeHubStep) {
-                placeHubStep.completed = true;
+            const buildHubStep = tm.steps.find(s => s.id === 'build_hub');
+            if (buildHubStep) {
+                buildHubStep.completed = true;
             }
             // Trigger gate check
             tm.checkResearchAccessGate();
@@ -381,23 +381,23 @@ test.describe('Research Gating System', () => {
         // 3. Complete early tutorial steps
         await page.evaluate(() => {
             const tm = window.game.tutorialManager;
-            ['deploy_first_probe', 'click_signal', 'explore_planet', 'deploy_remaining_probes', 'gather_resources'].forEach(stepId => {
+            ['deploy_and_explore', 'expand_fleet'].forEach(stepId => {
                 const step = tm.steps.find(s => s.id === stepId);
                 if (step) step.completed = true;
             });
         });
 
-        // 4. Still not unlocked (need to place hub)
+        // 4. Still not unlocked (need to build hub)
         state = await page.evaluate(() => {
             const research = window.game.gameState.getResearchSystem();
             return { unlocked: research.unlocked };
         });
         expect(state.unlocked).toBe(false);
 
-        // 5. Complete place_hub step and add second hub
+        // 5. Complete build_hub step and add second hub
         await page.evaluate(() => {
             const tm = window.game.tutorialManager;
-            const step = tm.steps.find(s => s.id === 'place_hub');
+            const step = tm.steps.find(s => s.id === 'build_hub');
             if (step) step.completed = true;
 
             // Add second hub

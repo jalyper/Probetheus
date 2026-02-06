@@ -212,7 +212,7 @@ test.describe('REQ-2: Dynamic Hub Operations Button States', () => {
     });
 });
 
-test.describe('REQ-4: Equipment Tutorial After Collection Research', () => {
+test.describe('REQ-4: Research & Equipment Tutorial', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto('/');
         await page.evaluate(() => localStorage.clear());
@@ -220,7 +220,7 @@ test.describe('REQ-4: Equipment Tutorial After Collection Research', () => {
         await page.waitForLoadState('networkidle');
     });
 
-    test('equipment tutorial appears after Collection research', async ({ page }) => {
+    test('research_and_equip tutorial triggers when player opens research screen', async ({ page }) => {
         // Start new game and skip cutscene
         await page.locator('#newGameBtn').click();
         await page.waitForTimeout(1500);
@@ -237,53 +237,52 @@ test.describe('REQ-4: Equipment Tutorial After Collection Research', () => {
             if (tutorialPanel) tutorialPanel.style.display = 'none';
         });
 
-        // Mark all prior steps as completed so equipment tutorial can trigger
+        // Mark all prior steps as completed so research_and_equip can trigger
         await page.evaluate(() => {
             const tm = window.game.tutorialManager;
-            tm.steps.forEach((step, index) => {
-                if (step.id !== 'install_probe_equipment') {
+            tm.steps.forEach((step) => {
+                if (step.id !== 'research_and_equip') {
                     step.completed = true;
                 }
             });
             tm.tutorialActive = true;
         });
 
-        // Get equipment step index before triggering
+        // Get research_and_equip step index
         const equipmentStepIndex = await page.evaluate(() => {
-            return window.game.tutorialManager.steps.findIndex(s => s.id === 'install_probe_equipment');
+            return window.game.tutorialManager.steps.findIndex(s => s.id === 'research_and_equip');
         });
         expect(equipmentStepIndex).toBeGreaterThan(-1);
 
-        // Simulate auto-collector research completion (must be specific ID)
+        // Emit research:unlocked then research:showTree to trigger the step
         await page.evaluate(() => {
-            window.game.eventBus.emit('research:completed', {
-                node: { id: 'auto_minerals', tree: 'collection', name: 'Auto-Mineral Collection' }
-            });
+            window.game.eventBus.emit('research:unlocked');
+            window.game.eventBus.emit('research:showTree');
         });
         await page.waitForTimeout(500);
 
-        // Check that the current step is the equipment step
+        // Check that the current step is the research_and_equip step
         const currentStep = await page.evaluate(() => {
             return window.game.tutorialManager.currentStep;
         });
         expect(currentStep).toBe(equipmentStepIndex);
 
-        // Check that the tutorial panel is showing the equipment message
+        // Check that the tutorial panel is showing
         const tutorialVisible = await page.evaluate(() => {
             const panel = document.getElementById('tutorialPanel');
             return panel && panel.style.display !== 'none';
         });
         expect(tutorialVisible).toBe(true);
 
-        // Verify the message content
+        // Verify the message content mentions equipment
         const tutorialContent = await page.evaluate(() => {
             const panel = document.getElementById('tutorialPanel');
             return panel ? panel.textContent : '';
         });
-        expect(tutorialContent).toContain('equipment');
+        expect(tutorialContent).toContain('Equipment');
     });
 
-    test('equipment tutorial completes when equipment is installed', async ({ page }) => {
+    test('research_and_equip step completes when equipment is installed', async ({ page }) => {
         // Start new game and skip cutscene
         await page.locator('#newGameBtn').click();
         await page.waitForTimeout(1500);
@@ -294,23 +293,23 @@ test.describe('REQ-4: Equipment Tutorial After Collection Research', () => {
         await page.waitForSelector('#galaxyCanvas', { timeout: 10000 });
         await page.waitForTimeout(3000);
 
-        // Set up tutorial at equipment step
+        // Set up tutorial at research_and_equip step
         await page.evaluate(() => {
             const tm = window.game.tutorialManager;
-            tm.steps.forEach((step, index) => {
-                if (step.id !== 'install_probe_equipment') {
+            tm.steps.forEach((step) => {
+                if (step.id !== 'research_and_equip') {
                     step.completed = true;
                 }
             });
-            const equipIndex = tm.steps.findIndex(s => s.id === 'install_probe_equipment');
+            const equipIndex = tm.steps.findIndex(s => s.id === 'research_and_equip');
             tm.currentStep = equipIndex;
             tm.tutorialActive = true;
         });
 
-        // Verify equipment step is not completed yet
+        // Verify step is not completed yet
         const stepCompletedBefore = await page.evaluate(() => {
             const tm = window.game.tutorialManager;
-            const step = tm.steps.find(s => s.id === 'install_probe_equipment');
+            const step = tm.steps.find(s => s.id === 'research_and_equip');
             return step.completed;
         });
         expect(stepCompletedBefore).toBe(false);
@@ -319,7 +318,7 @@ test.describe('REQ-4: Equipment Tutorial After Collection Research', () => {
         await page.evaluate(() => {
             const probe = window.game.gameState.entities.probes[0];
             if (probe) {
-                probe.equipment = { name: 'Auto-Collector', collectionTypes: ['minerals'] };
+                probe.equipment = [{ type: 'mineral_collector', name: 'Mineral Collector', collectionTypes: ['minerals'] }];
             }
         });
 
@@ -329,10 +328,10 @@ test.describe('REQ-4: Equipment Tutorial After Collection Research', () => {
         });
         await page.waitForTimeout(100);
 
-        // Verify equipment step condition is now met
+        // Verify step condition is now met
         const conditionMet = await page.evaluate(() => {
             const tm = window.game.tutorialManager;
-            const step = tm.steps.find(s => s.id === 'install_probe_equipment');
+            const step = tm.steps.find(s => s.id === 'research_and_equip');
             return step.checkCondition();
         });
         expect(conditionMet).toBe(true);
@@ -696,14 +695,14 @@ test.describe('REQ-9: Equipment Management', () => {
     });
 });
 
-// REQ-8: Research Lab Tutorial
-test.describe('REQ-8: Research Lab Tutorial', () => {
+// REQ-8: Research & Equip Tutorial (via research:showTree trigger)
+test.describe('REQ-8: Research & Equip Trigger', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto('/');
         await page.waitForLoadState('networkidle');
     });
 
-    test('research lab tutorial appears when player opens research screen', async ({ page }) => {
+    test('research_and_equip tutorial triggers only after research:showTree (not just research:unlocked)', async ({ page }) => {
         // Start new game and skip cutscene
         await page.locator('#newGameBtn').click();
         await page.waitForTimeout(1500);
@@ -720,20 +719,20 @@ test.describe('REQ-8: Research Lab Tutorial', () => {
             if (tutorialPanel) tutorialPanel.style.display = 'none';
         });
 
-        // Mark all prior steps as completed so research lab tutorial can trigger
+        // Mark all prior steps as completed so research_and_equip can trigger
         await page.evaluate(() => {
             const tm = window.game.tutorialManager;
             tm.steps.forEach((step) => {
-                if (step.id !== 'research_lab_unlocked' && step.id !== 'install_probe_equipment') {
+                if (step.id !== 'research_and_equip' && step.id !== 'mining_operations' && step.id !== 'advanced_resources') {
                     step.completed = true;
                 }
             });
             tm.tutorialActive = true;
         });
 
-        // Get research lab step index
+        // Get research_and_equip step index
         const researchStepIndex = await page.evaluate(() => {
-            return window.game.tutorialManager.steps.findIndex(s => s.id === 'research_lab_unlocked');
+            return window.game.tutorialManager.steps.findIndex(s => s.id === 'research_and_equip');
         });
         expect(researchStepIndex).toBeGreaterThan(-1);
 
@@ -755,28 +754,28 @@ test.describe('REQ-8: Research Lab Tutorial', () => {
         });
         await page.waitForTimeout(500);
 
-        // Check that the current step is now the research lab step
+        // Check that the current step is now the research_and_equip step
         const currentStep = await page.evaluate(() => {
             return window.game.tutorialManager.currentStep;
         });
         expect(currentStep).toBe(researchStepIndex);
 
-        // Check that the tutorial panel is showing the research lab message
+        // Check that the tutorial panel is showing
         const tutorialVisible = await page.evaluate(() => {
             const panel = document.getElementById('tutorialPanel');
             return panel && panel.style.display !== 'none';
         });
         expect(tutorialVisible).toBe(true);
 
-        // Verify the message content mentions Research Lab
+        // Verify the message content mentions Research
         const tutorialContent = await page.evaluate(() => {
             const panel = document.getElementById('tutorialPanel');
             return panel ? panel.textContent : '';
         });
-        expect(tutorialContent).toContain('Research Lab');
+        expect(tutorialContent).toContain('Research');
     });
 
-    test('research lab tutorial opens research screen when triggered via step progression', async ({ page }) => {
+    test('research_and_equip step opens research screen when shown', async ({ page }) => {
         // Start new game and skip cutscene
         await page.locator('#newGameBtn').click();
         await page.waitForTimeout(1500);
@@ -802,10 +801,10 @@ test.describe('REQ-8: Research Lab Tutorial', () => {
             window.game.tutorialManager.researchLabUnlocked = true;
         });
 
-        // Mark all steps before research_lab_unlocked as completed
+        // Mark all steps before research_and_equip as completed
         await page.evaluate(() => {
             const tm = window.game.tutorialManager;
-            const researchStepIndex = tm.steps.findIndex(s => s.id === 'research_lab_unlocked');
+            const researchStepIndex = tm.steps.findIndex(s => s.id === 'research_and_equip');
             for (let i = 0; i < researchStepIndex; i++) {
                 tm.steps[i].completed = true;
             }
@@ -817,10 +816,10 @@ test.describe('REQ-8: Research Lab Tutorial', () => {
         });
         expect(startScreen).toBe(true);
 
-        // Trigger the research lab tutorial step directly (simulating normal progression)
+        // Trigger the research_and_equip step directly (simulating normal progression)
         await page.evaluate(() => {
             const tm = window.game.tutorialManager;
-            const researchStepIndex = tm.steps.findIndex(s => s.id === 'research_lab_unlocked');
+            const researchStepIndex = tm.steps.findIndex(s => s.id === 'research_and_equip');
             tm.currentStep = researchStepIndex;
             tm.tutorialActive = true;
             tm.showCurrentStep();
@@ -839,7 +838,7 @@ test.describe('REQ-8: Research Lab Tutorial', () => {
         });
         expect(mapScreenActive).toBe(false);
 
-        // Verify tutorial panel is visible and shows research lab content
+        // Verify tutorial panel is visible and shows research content
         const tutorialVisible = await page.evaluate(() => {
             const panel = document.getElementById('tutorialPanel');
             return panel && panel.style.display !== 'none';
@@ -850,7 +849,7 @@ test.describe('REQ-8: Research Lab Tutorial', () => {
             const panel = document.getElementById('tutorialPanel');
             return panel ? panel.textContent : '';
         });
-        expect(tutorialContent).toContain('Research Lab');
+        expect(tutorialContent).toContain('Research');
     });
 });
 
