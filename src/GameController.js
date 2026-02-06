@@ -2144,25 +2144,67 @@ class GameController {
         // Apply signal type bonuses
         if (signal.signalType) {
             switch (signal.signalType) {
+                case 'ore_vein':
+                    // REW-01: 2x mineral bonus (exclusive advantage over standard 1.5x)
+                    rewards = {
+                        ...rewards,
+                        minerals: Math.floor(rewards.minerals * 2.0)
+                    };
+                    break;
+
+                case 'data_cache':
+                    // REW-02: 2x data bonus (exclusive advantage over standard 1.5x)
+                    rewards = {
+                        ...rewards,
+                        data: Math.floor(rewards.data * 2.0)
+                    };
+                    break;
+
+                case 'relic':
+                    // REW-03: 2x artifact bonus (relic signals also have rarity gating in ProbeManager)
+                    rewards = {
+                        ...rewards,
+                        artifacts: Math.floor(rewards.artifacts * 2.0)
+                    };
+                    break;
+
+                case 'exotic_crystal':
+                    // REW-04: 60% enhanced exotic minerals, 40% all three resources at once
+                    if (Math.random() < 0.6) {
+                        // Outcome 1: Enhanced exotic yield (handled below in exotic bonus section)
+                        // Mark for exotic enhancement - no base reward change needed
+                        signal._exoticEnhanced = true;
+                    } else {
+                        // Outcome 2: Mixed reward - boost all three resource types by 1.5x
+                        // The exploration mode will still pick one primary, but we'll add secondary rewards too
+                        signal._mixedReward = true;
+                        rewards = {
+                            minerals: Math.floor(rewards.minerals * 1.5),
+                            data: Math.floor(rewards.data * 1.5),
+                            artifacts: Math.floor(rewards.artifacts * 1.5)
+                        };
+                    }
+                    break;
+
                 case 'mineral':
                     // 50% bonus to mineral rewards
-                    rewards = { 
-                        ...rewards, 
-                        minerals: Math.floor(rewards.minerals * 1.5) 
+                    rewards = {
+                        ...rewards,
+                        minerals: Math.floor(rewards.minerals * 1.5)
                     };
                     break;
                 case 'data':
                     // 50% bonus to data rewards
-                    rewards = { 
-                        ...rewards, 
-                        data: Math.floor(rewards.data * 1.5) 
+                    rewards = {
+                        ...rewards,
+                        data: Math.floor(rewards.data * 1.5)
                     };
                     break;
                 case 'artifact':
                     // 50% bonus to artifact rewards
-                    rewards = { 
-                        ...rewards, 
-                        artifacts: Math.floor(rewards.artifacts * 1.5) 
+                    rewards = {
+                        ...rewards,
+                        artifacts: Math.floor(rewards.artifacts * 1.5)
                     };
                     break;
             }
@@ -2187,11 +2229,32 @@ class GameController {
                 break;
         }
 
+        // REW-04: Exotic Crystal mixed reward - add secondary resources to cargo
+        let secondaryRewards = null;
+        if (signal._mixedReward) {
+            // Calculate secondary resource amounts (same formula as primary: base + 0-100% random)
+            secondaryRewards = {};
+            if (primaryReward !== 'minerals') {
+                secondaryRewards.minerals = rewards.minerals + Math.floor(Math.random() * rewards.minerals);
+            }
+            if (primaryReward !== 'data') {
+                secondaryRewards.data = rewards.data + Math.floor(Math.random() * rewards.data);
+            }
+            if (primaryReward !== 'artifacts') {
+                secondaryRewards.artifacts = rewards.artifacts + Math.floor(Math.random() * rewards.artifacts);
+            }
+        }
+
         // Add bonus exotic minerals for rare+ signals
         let exoticBonus = 0;
         if (rarity === 'rare') exoticBonus = 1;
         else if (rarity === 'epic') exoticBonus = 3;
         else if (rarity === 'legendary') exoticBonus = 10;
+
+        // REW-04: Exotic Crystal enhances exotic mineral yield (60% outcome)
+        if (signal._exoticEnhanced && exoticBonus > 0) {
+            exoticBonus = Math.floor(exoticBonus * 2.0);
+        }
 
         // Find nearest active probe to store the rewards
         console.log('Finding nearest probe to signal position:', signal.x, signal.y);
@@ -2213,7 +2276,11 @@ class GameController {
             // Check cargo capacity
             const cargoUsed = this.probeManager.getCargoUsed(nearestProbe);
             const cargoCapacity = this.probeManager.getCargoCapacity(nearestProbe);
-            const totalReward = rewardAmount + (exoticBonus || 0);
+            let secondaryTotal = 0;
+            if (secondaryRewards) {
+                secondaryTotal = Object.values(secondaryRewards).reduce((sum, v) => sum + v, 0);
+            }
+            const totalReward = rewardAmount + (exoticBonus || 0) + secondaryTotal;
             
             if (cargoUsed + totalReward > cargoCapacity) {
                 // CARGO FULL - cannot collect
@@ -2237,6 +2304,13 @@ class GameController {
             if (exoticBonus > 0) {
                 nearestProbe.cargo.exoticMinerals += exoticBonus;
             }
+
+            // REW-04: Add secondary resources for exotic crystal mixed reward
+            if (secondaryRewards) {
+                for (const [resource, amount] of Object.entries(secondaryRewards)) {
+                    nearestProbe.cargo[resource] = (nearestProbe.cargo[resource] || 0) + amount;
+                }
+            }
             
             console.log('Cargo after adding rewards:', nearestProbe.cargo);
             console.log(`Added ${rewardAmount} ${primaryReward} to probe ${nearestProbe.id}`);
@@ -2255,6 +2329,12 @@ class GameController {
         let rewardText = `+${rewardAmount} ${primaryReward.charAt(0).toUpperCase() + primaryReward.slice(1)}`;
         if (exoticBonus > 0) {
             rewardText += `, +${exoticBonus} Exotic Minerals`;
+        }
+        // Add secondary rewards to display text (exotic crystal mixed)
+        if (secondaryRewards) {
+            for (const [resource, amount] of Object.entries(secondaryRewards)) {
+                rewardText += `, +${amount} ${resource.charAt(0).toUpperCase() + resource.slice(1)}`;
+            }
         }
         rewardText += ' (pending delivery)';
 
