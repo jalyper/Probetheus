@@ -50,18 +50,18 @@ Requirements for sector-specific signals and sector resource randomization.
 
 ### Discovery Reveal
 
-- [ ] **DISC-01**: Sector discovery modal shows exclusive signal type available in that sector
-- [ ] **DISC-02**: Discovery modal displays sector resource profile (signal richness, probethium potential)
-- [ ] **DISC-03**: First sector discovery spawns guaranteed exclusive signal (if sector type has one)
-- [ ] **DISC-04**: Standard sectors show messaging about balanced exploration opportunities
+- [x] **DISC-01**: Sector discovery modal shows exclusive signal type available in that sector
+- [x] **DISC-02**: Discovery modal displays sector resource profile (signal richness, probethium potential)
+- [x] **DISC-03**: First sector discovery spawns guaranteed exclusive signal (if sector type has one)
+- [x] **DISC-04**: Standard sectors show messaging about balanced exploration opportunities
 
 ### Tests
 
-- [ ] **TEST-01**: Exclusive signals spawn only in their designated sector types
-- [ ] **TEST-02**: Shell bonuses apply correctly to exclusive signal generation and collection
-- [ ] **TEST-03**: Discovery reveal modal displays correct exclusive signal info
-- [ ] **TEST-04**: Sector resource profiles persist through save/load
-- [ ] **TEST-05**: Distance-based richness produces expected distribution over many sectors
+- [x] **TEST-01**: Exclusive signals spawn only in their designated sector types
+- [x] **TEST-02**: Shell bonuses apply correctly to exclusive signal generation and collection
+- [x] **TEST-03**: Discovery reveal modal displays correct exclusive signal info
+- [x] **TEST-04**: Sector resource profiles persist through save/load
+- [x] **TEST-05**: Distance-based richness produces expected distribution over many sectors
 
 ## Future Requirements (v1.4)
 
@@ -113,15 +113,15 @@ Requirements for sector-specific signals and sector resource randomization.
 | SYNTH-02 | Phase 8.5 | Complete |
 | SYNTH-03 | Phase 8.5 | Complete |
 | SYNTH-04 | Phase 8.5 | Complete |
-| DISC-01 | Phase 9 | Pending |
-| DISC-02 | Phase 9 | Pending |
-| DISC-03 | Phase 9 | Pending |
-| DISC-04 | Phase 9 | Pending |
-| TEST-01 | Phase 10 | Pending |
-| TEST-02 | Phase 10 | Pending |
-| TEST-03 | Phase 10 | Pending |
-| TEST-04 | Phase 10 | Pending |
-| TEST-05 | Phase 10 | Pending |
+| DISC-01 | Phase 9 | Complete |
+| DISC-02 | Phase 9 | Complete |
+| DISC-03 | Phase 9 | Complete |
+| DISC-04 | Phase 9 | Complete |
+| TEST-01 | Phase 10 | Complete |
+| TEST-02 | Phase 10 | Complete |
+| TEST-03 | Phase 10 | Complete |
+| TEST-04 | Phase 10 | Complete |
+| TEST-05 | Phase 10 | Complete |
 
 **Coverage:**
 - v1.3 requirements: 35 total
