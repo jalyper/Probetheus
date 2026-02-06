@@ -3,13 +3,13 @@
 ## Current Position
 
 **Milestone:** v1.3 Signal Distribution System
-**Phase:** Phase 8 - Sector Resource Profiles (IN PROGRESS)
-**Plan:** 02 of 03 complete
-**Status:** Resource profiles and mining rework complete, ready for plan 08-03
-**Last activity:** 2026-02-05 - Completed 08-01-PLAN.md (resource profile assignment)
+**Phase:** Phase 8 - Sector Resource Profiles (COMPLETE)
+**Plan:** 03 of 03 complete
+**Status:** Phase 8 complete - resource profiles, mining rework, and tests done
+**Last activity:** 2026-02-06 - Completed 08-03-PLAN.md (sector profile tests)
 **Next Milestone:** -
 
-Progress: [████████░░░░░░░░░░░░] 18/35 requirements (51%)
+Progress: [█████████░░░░░░░░░░░] 24/35 requirements (69%)
 
 ## Project Reference
 
@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 **Current milestone (v1.3):**
 - Phases: 6 (Phase 5 through Phase 10)
 - Requirements: 35 total (expanded with PROF-06, SYNTH-01 through SYNTH-04)
-- Completed: 18 (SIG-01 through SIG-07, VIS-01 through VIS-05, REW-01 through REW-04, PROF-01, PROF-05, PROF-06)
-- Remaining: 17
-- Progress: 51%
+- Completed: 24 (SIG-01 through SIG-07, VIS-01 through VIS-05, REW-01 through REW-04, PROF-01 through PROF-06)
+- Remaining: 11
+- Progress: 69%
 
 **Previous milestone (v1.2):**
 - Duration: ~5 days (2026-01-28 to 2026-02-02)
@@ -59,12 +59,13 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 - Success: 2x resource yields, rare+ artifact guarantees, exotic mineral options
 - **Plan 07-01 COMPLETE:** Exclusive signal reward bonuses implemented, relic rarity gating, exotic crystal dual outcomes, 9 Playwright tests
 
-**Phase 8: Sector Resource Profiles** (6 requirements) - IN PROGRESS
+**Phase 8: Sector Resource Profiles** (6 requirements) - COMPLETE
 - Goal: Sectors have unique resource richness, mining stations mine sector specialty
 - Success: Random profiles on discovery, distance-based richness, mining rework, probethium-rich sectors are rare
 - Context: 08-CONTEXT.md captures mining station rework design decisions
 - **Plan 08-01 COMPLETE:** Resource profile assignment with distance-weighted distribution (PROF-01)
 - **Plan 08-02 COMPLETE:** Mining stations produce sector specialty resource (PROF-05, PROF-06)
+- **Plan 08-03 COMPLETE:** 14 Playwright tests validating PROF-01 through PROF-06
 
 **Phase 8.5: Probethium Synthesis** (4 requirements)
 - Goal: Players synthesize probethium at hubs using exotic materials
@@ -104,6 +105,8 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 | Distance-weighted profile RNG | Near origin: 60% balanced, Far out: 30% balanced (progression feel) | Applied |
 | Spawn multipliers stack with bonuses | Sector multiplier * shell bonus = combined effect (multiplicative) | Applied |
 | Profile serialization automatic | Spread operator in SaveManager handles resourceProfile without changes | Applied |
+| Statistical test sample sizes | 200 samples for distribution, 500 for rare events (reliable RNG validation) | Applied |
+| Test tolerance ranges for RNG | 40% threshold for balanced sectors (60% weight + variance) | Applied |
 
 ### Tech Debt
 
@@ -126,16 +129,17 @@ None
 - **Plan 07-01:** Exclusive signal reward bonuses: 2x yields for ore_vein/data_cache/relic, exotic_crystal dual outcomes, relic rarity gating
 - **Plan 08-01:** Resource profiles assigned on sector discovery with distance-weighted distribution
 - **Plan 08-02:** Mining stations produce sector specialty (minerals/data/artifacts/probethium/mixed), UI shows output type
+- **Plan 08-03:** 14 Playwright tests validate all Phase 8 requirements (PROF-01 through PROF-06)
 
 ## Session Continuity
 
-Last session: 2026-02-05
-Stopped at: Completed 08-01-PLAN.md
-Resume file: .planning/phases/08-sector-resource-profiles/08-01-SUMMARY.md
+Last session: 2026-02-06
+Stopped at: Completed 08-03-PLAN.md (Phase 8 complete)
+Resume file: None
 
 **Next steps:**
-1. Continue Phase 8: Plan 08-03 (balanced sector mixed resource output - PROF-02, PROF-03, PROF-04)
-2. Testing and verification for Phase 8
+1. Begin Phase 8.5: Probethium Synthesis (4 requirements: SYNTH-01 through SYNTH-04)
+2. Then Phase 9: Discovery Reveal (4 requirements)
 3. Begin Phase 8.5 (Probethium Synthesis)
 
 ---
