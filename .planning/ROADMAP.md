@@ -4,7 +4,7 @@
 **Milestone:** v1.3 Signal Distribution System
 **Phases:** 7 (Phase 5 through Phase 10, plus Phase 8.5)
 **Requirements:** 35 total
-**Status:** Phase 7 complete, Phase 8 planned
+**Status:** Phase 8 complete, Phase 8.5 planned
 
 ## Overview
 
@@ -129,7 +129,9 @@ This milestone adds sector-specific signal types that are exclusive to designate
 
 **Requirements:** SYNTH-01, SYNTH-02, SYNTH-03, SYNTH-04
 
-**Plans:** 0 plans
+**Plans:** 2 plans
+- [ ] 085-01-PLAN.md — Research node, hub button, conversion logic, and 3-second canvas animation
+- [ ] 085-02-PLAN.md — Playwright tests for SYNTH-01 through SYNTH-04
 
 **Success Criteria:**
 1. Hub menu has "Synthesize Probethium" button that converts exotic materials to probethium
@@ -138,11 +140,12 @@ This milestone adds sector-specific signal types that are exclusive to designate
 4. Synthesis provides a viable alternative probethium source for players who haven't found probethium-rich sectors
 
 **Implementation Notes:**
-- Add "Synthesize Probethium" button to hub detail panel / hub menu
-- Research unlock gates the button (greyed out / hidden until researched)
-- Exotic materials are collected from exotic crystal signals (Phase 5/7 systems)
-- Hub animation: visual effect on the hub entity during synthesis (glow, particles, etc.)
-- Conversion rate TBD during planning (balance exotic rarity vs probethium need)
+- Research node `probethium_synthesis` in alien tech tree (parent: alien_tech, cost: 3)
+- Flat rate conversion: 5 exotic minerals = 0.001 probethium per batch
+- Button hidden until researched; disabled when < 5 exotics
+- 3-second canvas animation: purple charge-up, white-gold flash with screen shake, golden release
+- Animation queue for sequential playback (no overlapping)
+- New file: src/SynthesisAnimationManager.js
 
 ---
 
@@ -206,7 +209,7 @@ This milestone adds sector-specific signal types that are exclusive to designate
 | Phase 6: Visual Rendering | 5 | 1 | Complete | 100% |
 | Phase 7: Signal Rewards | 4 | 1 | Complete | 100% |
 | Phase 8: Sector Resource Profiles | 6 | 3 | Complete | 100% |
-| Phase 8.5: Probethium Synthesis | 4 | 0 | Pending | 0% |
+| Phase 8.5: Probethium Synthesis | 4 | 2 | Planned | 0% |
 | Phase 9: Discovery Reveal | 4 | 0 | Pending | 0% |
 | Phase 10: Testing & Integration | 5 | 0 | Pending | 0% |
 
@@ -240,10 +243,10 @@ This milestone adds sector-specific signal types that are exclusive to designate
 | PROF-04 | Phase 8 | Complete |
 | PROF-05 | Phase 8 | Complete |
 | PROF-06 | Phase 8 | Complete |
-| SYNTH-01 | Phase 8.5 | Pending |
-| SYNTH-02 | Phase 8.5 | Pending |
-| SYNTH-03 | Phase 8.5 | Pending |
-| SYNTH-04 | Phase 8.5 | Pending |
+| SYNTH-01 | Phase 8.5 | Planned |
+| SYNTH-02 | Phase 8.5 | Planned |
+| SYNTH-03 | Phase 8.5 | Planned |
+| SYNTH-04 | Phase 8.5 | Planned |
 | DISC-01 | Phase 9 | Pending |
 | DISC-02 | Phase 9 | Pending |
 | DISC-03 | Phase 9 | Pending |
@@ -301,3 +304,4 @@ This milestone adds sector-specific signal types that are exclusive to designate
 *Phase 7 complete: 2026-02-05*
 *Phase 8.5 added: 2026-02-05 (probethium synthesis -- mining rework + exotic material economy)*
 *Phase 8 planned: 2026-02-05*
+*Phase 8.5 planned: 2026-02-05*
