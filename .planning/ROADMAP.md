@@ -4,7 +4,7 @@
 **Milestone:** v1.3 Signal Distribution System
 **Phases:** 7 (Phase 5 through Phase 10, plus Phase 8.5)
 **Requirements:** 35 total
-**Status:** Phase 8.5 complete, Phase 9 pending
+**Status:** Phase 8.5 complete, Phase 9 planned
 
 ## Overview
 
@@ -156,7 +156,9 @@ This milestone adds sector-specific signal types that are exclusive to designate
 
 **Requirements:** DISC-01, DISC-02, DISC-03, DISC-04
 
-**Plans:** 0 plans
+**Plans:** 2 plans
+- [ ] 09-01-PLAN.md — Rewrite discovery modal into Sector Survey Report with 8 sections and exclusive signal spawning
+- [ ] 09-02-PLAN.md — Playwright tests for DISC-01 through DISC-04
 
 **Success Criteria:**
 1. Sector discovery modal highlights exclusive signal type available in that sector (or "Balanced Signals" for Standard)
@@ -210,7 +212,7 @@ This milestone adds sector-specific signal types that are exclusive to designate
 | Phase 7: Signal Rewards | 4 | 1 | Complete | 100% |
 | Phase 8: Sector Resource Profiles | 6 | 3 | Complete | 100% |
 | Phase 8.5: Probethium Synthesis | 4 | 2 | Complete | 100% |
-| Phase 9: Discovery Reveal | 4 | 0 | Pending | 0% |
+| Phase 9: Discovery Reveal | 4 | 2 | Planned | 0% |
 | Phase 10: Testing & Integration | 5 | 0 | Pending | 0% |
 
 **Total Requirements:** 35
@@ -306,3 +308,4 @@ This milestone adds sector-specific signal types that are exclusive to designate
 *Phase 8 planned: 2026-02-05*
 *Phase 8.5 planned: 2026-02-05*
 *Phase 8.5 complete: 2026-02-06*
+*Phase 9 planned: 2026-02-05*
