@@ -3,13 +3,13 @@
 ## Current Position
 
 **Milestone:** v1.3 Signal Distribution System
-**Phase:** Phase 6 - Visual Rendering (COMPLETE)
-**Plan:** All plans complete, verified
-**Status:** Phase 6 verified, ready for Phase 7
-**Last activity:** 2026-02-04 - Phase 6 verified (7/7 must-haves passed)
+**Phase:** Phase 7 - Signal Rewards (IN PROGRESS)
+**Plan:** 07-01 complete
+**Status:** Phase 7 started, 4/4 requirements complete
+**Last activity:** 2026-02-06 - Completed 07-01-PLAN.md (REW-01 through REW-04)
 **Next Milestone:** -
 
-Progress: [███████░░░░░░░░░░░░░] 12/30 requirements (40%)
+Progress: [████████░░░░░░░░░░░░] 16/30 requirements (53%)
 
 ## Project Reference
 
@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 **Current milestone (v1.3):**
 - Phases: 6 (Phase 5 through Phase 10)
 - Requirements: 30 total
-- Completed: ~12 (SIG-01 through SIG-07, VIS-01 through VIS-05)
-- Remaining: ~18
-- Progress: ~40%
+- Completed: 16 (SIG-01 through SIG-07, VIS-01 through VIS-05, REW-01 through REW-04)
+- Remaining: 14
+- Progress: 53%
 
 **Previous milestone (v1.2):**
 - Duration: ~5 days (2026-01-28 to 2026-02-02)
@@ -54,9 +54,10 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 - Success: Orange/cyan/gold/prismatic color schemes with unique particle effects, 5-8s lifetime
 - **Plan 06-01 COMPLETE:** 4 color cases, renderExclusiveParticles(), HSL gradient handling, duration override, 16 Playwright tests
 
-**Phase 7: Signal Rewards** (4 requirements)
+**Phase 7: Signal Rewards** (4 requirements) - COMPLETE
 - Goal: Exclusive signals provide meaningful reward advantages
 - Success: 2x resource yields, rare+ artifact guarantees, exotic mineral options
+- **Plan 07-01 COMPLETE:** Exclusive signal reward bonuses implemented, relic rarity gating, exotic crystal dual outcomes, 9 Playwright tests
 
 **Phase 8: Sector Resource Profiles** (5 requirements)
 - Goal: Sectors have unique resource richness influencing signal quality
@@ -86,6 +87,10 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 | HSL detection before gradient stops | exotic_crystal uses cycling HSL which crashes hexToRgba | Applied |
 | Performance guard at 50 signals | Prevent frame drops from particle calculations | Applied |
 | ctx.save()/restore() for particles | Isolated canvas state prevents rendering artifacts | Applied |
+| Exclusive 2x multiplier (not additive) | ore_vein replaces mineral bonus (cleaner reward curve) | Applied |
+| Relic minimum uncommon (not rare) | Prevents worthless drops while maintaining rarity spectrum | Applied |
+| Exotic Crystal 60/40 split | 60% enhanced exotics maintains scarcity, 40% mixed provides variety | Applied |
+| Secondary rewards with variance | Consistency with primary reward calculation (base + 0-100% random) | Applied |
 
 ### Tech Debt
 
@@ -105,18 +110,19 @@ None
 - **Plan 05-01:** Exclusive signal types now spawn in designated sectors, equipment compatibility via base type mapping
 - **Plan 05-02:** 17 Playwright tests verify all Phase 5 requirements (SIG-01 through SIG-07)
 - **Plan 06-01:** Distinct visuals for 4 exclusive signal types with colors, particles, HSL handling, and 5-8s duration
+- **Plan 07-01:** Exclusive signal reward bonuses: 2x yields for ore_vein/data_cache/relic, exotic_crystal dual outcomes, relic rarity gating
 
 ## Session Continuity
 
-Last session: 2026-02-04
-Stopped at: Phase 6 verified
-Resume file: .planning/phases/06-visual-rendering/06-VERIFICATION.md
+Last session: 2026-02-06
+Stopped at: Completed 07-01-PLAN.md
+Resume file: None
 
 **Next steps:**
-1. Begin Phase 7 (Signal Rewards)
-2. Implement 2x resource yields for Ore Vein and Data Cache
-3. Add rare+ artifact guarantees for Relic, exotic mineral options for Exotic Crystal
+1. Begin Phase 8 (Sector Resource Profiles)
+2. Implement random resource profiles on sector discovery
+3. Add distance-based richness modifiers
 
 ---
 
-*Last updated: 2026-02-04 - Phase 6 verified*
+*Last updated: 2026-02-06 - Phase 7 complete*
