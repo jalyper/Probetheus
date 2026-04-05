@@ -63,24 +63,24 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| HUB-01 | — | Pending |
-| HUB-02 | — | Pending |
-| HUB-03 | — | Pending |
-| HUB-04 | — | Pending |
-| HUB-05 | — | Pending |
-| HUB-06 | — | Pending |
-| HUB-07 | — | Pending |
-| EQUIP-01 | — | Pending |
-| EQUIP-02 | — | Pending |
-| TEST-01 | — | Pending |
-| TEST-02 | — | Pending |
-| TEST-03 | — | Pending |
+| HUB-01 | Phase 11 | Pending |
+| HUB-02 | Phase 11 | Pending |
+| HUB-03 | Phase 11 | Pending |
+| HUB-04 | Phase 11 | Pending |
+| HUB-05 | Phase 11 | Pending |
+| HUB-06 | Phase 11 | Pending |
+| HUB-07 | Phase 11 | Pending |
+| EQUIP-01 | Phase 12 | Pending |
+| EQUIP-02 | Phase 12 | Pending |
+| TEST-01 | Phase 13 | Pending |
+| TEST-02 | Phase 13 | Pending |
+| TEST-03 | Phase 13 | Pending |
 
 **Coverage:**
 - v1.4 requirements: 12 total
-- Mapped to phases: 0
-- Unmapped: 12
+- Mapped to phases: 12
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-04*
-*Last updated: 2026-04-04 after initial definition*
+*Last updated: 2026-04-04 after roadmap creation — all 12 requirements mapped*
