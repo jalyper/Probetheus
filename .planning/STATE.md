@@ -2,21 +2,20 @@
 
 ## Current Position
 
-**Milestone:** Planning next milestone
-**Phase:** -
-**Plan:** -
-**Status:** v1.3 shipped, ready for next milestone
-**Last activity:** 2026-02-06 - v1.3 milestone complete and archived
-**Next Milestone:** TBD (run `/gsd:new-milestone`)
+**Milestone:** v1.4 Hub Upgrades & Equipment Completion
+**Phase:** Not started (defining requirements)
+**Plan:** —
+**Status:** Defining requirements
+**Last activity:** 2026-04-04 — Milestone v1.4 started
 
-Progress: No active milestone
+Progress: Defining requirements
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-06)
+See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** Players explore, expand, and upgrade through satisfying resource collection and progression loops
-**Current focus:** Planning next milestone
+**Current focus:** v1.4 Hub Upgrades & Equipment Completion
 
 ## Performance Metrics
 

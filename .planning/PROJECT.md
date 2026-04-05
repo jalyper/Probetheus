@@ -40,7 +40,17 @@ Players explore, expand, and upgrade through satisfying resource collection and 
 
 <!-- Current scope. Building toward these. -->
 
-(None yet — define with `/gsd:new-milestone`)
+## Current Milestone: v1.4 Hub Upgrades & Equipment Completion
+
+**Goal:** Complete the two partially-built progression systems so the mid-game has depth and meaningful upgrade choices.
+
+**Target features:**
+- Hub Shuttle Capacity upgrade (3→6) with research gate
+- Hub Probe Capacity upgrade (5→8) with research gate
+- Hub Probe Range upgrade (+50%) with research gate
+- "Upgrade Hub" UI (button + modal showing tiers, costs, current level)
+- 3rd equipment slot unlockable via research
+- Playwright tests for all new features
 
 ### Out of Scope
 
@@ -83,5 +93,22 @@ Players explore, expand, and upgrade through satisfying resource collection and 
 | Probethium synthesis batch processing | All available batches at once (not one-at-a-time) | ✓ Good |
 | Programmatic sector creation in tests | Deterministic control, no RNG flakiness | ✓ Good |
 
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd-transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd-complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
 ---
-*Last updated: 2026-02-06 after v1.3 milestone*
+*Last updated: 2026-04-04 after v1.4 milestone started*
