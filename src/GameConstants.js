@@ -12,9 +12,10 @@ window.GAME_CONSTANTS = {
         BUILD_COST: 25
     },
     SIGNAL: {
-        // Standard signals: 1.5-2.5s (was 2-3s) — pairs with faster probes
-        STANDARD_DURATION_MIN: 1500,
-        STANDARD_DURATION_RAND: 1000,
+        // Standard signals: 2.5-4s — generous windows, no click-pressure
+        // (CORE_LOOP.md "relaxing and stimulating" revision)
+        STANDARD_DURATION_MIN: 2500,
+        STANDARD_DURATION_RAND: 1500,
         // Exclusive sector signals keep their longer windows (VIS-05)
         EXCLUSIVE_DURATION_MIN: 5000,
         EXCLUSIVE_DURATION_RAND: 3000,

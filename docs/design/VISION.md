@@ -5,11 +5,11 @@
 
 ## What this game is
 
-**Probetheus is an arcade-paced factory game about building probe networks in deep space.**
+**Probetheus is a relaxing-but-stimulating factory game about building probe networks in deep space — Factorio's satisfaction, stripped to its essence, beautiful enough to watch.**
 
-One sentence pitch: *Factorio's "watch your machine hum" satisfaction, at the tempo of an arcade game, where the factory is a network of probes, hubs, and shuttles spread across an infinite galaxy — and the frontier always has something worth flying toward.*
+One sentence pitch: *Design a probe network with simple, legible rules, then fall in love with watching it flow — gold routes humming with cargo across an infinite galaxy, while the frontier always has something worth drifting toward.*
 
-The previous framing ("space exploration idle game") is retired. Idle/offline progress remains as a retention feature, but the game is designed around **active sessions** where the player is routing probes, reading their network's throughput, chasing events, and pushing the frontier. If a feature makes the best move "wait longer," it's wrong for this game.
+The previous framing ("space exploration idle game") is retired, and so is any "arcade adrenaline" reading: "arcade version of Factorio" means **less complex and more straightforward than Factorio**, not faster or louder. The target feeling is *relaxing and stimulating* — lofi-stream energy: calm surface, constant gentle motion, always something satisfying to notice. Idle/offline progress remains as a retention feature, but the game is designed around active sessions where the player routes probes, reads their network's flow, and pushes the frontier. If a feature makes the best move "wait longer," it's wrong; if a feature makes the player feel *rushed*, it's equally wrong.
 
 ## The three pillars
 
@@ -18,8 +18,8 @@ Every feature must serve at least one pillar. Features that serve none get cut, 
 ### 1. The network is the factory
 The player's probe/hub/shuttle network is a living machine with measurable throughput. Like Factorio, the game must **show the player their own bottlenecks** — starved stations, idle shuttles, overloaded probes — and reward fixing them with visibly better numbers. A well-tuned network should feel meaningfully different from a sloppy one, and the player should be able to *see* the difference.
 
-### 2. Arcade tempo
-Fast probes, snappy collection, juicy feedback, short loops. Sessions should feel like spinning plates, not watching paint dry. Sound, particles, combo moments, and timed events (Signal Storms) provide the pulse. Time controls (1x/2x/4x) let the player set their own tempo. Travel time exists to create routing decisions, never to pad the clock.
+### 2. Flow you can watch (relaxing *and* stimulating)
+The network in motion is the product. Probes drifting along gold routes, cargo sparks traveling home, soft chimes on every delivery — a player should be able to zoom out and simply *watch* their hard-designed network run, the way you'd watch an aquarium or a lofi stream. Streamlined rules keep play simple (this is the "arcade" in "arcade Factorio": less complexity than Factorio, never more adrenaline). Juice means *satisfaction*, not urgency: gentle combo delights, eased pulses, ambient sound. Time controls (1x/2x/4x + pause) let the player set their own tempo. Nothing in the game should make the player feel rushed — events are invitations, not alarms.
 
 ### 3. The frontier always pulls
 Distance must mean something. The further from home, the stranger and richer the galaxy gets: hazard biomes with exclusive resources, derelicts and landmarks that exist nowhere else, story echoes that only spawn far out. Exploration is never "more of the same in a new place" — every expedition outward should answer "can my current build handle it?" and pay off with something home sectors can't offer.
@@ -55,7 +55,8 @@ Explicitly **not** designing for: pure idle players who never want to touch the 
 - **Earned automation.** Every automation tier (patrol → auto-routing → swarm) is researched, never default. The manual version must be fun first.
 - **Risk is a trade, not a tax.** Research changes the terms of a hazard, never deletes it (Phase Shift's current "negate asteroids" behavior gets reworked).
 - **Numbers the player can feel.** Prefer one stat the player watches (resources/min) over five they don't.
-- **No dead clicks.** Every click does something with feedback within 100ms — sound, flash, number.
+- **No dead clicks.** Every click does something with feedback within 100ms — sound, glow, number.
+- **Calm surface, constant motion.** The screen is never frantic and never static. If a feature adds stress, soften it; if a screen sits still, give it a slow drift.
 - **Ship the pulse early.** One live event in players' hands beats five in a doc.
 
 ## Platform & Early Access intent

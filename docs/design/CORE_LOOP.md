@@ -1,7 +1,9 @@
 # Core Loop & Game Feel
 
 **Last updated:** 2026-06-10
-**Pillar served:** Arcade tempo (primary), The network is the factory (secondary)
+**Pillar served:** Flow you can watch (primary), The network is the factory (secondary)
+
+**Tone rule for everything below:** relaxing *and* stimulating. The screen is always gently in motion and never demands panic. Feedback exists to make actions feel satisfying, not urgent.
 
 ## The loop, restated
 
@@ -17,12 +19,12 @@ Nothing structural changes here. What changes is **tempo and feedback density** 
 
 ### Probe speed
 - Outbound speed: `0.0001` → **`0.00025`** (2.5x). Return stays `0.0003` so "coming home is faster" is preserved but no longer 3x.
-- Rationale: at current speed a mid-length route is a coffee break. Target: a typical route completes in **20–40 seconds**, so an active player with 4–6 probes always has something landing.
+- Rationale: at the old speed a mid-length route was a coffee break and the map sat still. Target: a typical route completes in **20–40 seconds**, so a network of 4–6 probes always has something gently in motion — the aquarium effect, not plate-spinning.
 - Offline/idle earnings calculations stay tuned to the *old* effective rates — the speed-up is a play-feel change, not an economy buff. Adjust `OfflineManager` hourly estimates accordingly.
 
 ### Signal lifetimes
-- Tighten across the board: common 2s → **1.5s**, scaling up so legendary stays ≥ 6s. Exclusive sector signals keep their longer durations.
-- Faster probes + shorter signal windows = the plate-spinning feel. Auto-collectors (researched) relieve this pressure, which makes the automation research *feel* like relief — that's the intended arc.
+- **Relax, don't tighten** (revised 2026-06-10 with the relaxing-and-stimulating steer): standard signals 2.5–4s (was 2–3s), exclusive signals keep their longer 5–8s windows.
+- Generous windows remove click-pressure; faster probes keep the map alive. Auto-collectors remain the automation arc, but missing a signal should feel like "ah, next time," never like failure.
 
 ### Time controls
 - **1x / 2x / 4x speed toggle**, always available, hotkeys `1`/`2`/`3`. Affects simulation, not animations' base smoothness.
@@ -35,7 +37,7 @@ The rule: **every loop event has a sound and a visual within 100ms.** Current st
 
 ### Collection
 - Signal collected: pop animation (scale-up + fade), pitched blip (pitch rises with rarity), small floating `+12 ⛏` text drifting toward the probe.
-- **Combo system (new):** collecting 3+ signals within 2 seconds chains a combo — each adds +10% to the chain's value (cap +50%), with escalating pitch and a combo counter near the probe. Combos reward dense routing through signal clusters, which quietly teaches good route placement. This is the single most "arcade" feature in the game; it should feel like Peggle.
+- **Combo system (new):** collecting 3+ signals within 2 seconds chains a combo — each adds +10% to the chain's value (cap +50%), with a softly rising chime and a gold combo callout near the probe. Combos reward dense routing through signal clusters, which quietly teaches good route placement. Tone: a wind-chime run, not a slot machine — the player smiles, they don't spike.
 - Rare+ spawn anywhere on screen: edge-of-screen ping + directional chevron for 2s.
 
 ### Delivery
@@ -64,13 +66,13 @@ Minimum viable soundscape, 14 assets:
 | 11 | Probe destroyed | muffled crack + static |
 | 12 | Remnant/Dark Market arrival | eerie shimmer |
 | 13 | Sector discovered | wide pad swell |
-| 14 | Signal Storm start | klaxon-meets-windchime |
+| 14 | Signal Storm start | windchime swell — an invitation, never a klaxon |
 
-Plus ambient bed: low space drone, ducked under MusicManager tracks. Volume sliders already exist in settings — add separate Music / SFX / Ambient channels.
+All fourteen sounds follow the tone rule: soft attacks, warm timbres, generous decay. Plus ambient bed: low space drone, ducked under MusicManager tracks. Volume sliders already exist in settings — add separate Music / SFX / Ambient channels.
 
 ## Live events — the pulse
 
-Events are short, loud, opt-in spikes of activity. They exist to break up routine, create "drop everything" moments, and reward having a responsive network. **Ship one event type in EA first patch-window; add more from the list as content updates** (events are ideal EA drip content).
+Events are short, *gentle* spikes of opportunity — invitations, never alarms. They exist to break up routine, give the player a pleasant "ooh, let me drift over there" moment, and reward having a responsive network. Ignoring an event must always be fine. **Ship one event type in EA first patch-window; add more from the list as content updates** (events are ideal EA drip content).
 
 ### Signal Storm (ship first)
 - Trigger: random, ~every 15–25 min of active play, weighted toward sectors the player has probes in.

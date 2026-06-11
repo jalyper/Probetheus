@@ -19,7 +19,7 @@
     "install-browsers": "playwright install"
   },
   "devDependencies": {
-    "@playwright/test": "^1.40.0",
+    "@playwright/test": "^1.60.0",
     "electron": "^38.4.0",
     "electron-builder": "^26.0.12",
     "vite": "^7.1.12",
