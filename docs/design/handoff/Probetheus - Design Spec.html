@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Probetheus — Design Spec</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  body{ overflow:auto; }
+  .bg{ position:fixed; inset:0; z-index:0; background:
+    radial-gradient(ellipse 80% 60% at 70% 110%, rgba(26,16,48,0.6) 0%, rgba(26,16,48,0) 60%), var(--void); }
+  .doc{ max-width:1040px; margin:0 auto; padding:72px 40px 120px; position:relative; z-index:1; }
+  .crumb{ font-family:var(--font-data); font-size:11px; letter-spacing:.06em; color:rgba(139,132,163,0.6);
+    margin-bottom:30px; display:flex; gap:14px; }
+  .crumb a{ color:rgba(139,132,163,0.6); text-decoration:none; } .crumb a:hover{ color:var(--fire); }
+  h1{ font-family:var(--font-display); font-weight:200; font-size:46px; letter-spacing:.34em;
+    text-indent:.34em; text-transform:uppercase; color:var(--signal); margin-bottom:14px; }
+  .rule{ width:160px; height:1px; background:linear-gradient(90deg,var(--fire),transparent); margin-bottom:18px; position:relative; }
+  .rule::after{ content:""; position:absolute; left:0; top:-2px; width:5px; height:5px; border-radius:50%;
+    background:var(--fire); box-shadow:0 0 8px rgba(212,175,55,.8); }
+  .lede{ color:var(--mist); font-size:14px; line-height:1.7; max-width:660px; }
+  .lede b{ color:var(--signal); font-weight:400; } .lede em{ color:var(--fire); font-style:normal; }
+  h2{ font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--fire);
+    margin:56px 0 20px; display:flex; align-items:center; gap:14px; }
+  h2::after{ content:""; flex:1; height:1px; background:var(--line-soft); }
+
+  /* swatches */
+  .swatch-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .swatch{ display:flex; align-items:center; gap:16px; border:1px solid var(--line-soft); border-radius:4px;
+    background:var(--panel); padding:12px 14px; }
+  .swatch .chip{ width:46px; height:46px; border-radius:3px; flex:none; border:1px solid rgba(255,255,255,0.06); }
+  .swatch .t{ min-width:0; }
+  .swatch .vn{ font-family:var(--font-data); font-size:12px; color:var(--signal); }
+  .swatch .hx{ font-family:var(--font-data); font-size:11px; color:var(--mist); margin:2px 0 4px; }
+  .swatch .us{ font-size:11px; color:var(--mist); line-height:1.4; }
+
+  .ramp{ display:flex; gap:0; border:1px solid var(--line-soft); border-radius:4px; overflow:hidden; }
+  .ramp .seg{ flex:1; padding:16px 14px 14px; border-right:1px solid rgba(7,6,11,0.6); }
+  .ramp .seg:last-child{ border-right:none; }
+  .ramp .dot{ width:18px; height:18px; border-radius:50%; margin-bottom:12px; }
+  .ramp .rn{ font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--signal); margin-bottom:3px; }
+  .ramp .rh{ font-family:var(--font-data); font-size:10px; color:var(--mist); }
+
+  .proportion{ display:flex; height:40px; border-radius:3px; overflow:hidden; border:1px solid var(--line-soft); margin-top:18px; }
+  .proportion i{ display:flex; align-items:center; justify-content:center; font-family:var(--font-data); font-size:10px; }
+
+  /* type */
+  .type-row{ border:1px solid var(--line-soft); border-radius:4px; background:var(--panel); padding:22px 26px; margin-bottom:12px;
+    display:flex; align-items:center; justify-content:space-between; gap:30px; }
+  .type-row .spec{ font-family:var(--font-data); font-size:11px; color:var(--mist); text-align:right; flex:none; line-height:1.7; }
+  .type-row .spec b{ color:var(--fire); font-weight:400; }
+  .t-display-xl{ font-family:var(--font-display); font-weight:200; font-size:42px; letter-spacing:.34em; text-indent:.34em; text-transform:uppercase; color:var(--signal); }
+  .t-display{ font-family:var(--font-display); font-weight:300; font-size:24px; letter-spacing:.22em; text-indent:.22em; text-transform:uppercase; color:var(--signal); }
+  .t-label{ font-family:var(--font-ui); font-weight:400; font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--mist); }
+  .t-body{ font-family:var(--font-ui); font-weight:300; font-size:15px; letter-spacing:.02em; color:var(--signal); }
+  .t-data{ font-family:var(--font-data); font-weight:300; font-size:22px; color:var(--fire-bright); }
+  .t-data-sm{ font-family:var(--font-data); font-weight:400; font-size:13px; color:var(--signal); }
+
+  /* token grids */
+  .tok-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .tok{ border:1px solid var(--line-soft); border-radius:4px; background:var(--panel); padding:18px 20px; }
+  .tok .demo{ height:54px; display:flex; align-items:center; margin-bottom:14px; }
+  .tok .tk{ font-family:var(--font-data); font-size:12px; color:var(--fire); margin-bottom:4px; }
+  .tok .td{ font-size:11.5px; color:var(--mist); line-height:1.5; }
+  .box-a{ width:80px; height:44px; background:var(--panel); border:1px solid var(--line); border-radius:4px; }
+  .box-b{ width:80px; height:44px; background:var(--panel); border:1px solid var(--line); border-radius:3px; }
+  .box-c{ width:80px; height:44px; background:var(--panel); border:1px solid var(--line); border-radius:2px; }
+  .hair{ width:120px; border-top:1px solid var(--line); }
+  .hair2{ width:120px; border-top:1px solid var(--line-soft); margin-top:8px; }
+  .padbox{ width:120px; height:54px; border:1px solid var(--line-soft); border-radius:3px; position:relative; }
+  .padbox::after{ content:""; position:absolute; inset:13px; border:1px dashed rgba(212,175,55,0.3); border-radius:2px; }
+
+  /* motion */
+  .motion{ display:grid; grid-template-columns:1.3fr 1fr; gap:14px; }
+  .mcard{ border:1px solid var(--line-soft); border-radius:4px; background:var(--panel); padding:20px 22px; }
+  .mcard .mk{ font-family:var(--font-data); font-size:12px; color:var(--fire); margin-bottom:10px; }
+  .mtrack{ height:2px; background:rgba(212,175,55,0.12); border-radius:2px; position:relative; margin:18px 0; }
+  .mdot{ position:absolute; top:-3px; width:8px; height:8px; border-radius:50%; background:var(--fire);
+    box-shadow:0 0 8px rgba(212,175,55,.7); animation:travel 3.4s var(--ease) infinite; }
+  @keyframes travel{ 0%{ left:0; opacity:0; } 12%{ opacity:1; } 88%{ opacity:1; } 100%{ left:100%; opacity:0; } }
+  .mlist{ font-size:12px; color:var(--mist); line-height:1.9; }
+  .mlist b{ color:var(--signal); font-weight:400; } .mlist code{ font-family:var(--font-data); color:var(--fire); font-size:11px; }
+
+  /* buttons grammar */
+  .btn-demo{ display:flex; gap:30px; align-items:center; border:1px solid var(--line-soft); border-radius:4px;
+    background:var(--panel); padding:26px 30px; flex-wrap:wrap; }
+  .bd{ display:flex; flex-direction:column; gap:8px; }
+  .bd .cap{ font-family:var(--font-data); font-size:10px; color:var(--mist); }
+  .demo-tbtn{ background:none; border:none; cursor:pointer; font-family:var(--font-ui); font-weight:300; font-size:14px;
+    letter-spacing:.06em; padding:6px 2px; position:relative; }
+  .demo-tbtn.q{ color:var(--mist); } .demo-tbtn.h{ color:var(--signal); } .demo-tbtn.a{ color:var(--fire); }
+  .demo-tbtn.h::after,.demo-tbtn.a::after{ content:""; position:absolute; left:2px; right:2px; bottom:1px; height:1px; background:var(--fire); }
+
+  /* CSS block */
+  pre{ border:1px solid var(--line-soft); border-radius:4px; background:rgba(7,6,11,0.6); padding:24px 26px;
+    overflow:auto; font-family:var(--font-data); font-size:12px; line-height:1.7; color:var(--signal); }
+  pre .c{ color:var(--mist); } pre .p{ color:var(--fire); } pre .v{ color:#9fd0ff; }
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="doc">
+  <div class="crumb"><a href="Probetheus — Game UI.html">← game ui</a><span>·</span><a href="Probetheus — Icon Kit.html">icon kit →</a></div>
+  <h1>Design Spec</h1>
+  <div class="rule"></div>
+  <p class="lede">The transcribable layer of <b>Void Premium</b>. The void is the canvas; <em>gold is the stolen fire</em> — it marks only what the player earned and built. A typical screen is ~85% void, ~10% text, <b>≤5% gold</b>. Everything breathes slightly violet; nothing is pure black or pure white.</p>
+
+  <h2>Color — core palette</h2>
+  <div class="swatch-grid" id="coreSwatches"></div>
+  <div class="proportion" id="proportion"></div>
+
+  <h2>Material identities &amp; rarity</h2>
+  <div class="swatch-grid" id="matSwatches" style="margin-bottom:14px"></div>
+  <div class="ramp" id="ramp"></div>
+
+  <h2>Typography</h2>
+  <div class="type-row">
+    <div class="t-display-xl">Probetheus</div>
+    <div class="spec"><b>Display XL</b> · Jost 200<br>letter-spacing 0.34em<br>uppercase · titles</div>
+  </div>
+  <div class="type-row">
+    <div class="t-display">Hub Operations</div>
+    <div class="spec"><b>Display</b> · Jost 300<br>0.22em · screen headers</div>
+  </div>
+  <div class="type-row">
+    <div class="t-label">Intake Bay · Deliveries / min</div>
+    <div class="spec"><b>Label</b> · Jost 400<br>0.18em · uppercase · 10–11px</div>
+  </div>
+  <div class="type-row">
+    <div class="t-body">Select a probe and draw its path through a charted deposit to open a route.</div>
+    <div class="spec"><b>Body</b> · Jost 300<br>sentence case · 13–15px</div>
+  </div>
+  <div class="type-row">
+    <div><span class="t-data">128.4</span> &nbsp; <span class="t-data-sm">24.6 /min · [0, 0]</span></div>
+    <div class="spec"><b>Data</b> · IBM Plex Mono 300/400<br>numbers · rates · coordinates</div>
+  </div>
+  <p class="lede" style="margin-top:14px; font-size:12.5px">No bold display weights, ever — emphasis comes from gold, spacing, or size. Fallbacks: <b>Century Gothic, Segoe UI</b> / <b>Courier New</b>. Fonts are self-hosted woff2 (OFL) — no network dependency.</p>
+
+  <h2>Form — radius, hairlines, padding</h2>
+  <div class="tok-grid">
+    <div class="tok"><div class="demo"><div class="box-a"></div></div><div class="tk">--radius-max: 4px</div><div class="td">Panels &amp; modals. The ceiling — nothing rounds more than this.</div></div>
+    <div class="tok"><div class="demo"><div class="box-b"></div></div><div class="tk">3px</div><div class="td">Buttons, cells, slots, chips — the working radius.</div></div>
+    <div class="tok"><div class="demo"><div class="box-c"></div></div><div class="tk">2px</div><div class="td">Bars, fills, the smallest inset elements.</div></div>
+    <div class="tok"><div class="demo" style="flex-direction:column;align-items:flex-start;justify-content:center;gap:2px"><div class="hair"></div><div class="hair2"></div></div><div class="tk">--line / --line-soft</div><div class="td">1px hairline gold at 0.28 / 0.14 alpha. The only border weight.</div></div>
+    <div class="tok"><div class="demo"><div class="padbox"></div></div><div class="tk">padding ≥ 16px</div><div class="td">Panels breathe. Generous interior space is part of the premium read.</div></div>
+    <div class="tok"><div class="demo"><div style="width:120px;height:44px;background:var(--panel);border:1px solid var(--line);border-radius:4px;backdrop-filter:blur(6px)"></div></div><div class="tk">--panel + blur(6px)</div><div class="td">rgba(10,8,18,0.92) glass over the playfield. One accent per surface.</div></div>
+  </div>
+
+  <h2>Motion grammar</h2>
+  <div class="motion">
+    <div class="mcard">
+      <div class="mk">// the traveling spark</div>
+      <div class="mtrack"><div class="mdot"></div></div>
+      <div class="mlist">Whenever value moves through the network, a spark shows it. <b>Drift, don't snap.</b> Ambient elements move at minutes-per-cycle speeds; pulses breathe on 2–4s cycles. Nothing strobes, nothing shakes by default.</div>
+    </div>
+    <div class="mcard">
+      <div class="mk">// timing</div>
+      <div class="mlist">
+        Easing <code>cubic-bezier(0.4, 0, 0.2, 1)</code> — everywhere.<br>
+        UI transitions <code>240–400ms</code>.<br>
+        Ambient drift <code>minutes / cycle</code>.<br>
+        Respects <code>prefers-reduced-motion</code>: drift slows, sparks fade in place, shake off.
+      </div>
+    </div>
+  </div>
+
+  <h2>Buttons — text-first</h2>
+  <div class="btn-demo">
+    <div class="bd"><button class="demo-tbtn q">Deploy Probe</button><div class="cap">default · quiet mist</div></div>
+    <div class="bd"><button class="demo-tbtn h">Deploy Probe</button><div class="cap">hover · signal + gold underline</div></div>
+    <div class="bd"><button class="demo-tbtn a">Deploy Probe</button><div class="cap">active · gold</div></div>
+    <div class="bd"><button class="cta" style="width:auto"><span style="font-family:var(--font-ui)">Primary CTA</span></button><div class="cap">boxes only for primary / destructive</div></div>
+  </div>
+
+  <h2>CSS variables — transcribe directly</h2>
+  <pre id="cssblock"></pre>
+</div>
+
+<script>
+  const CORE = [
+    ['--void','#07060B','Page &amp; canvas ground. Never pure black — violet-tinted near-black.'],
+    ['--rift','#1A1030','Nebula depth. Soft radial/linear gradients only, never flat fill.'],
+    ['--fire','#D4AF37','The gold. Active states, underlines, hubs, routes, scores.'],
+    ['--fire-bright','#FFD700','Gameplay gold — Probethium, legendaries, combos. Used small.'],
+    ['--signal','#E8E4F0','Primary text + probe bodies. Off-white with a violet whisper.'],
+    ['--mist','#8B84A3','Secondary text, captions, inactive UI, common signals.'],
+    ['--line','rgba(212,175,55,0.28)','Hairline gold — borders, route lines, constellation strokes.'],
+    ['--danger','#E0524D','Warnings &amp; loss only. Soft red, sparing, never flashing.'],
+  ];
+  document.getElementById('coreSwatches').innerHTML = CORE.map(c =>
+    '<div class="swatch"><div class="chip" style="background:' + c[1].replace('&amp;','&') + '"></div>' +
+    '<div class="t"><div class="vn">' + c[0] + '</div><div class="hx">' + c[1] + '</div><div class="us">' + c[2] + '</div></div></div>'
+  ).join('');
+
+  // proportion bar
+  document.getElementById('proportion').innerHTML =
+    '<i style="flex:85;background:var(--void);color:var(--mist);border-right:1px solid var(--line-soft)">85% · void / rift</i>' +
+    '<i style="flex:10;background:rgba(232,228,240,0.08);color:var(--signal);border-right:1px solid var(--line-soft)">10% · text</i>' +
+    '<i style="flex:5;background:rgba(212,175,55,0.18);color:var(--fire)">5% · gold</i>';
+
+  const MAT = [
+    ['Minerals','#C97B4A','copper'],['Data','#5B8CFF','clear blue'],
+    ['Artifacts','#B06BFF','rift violet'],['Exotic','#E8E4F0','shimmer white'],
+  ];
+  document.getElementById('matSwatches').innerHTML = MAT.map(m =>
+    '<div class="swatch"><div class="chip" style="background:' + m[1] + '"></div>' +
+    '<div class="t"><div class="vn">' + m[0] + '</div><div class="hx">' + m[1] + '</div><div class="us">' + m[2] + ' — beads, deposits &amp; ports read from here</div></div></div>'
+  ).join('');
+
+  const RAMP = [
+    ['Common','#8B84A3'],['Uncommon','#7FD6C2'],['Rare','#5B8CFF'],['Epic','#B06BFF'],['Legendary','#FFD700'],
+  ];
+  document.getElementById('ramp').innerHTML = RAMP.map(r =>
+    '<div class="seg"><div class="dot" style="background:' + r[1] + ';box-shadow:0 0 12px ' + r[1] + '66"></div>' +
+    '<div class="rn">' + r[0] + '</div><div class="rh">' + r[1] + '</div></div>'
+  ).join('');
+
+  document.getElementById('cssblock').innerHTML =
+`<span class="c">/* Probetheus — Void Premium tokens */</span>
+:root {
+  <span class="p">--void</span>:        <span class="v">#07060B</span>;   <span class="c">/* ground   */</span>
+  <span class="p">--rift</span>:        <span class="v">#1A1030</span>;   <span class="c">/* depth    */</span>
+  <span class="p">--fire</span>:        <span class="v">#D4AF37</span>;   <span class="c">/* the gold */</span>
+  <span class="p">--fire-bright</span>: <span class="v">#FFD700</span>;
+  <span class="p">--signal</span>:      <span class="v">#E8E4F0</span>;
+  <span class="p">--mist</span>:        <span class="v">#8B84A3</span>;
+  <span class="p">--line</span>:        <span class="v">rgba(212,175,55,0.28)</span>;
+  <span class="p">--line-soft</span>:   <span class="v">rgba(212,175,55,0.14)</span>;
+  <span class="p">--danger</span>:      <span class="v">#E0524D</span>;
+  <span class="p">--panel</span>:       <span class="v">rgba(10,8,18,0.92)</span>;
+
+  <span class="c">/* materials */</span>
+  <span class="p">--mat-minerals</span>:  <span class="v">#C97B4A</span>;
+  <span class="p">--mat-data</span>:      <span class="v">#5B8CFF</span>;
+  <span class="p">--mat-artifacts</span>: <span class="v">#B06BFF</span>;
+  <span class="p">--mat-exotic</span>:    <span class="v">#E8E4F0</span>;
+
+  <span class="c">/* type */</span>
+  <span class="p">--font-display</span>: <span class="v">'Jost', 'Century Gothic', sans-serif</span>;
+  <span class="p">--font-data</span>:    <span class="v">'IBM Plex Mono', 'Courier New', monospace</span>;
+
+  <span class="c">/* form + motion */</span>
+  <span class="p">--radius-max</span>: <span class="v">4px</span>;
+  <span class="p">--pad-panel</span>:  <span class="v">16px</span>;
+  <span class="p">--ease</span>:       <span class="v">cubic-bezier(0.4, 0, 0.2, 1)</span>;
+  <span class="p">--dur-ui</span>:     <span class="v">280ms</span>;
+}`;
+</script>
+</body>
+</html>

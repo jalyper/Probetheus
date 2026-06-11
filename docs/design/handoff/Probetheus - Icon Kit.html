@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Probetheus — Icon Kit</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  body{ overflow:auto; }
+  .doc{ max-width:1100px; margin:0 auto; padding:72px 40px 120px; position:relative; z-index:1; }
+  .bg{ position:fixed; inset:0; z-index:0; background:
+    radial-gradient(ellipse 80% 60% at 70% 110%, rgba(26,16,48,0.6) 0%, rgba(26,16,48,0) 60%), var(--void); }
+  .crumb{ font-family:var(--font-data); font-size:11px; letter-spacing:.06em; color:rgba(139,132,163,0.6);
+    margin-bottom:30px; display:flex; gap:14px; }
+  .crumb a{ color:rgba(139,132,163,0.6); text-decoration:none; } .crumb a:hover{ color:var(--fire); }
+  h1{ font-family:var(--font-display); font-weight:200; font-size:46px; letter-spacing:.34em;
+    text-indent:.34em; text-transform:uppercase; color:var(--signal); margin-bottom:14px; }
+  .rule{ width:160px; height:1px; background:linear-gradient(90deg,var(--fire),transparent); margin-bottom:18px; position:relative; }
+  .rule::after{ content:""; position:absolute; left:0; top:-2px; width:5px; height:5px; border-radius:50%;
+    background:var(--fire); box-shadow:0 0 8px rgba(212,175,55,.8); }
+  .lede{ color:var(--mist); font-size:14px; line-height:1.7; max-width:620px; margin-bottom:8px; }
+  .lede b{ color:var(--signal); font-weight:400; }
+  .meta{ font-family:var(--font-data); font-size:11px; color:rgba(139,132,163,0.7); margin-top:14px; }
+  .grouplbl{ font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--fire);
+    margin:54px 0 4px; display:flex; align-items:center; gap:14px; }
+  .grouplbl::after{ content:""; flex:1; height:1px; background:var(--line-soft); }
+  .gnote{ font-size:12px; color:var(--mist); margin-bottom:22px; }
+  .grid{ display:grid; grid-template-columns:repeat(6,1fr); gap:14px; }
+  .cell{ border:1px solid var(--line-soft); border-radius:4px; background:var(--panel);
+    padding:20px 12px 13px; display:flex; flex-direction:column; align-items:center; gap:13px;
+    transition:border-color .3s var(--ease), background .3s var(--ease); }
+  .cell:hover{ border-color:var(--line); background:rgba(212,175,55,0.03); }
+  .cell .gl{ height:30px; display:flex; align-items:center; color:var(--fire); }
+  .cell .nm{ font-family:var(--font-data); font-size:10px; letter-spacing:.04em; color:var(--mist); text-align:center; }
+
+  .scale-demo{ display:flex; align-items:flex-end; gap:30px; border:1px solid var(--line-soft);
+    border-radius:4px; background:var(--panel); padding:26px 30px; margin-top:6px; }
+  .sd-col{ display:flex; flex-direction:column; align-items:center; gap:11px; }
+  .sd-col .px{ font-family:var(--font-data); font-size:10px; color:var(--mist); }
+  .sd-col .gl{ color:var(--fire); display:flex; align-items:flex-end; }
+  .twovar{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:6px; }
+  .var-card{ border:1px solid var(--line-soft); border-radius:4px; background:var(--panel); padding:22px 24px; }
+  .var-card .vh{ font-size:11px; letter-spacing:.2em; text-transform:uppercase; margin-bottom:5px; }
+  .var-card .vd{ font-size:12px; color:var(--mist); line-height:1.55; margin-bottom:18px; }
+  .var-row{ display:flex; gap:18px; align-items:center; }
+  .var-row .gl{ display:flex; align-items:center; }
+  .gold .vh{ color:var(--fire); } .mist .vh{ color:var(--mist); }
+  .principles{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:6px; }
+  .pr{ border:1px solid var(--line-soft); border-radius:4px; background:var(--panel); padding:18px 20px; }
+  .pr .k{ font-family:var(--font-data); font-size:11px; color:var(--fire); margin-bottom:8px; }
+  .pr .v{ font-size:12px; color:var(--mist); line-height:1.6; }
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="doc">
+  <div class="crumb"><a href="Probetheus — Game UI.html">← game ui</a><span>·</span><a href="Probetheus — Design Spec.html">design spec →</a></div>
+  <h1>Iconography</h1>
+  <div class="rule"></div>
+  <p class="lede">Thin-line constellation glyphs that replace every emoji across the chrome. Geometric, drawn on a single <b>1.25px stroke</b>, rendered in <b>currentColor</b> so any glyph inherits gold (earned/active) or mist (quiet) from its surface. Built to read cleanly from <b>12 to 20px</b>.</p>
+  <div class="meta">27 glyphs · 24×24 viewBox · stroke 1.25 · round caps + joins · no fills except node cores</div>
+
+  <div class="grouplbl">Network &amp; Entities</div>
+  <div class="gnote">The things the player builds and commands. Gold by default — earned.</div>
+  <div class="grid" data-group="entities"></div>
+
+  <div class="grouplbl">Deposits — one per material</div>
+  <div class="gnote">Each carries its material color: copper minerals · blue data · violet artifacts · white exotics.</div>
+  <div class="grid" data-group="deposits"></div>
+
+  <div class="grouplbl">Systems</div>
+  <div class="gnote">Research, equipment, and access surfaces.</div>
+  <div class="grid" data-group="systems"></div>
+
+  <div class="grouplbl">Controls &amp; State</div>
+  <div class="gnote">Time, navigation, and affordances.</div>
+  <div class="grid" data-group="controls"></div>
+
+  <div class="grouplbl">Probe Operations</div>
+  <div class="gnote">Per-probe toggles and network telemetry.</div>
+  <div class="grid" data-group="ops"></div>
+
+  <div class="grouplbl">Reads at every size</div>
+  <div class="gnote">The hexagon hub from caption to header. No glyph is detailed enough to break below 12px.</div>
+  <div class="scale-demo" data-scale="hub"></div>
+
+  <div class="grouplbl">One stroke, two voices</div>
+  <div class="gnote">The same glyph carries meaning by color alone — never by weight.</div>
+  <div class="twovar">
+    <div class="var-card gold">
+      <div class="vh">Gold — earned / active</div>
+      <div class="vd">Built things, active states, the selected probe, anything the player owns.</div>
+      <div class="var-row" data-var="gold"></div>
+    </div>
+    <div class="var-card mist">
+      <div class="vh">Mist — quiet / inactive</div>
+      <div class="vd">Default buttons, captions, locked or idle affordances. Recedes into the void.</div>
+      <div class="var-row" data-var="mist"></div>
+    </div>
+  </div>
+
+  <div class="grouplbl">Drawing rules</div>
+  <div class="gnote">Keep the set coherent as it grows.</div>
+  <div class="principles">
+    <div class="pr"><div class="k">// geometry</div><div class="v">Built from circles, hexagons, rhombi and straight runs. Constellation-adjacent — never illustrative.</div></div>
+    <div class="pr"><div class="k">// stroke</div><div class="v">1.25px at 24px. Round caps and joins. Node cores are the only filled element, and only when something is "live."</div></div>
+    <div class="pr"><div class="k">// color</div><div class="v">currentColor only. Emphasis is gold or color — never a heavier stroke, never a glow on a resting icon.</div></div>
+  </div>
+</div>
+
+<script src="icons.js"></script>
+<script>
+  const GROUPS = {
+    entities: ['probe','hub','shuttle','mining','foundry','spark'],
+    deposits: [['deposit-mineral','var(--mat-min)'],['deposit-data','var(--mat-data)'],['deposit-artifact','var(--mat-art)'],['deposit-exotic','var(--mat-exo)']],
+    systems: ['uplink','slot','lock','settings','sector','upgrade'],
+    controls: ['pause','play','speed','close','chevron','plus','check','power'],
+    ops: ['patrol','camera','flow'],
+  };
+  function cell(name, color) {
+    const div = document.createElement('div');
+    div.className = 'cell';
+    div.innerHTML = '<div class="gl"' + (color ? ' style="color:' + color + '"' : '') + '>' +
+      window.icon(name, { size: 24 }) + '</div><div class="nm">' + name + '</div>';
+    return div;
+  }
+  Object.entries(GROUPS).forEach(([g, names]) => {
+    const host = document.querySelector('[data-group="' + g + '"]');
+    names.forEach(n => {
+      if (Array.isArray(n)) host.appendChild(cell(n[0], n[1]));
+      else host.appendChild(cell(n));
+    });
+  });
+  // scale demo
+  const sd = document.querySelector('[data-scale="hub"]');
+  [12, 14, 16, 20, 24, 32].forEach(px => {
+    const c = document.createElement('div');
+    c.className = 'sd-col';
+    c.innerHTML = '<div class="gl">' + window.icon('hub', { size: px }) + '</div><div class="px">' + px + 'px</div>';
+    sd.appendChild(c);
+  });
+  // two voices
+  const sample = ['probe','hub','uplink','patrol','lock','settings'];
+  document.querySelector('[data-var="gold"]').innerHTML =
+    sample.map(n => '<span class="gl" style="color:var(--fire)">' + window.icon(n, { size: 20 }) + '</span>').join('');
+  document.querySelector('[data-var="mist"]').innerHTML =
+    sample.map(n => '<span class="gl" style="color:var(--mist)">' + window.icon(n, { size: 20 }) + '</span>').join('');
+</script>
+</body>
+</html>

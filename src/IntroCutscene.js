@@ -311,9 +311,20 @@ class IntroCutscene {
         this.ctx.translate(-this.canvas.width / 2, -this.canvas.height / 2);
         this.ctx.translate(-this.camera.x, -this.camera.y);
         
-        this.ctx.fillStyle = '#000';
+        // Void ground + rift-violet nebula rising from below (VISUAL_STYLE:
+        // never pure black; the same ground the playfield and start screen use)
+        this.ctx.fillStyle = '#07060B';
         this.ctx.fillRect(-1000, -1000, this.canvas.width + 2000, this.canvas.height + 2000);
-        
+        const nebula = this.ctx.createRadialGradient(
+            this.canvas.width * 0.72, this.canvas.height * 1.05, 0,
+            this.canvas.width * 0.72, this.canvas.height * 1.05,
+            Math.max(this.canvas.width, this.canvas.height) * 0.9);
+        nebula.addColorStop(0, 'rgba(26, 16, 48, 0.55)');
+        nebula.addColorStop(0.5, 'rgba(26, 16, 48, 0.16)');
+        nebula.addColorStop(1, 'rgba(26, 16, 48, 0)');
+        this.ctx.fillStyle = nebula;
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
         // Draw starfield
         this.drawStars();
         
@@ -377,7 +388,8 @@ class IntroCutscene {
     }
     
     drawStars() {
-        this.ctx.fillStyle = '#fff';
+        // Mist-toned stars (playfield grammar) — never stark white
+        this.ctx.fillStyle = '#8B84A3';
         this.stars.forEach(star => {
             // Simple, smooth star movement - no rubber-banding
             if (!star.currentX) {
@@ -418,15 +430,15 @@ class IntroCutscene {
         this.ctx.rotate((this.blackHole.rotation * Math.PI) / 180);
         this.ctx.globalAlpha = this.blackHole.opacity;
         
-        // Draw black center
-        this.ctx.fillStyle = '#000';
+        // Draw void center
+        this.ctx.fillStyle = '#07060B';
         this.ctx.beginPath();
         this.ctx.arc(0, 0, this.blackHole.radius * 0.7, 0, Math.PI * 2);
         this.ctx.fill();
-        
-        // Draw rotating jagged white ring
-        this.ctx.strokeStyle = '#fff';
-        this.ctx.lineWidth = 2;
+
+        // Draw rotating jagged signal-white ring (hairline)
+        this.ctx.strokeStyle = 'rgba(232, 228, 240, 0.75)';
+        this.ctx.lineWidth = 1.2;
         this.ctx.setLineDash([5, 5]);
         this.ctx.beginPath();
         
@@ -448,11 +460,11 @@ class IntroCutscene {
         this.ctx.stroke();
         this.ctx.setLineDash([]);
         
-        // Draw gravitational distortion effect
+        // Gravitational distortion — rift violet, the void's own color
         const gradient = this.ctx.createRadialGradient(0, 0, this.blackHole.radius * 0.5, 0, 0, this.blackHole.radius * 2);
-        gradient.addColorStop(0, 'rgba(128, 0, 255, 0.4)');
-        gradient.addColorStop(0.5, 'rgba(128, 0, 255, 0.2)');
-        gradient.addColorStop(1, 'rgba(128, 0, 255, 0)');
+        gradient.addColorStop(0, 'rgba(176, 107, 255, 0.30)');
+        gradient.addColorStop(0.5, 'rgba(176, 107, 255, 0.14)');
+        gradient.addColorStop(1, 'rgba(176, 107, 255, 0)');
         this.ctx.fillStyle = gradient;
         this.ctx.beginPath();
         this.ctx.arc(0, 0, this.blackHole.radius * 2, 0, Math.PI * 2);
@@ -564,36 +576,45 @@ class IntroCutscene {
             this.ctx.arc(0, 0, 25, 0, Math.PI * 2);
             this.ctx.fill();
         }
-        
-        // Draw hexagonal hub (matching the game's gold hub strokes)
+
+        // Hub in the playfield grammar (design handoff, playfield.js drawHub):
+        // breathing gold hexagon stroke + thin intake ring + glowing core.
         const size = 15;
-        this.ctx.fillStyle = 'rgba(212, 175, 55, 0.12)';
-        this.ctx.strokeStyle = '#D4AF37';
-        this.ctx.lineWidth = 1.5;
+        const breathe = 0.5 + 0.5 * Math.sin(performance.now() * 0.0007 + x * 0.01);
+
         this.ctx.beginPath();
-        
         for (let i = 0; i < 6; i++) {
             const angle = (Math.PI * 2 * i) / 6 - Math.PI / 2;
             const px = Math.cos(angle) * size;
             const py = Math.sin(angle) * size;
-            
+
             if (i === 0) {
                 this.ctx.moveTo(px, py);
             } else {
                 this.ctx.lineTo(px, py);
             }
         }
-        
         this.ctx.closePath();
-        this.ctx.fill();
+        this.ctx.strokeStyle = `rgba(212, 175, 55, ${(0.55 + breathe * 0.35).toFixed(3)})`;
+        this.ctx.lineWidth = 1.2;
         this.ctx.stroke();
-        
-        // Draw center dot
-        this.ctx.fillStyle = '#FFD700';
+
+        // Intake ring
         this.ctx.beginPath();
-        this.ctx.arc(0, 0, 3, 0, Math.PI * 2);
+        this.ctx.arc(0, 0, size * 0.52, 0, Math.PI * 2);
+        this.ctx.strokeStyle = 'rgba(212, 175, 55, 0.22)';
+        this.ctx.lineWidth = 1;
+        this.ctx.stroke();
+
+        // Breathing core
+        this.ctx.beginPath();
+        this.ctx.arc(0, 0, 2.2 + breathe * 1.6, 0, Math.PI * 2);
+        this.ctx.fillStyle = '#D4AF37';
+        this.ctx.shadowColor = 'rgba(212, 175, 55, 0.7)';
+        this.ctx.shadowBlur = 10 + breathe * 10;
         this.ctx.fill();
-        
+        this.ctx.shadowBlur = 0;
+
         this.ctx.restore();
     }
     
@@ -606,7 +627,7 @@ class IntroCutscene {
             if (particle.life > 0) {
                 this.ctx.save();
                 this.ctx.globalAlpha = particle.life;
-                this.ctx.fillStyle = '#fff';
+                this.ctx.fillStyle = '#E8E4F0';
                 this.ctx.fillRect(particle.x, particle.y, particle.size, particle.size);
                 this.ctx.restore();
                 return true;

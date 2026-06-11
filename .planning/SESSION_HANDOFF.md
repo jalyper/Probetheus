@@ -1,56 +1,54 @@
-# Session Handoff — 2026-06-11 (end of session, consolidated)
+# Session Handoff — 2026-06-11 (evening, consolidated; supersedes the morning handoff)
 
-Read this, then `docs/design/LOOP_REDESIGN.md` → `VISION.md` → `VISUAL_STYLE.md`. Those three are authoritative. CORE_LOOP.md's "loop restated" section and the old ONBOARDING.md flow are superseded by LOOP_REDESIGN.md. Everything in `docs/archive/` is dead.
+Read order: `docs/design/REBUILD.md` → `LOOP_REDESIGN.md` → `VISION.md` → `VISUAL_STYLE.md` → **`docs/design/handoff/README.md`** (the Claude Design package — next session's primary work order). Everything in `docs/archive/` is dead. REBUILD.md outranks the LOOP_REDESIGN systems-audit verdicts where they conflict.
 
-## What this game is now
+## Standing user directives
 
-**The core loop was redesigned and prototyped this session.** Playtest verdict killed the old one ("nothing makes a well-routed network beat a sloppy one"); root cause was structural — signals spawned FROM the probe, so the map had no spatial structure and routing couldn't matter.
+- **Sledgehammer mandate (2026-06-11):** "INVENT game mechanics more than refine… take a sledgehammer to everything and rebuild it from the ground up according to our new pillars." The invention slate + demolition ledger live in REBUILD.md.
+- The loop outranks existing code; flow-watching is the earned side effect, never the goal.
+- In-game UI must speak the start screen's language (user, this session) — that sweep is DONE; the deeper redesign is the handoff package below.
 
-The new loop (Direction A, user-chosen, + user's framing):
-- **Deposits** are persistent places in the world. **Prospect** (probe pulses raise pings at undiscovered deposits; collecting a ping charts it) → **Tap** (probes extract per route pass, rate-capped per deposit) → **Route** (throughput = cargo ÷ round-trip) → **Tune** (hub intake processes 8/min × level; saturated docks queue probes visibly) → **Push** (richness scales with distance).
-- **Factory-first:** logistics items/upgrades are MADE from found materials (`window.RECIPES` + `RecipeUtils` in GameConstants). Intake Bay tier 3 costs exotic minerals, which only exist in ring-2+ deposits.
-- **Concentric rings (Valheim-style):** difficulty/exoticness scale with distance from home in any direction.
-- **Mothership endgame:** explore outward to find/build ancient tech that locates and reunites the probes with the Probetheus. STORY.md not yet rewritten against this.
+## What shipped this session (local main, force-pushed to origin)
 
-Standing user directives: **no mechanic is sacred — the loop outranks existing code**; flow-watching is the *earned side effect* of an efficient network, never the goal (VISION pillar 2 reworded accordingly; tagline is "The network is the factory").
+1. **`d05d806` — The Uplink replaces the Research Lab** (REBUILD.md §1). Research is a flow problem: Uplink is crafted (`RECIPES.uplink`), streams stored data into ONE active protocol at `UPLINK.DECODE_PER_MIN_BASE(12) × level`, deep protocols charge ring catalysts once up front. State: `gameState.uplink {built, level, active, progress{}, paid:Set, decoded:Set}`; gate with `gameState.hasProtocol(id)`; catalog `window.PROTOCOLS` (7). Deleted: ResearchManager, research screen/tree/points/milestone-RP/unlock modal, the entire collection-rarity ladder (`getMaxCollectableRarity` now always 'legendary'). Equipment gates: typed collectors → `harvest_lattice`, universal → `universal_lattice`; synthesis → `exotic_synthesis`; Remnant deep trade → `remnant_protocols`. Shell `researchSpeed` bonus now multiplies `uplinkSystem.decodeRatePerMin()`. Legacy saves migrate on load (SaveManager). Tutorial rewritten descriptive-of-mechanics (REBUILD.md §7) + uplink tips. Tests: `tests/uplink.spec.js` (11); all old suites migrated off the dead API.
+2. **`48bd06f` — Premium chrome sweep.** Every in-game surface tokenized to VISUAL_STYLE: intro title card now mirrors the start screen (thin signal-white PROBETHEUS + gold hairline + "The network is the factory"), tutorial panel/toasts de-neoned, all panels 1px hairline glass (no glow halos), DetailsPanel (~120 colors, ~40 emoji), UIManager (connector, slots, probe list, shell modal, alerts), Dark Market unified to one rift-violet accent. NO emoji and NO cyan remain in chrome.
+3. **(this commit) — Cutscene reskin + design handoff vendored.** IntroCutscene canvas now uses the playfield grammar: void+rift nebula ground, mist stars, violet/signal mothership with gold thrust, breathing-core gold hub hexagons (ported from handoff `playfield.js`), rift-violet black-hole distortion. Claude Design package vendored at `docs/design/handoff/`.
 
-## Session commits (local main, NOT pushed; ahead 12 / behind 40 vs origin — user chose "playtest first, merge later")
+Suite state: **199 green** (full run shows 198 + `mining-stall.spec.js` flaking under parallel workers; passes in isolation — run `--workers=4` and retry singles before trusting a red).
 
-1. `8e83f31` — Void Premium phase 2: start screen + living constellation (`StartConstellation.js`), full canvas repaint (`window.PALETTE`, new rarity ramp, gold network), cargo sparks (`CargoSparkSystem.js`), inline-chrome sweep (no cyan, no emoji), anime.js bundled locally (Steam offline).
-2. `5fdff86` — loop prototype: `DepositSystem.js` (deterministic per-sector gen, starter cluster at home, ring scaling, exotic deposits ring 2+, token-bucket rate caps), prospecting pings replace probe-spawned loot, extraction on passes, hub intake gate + visible "N waiting" queue, save persistence of charted flags.
-3. `c386404` — tutorial deleted/rewritten (select hub → scout → chart → tap → deliver → release; advances on `deposit:discovered`/`deposit:extracted`); soundtrack = five LoFi WAVs (MusicManager, stale-selection fallback); **systems audit table added to LOOP_REDESIGN.md** (KEEP/RECAST/CUT verdict for every old system — read it before touching anything old).
-4. `e389fee` — Intake Bay upgrade UI on hub panel (level/rate/recipe/shortfall messages; `hub.intakeLevel` persists), RECIPES table, VISUAL_STYLE.md §"Material flow — the conveyor in space".
+## NEXT SESSION: port the Claude Design handoff (`docs/design/handoff/`)
 
-Tests: 34/34 green across `deposit-loop`, `intake-recipes`, `cargo-sparks`, `redesign-m1`, `tutorial-system` (chromium). ~50 OLD test failures (signal-rewards, synthesis, progression-gates…) predate everything and encode the dead economy — audit says DELETE them, don't fix.
+The bundle is a hi-fi HTML/CSS/JS prototype of the entire in-game UI + asset kit; its README is a precise work order with exact values, and its tokens already match shipped `styles.css`. **Do not ship the HTML — port into modules.** Suggested order:
 
-## Next session order of attack
+1. **Icon kit** — port `handoff/icons.js` (27 thin-line glyphs, `window.icon(name,{size,color})`) into `src/` + script tag; replace remaining text glyphs (◇ ▸ ⏻ ⚙︎) across index.html/UIManager/DetailsPanel.
+2. **HUD header bar** (README §1) — rebuild the resource bar to the 66px clustered design; KEEP existing element ids (`#minerals`, `#sectorInfo`, `#throughputValue`…) so tests survive.
+3. **Hub Operations panel** (README §2) — merge detailsPanel hub view + probePanel into the single 312px surface (stat grid, Intake Bay block, text-first op rows with key chips, shell footer).
+4. **Uplink panel refinements** (README §3) — stat tiles, state tags (DECODED/DECODING/AVAILABLE/LOCKED), data-blue glow bar; `UplinkSystem.renderPanel()` already structured for this.
+5. **Playfield canvas** (README §8) — port `handoff/playfield.js` routines into the game renderer: breathing-core hubs + intake rings, route filament alpha ∝ load, deposit glyph shapes (FlowBeadSystem already does beads; align bead size/consume-glow), Uplink dish as orbiting arc, probe diamond + trail, void+nebula ground. Mind the two clocks: ambient `time` never pauses, `simTime` scales.
+6. **Probe floater + tutorial card + toast specifics** (README §4–5), Dark Market modal interior (§6 — GameController renders its inner HTML; NPC accents already unified).
 
-1. ~~**Flow beads v1**~~ DONE 2026-06-11 — `FlowBeadSystem.js` replaces CargoSparkSystem: continuous type-colored bead chains per route (density ∝ rolling 90s per-route throughput, 1 bead floor / 12 cap / over-cap filament brighten), striped by cargo mix, sim-time march; shuttle legs keep one-shot pulses; consumption rings at hub on delivery. Material colors centralized in `PALETTE.MATERIALS`. Tests: `tests/flow-beads.spec.js` (11). **Next in this track: step 2 dock consumption** (bead swallow + visible back-up when intake queues), then step 3 processor ports — spec in VISUAL_STYLE.md §"Material flow".
-2. ~~**CUT** the exploration screen + dead test suites~~ DONE 2026-06-11 — removed `explore()`/planet path from GameController, exploreScreen+rewardModal markup/CSS; deleted 10 dead-economy suites (signal-rewards, exclusive-signals, signal-visuals, statistical-validation, happy-path-integration, progression-gates, probethium-synthesis, synthesis-system, rarity-display, discovery-reveal). Full suite green (208/208 minus deletions; note: heavy parallel full-suite runs can flake ~10% on worker contention — rerun before trusting a red).
-3. Migrate legacy build costs (probe 25M etc. hardcoded in ProbeManager/DetailsPanel buttons) to read RECIPES.
-4. ~~Equipment/research recast~~ research DONE 2026-06-11 — the Research Lab is demolished, replaced by **the Uplink** (REBUILD.md §1, which now outranks the audit verdicts): research = streaming stored data into one active protocol at a capped rate (12/min × level), deep protocols cost ring catalysts, `gameState.hasProtocol(id)` gates collectors/synthesis/Remnant trade. Tutorial rewritten descriptive-of-mechanics (REBUILD.md §7). Equipment→extractor-modules recast still open, folds into the Foundry pass (REBUILD.md §2, next).
-5. Signal Storm recast (temporary surface deposits) + OfflineManager honest-math rewrite.
-6. STORY.md rewrite against rings/mothership.
-7. Playtest first-ten-minutes; tune intake rate (8/min), starter richness, extraction cooldown (2.5s), ring multipliers.
+Then resume the REBUILD.md build order: **Foundry** (mining station demolition, §2) → Solar Drift → Resonance → Carrier Signal.
 
 ## Known issues / debts
 
-- Hub panel + all UIManager/DetailsPanel/ResearchManager/DarkMarketSystem generated HTML still carries old inline colors + emoji (the Intake Bay section is the only tokenized part). IntroCutscene title card still cyan.
-- Dark Market purchase button bug still open (`DARK_MARKET_BUG.md`).
-- Dev "Testing" panel visible (strip at M3 "Steam hygiene").
-- `nul` file at repo root is junk; `.claude/settings.local.json` + old `.planning/phases/` deletions are uncommitted pre-existing noise.
+- `Available: 3 | Deployed: -3` seen on hub panel — probe count math bug somewhere in DetailsPanel/hub stats; investigate.
+- Black-hole rift glow reads very saturated at full-zoom finale (alpha 0.30 at radius×2); tune if it feels heavy.
+- Default shell swatches still use legacy content colors (cyan Standard Hub chip) — shell CONTENT colors were deliberately kept; decide whether defaults should re-tint.
+- Dev "Testing" panel visible (strip at M3); Dark Market purchase bug still open (`DARK_MARKET_BUG.md`); `nul` junk file at repo root; `.claude/settings.local.json` + `.planning/phases/` deletions remain uncommitted noise.
+- OfflineManager still models the dead signal economy (REBUILD ledger: demolish → honest math).
+- STORY.md still unwritten against rings/mothership.
 
 ## How to run / test
 
-- Serve: `python -m http.server 8000` from repo root (vite not installed; `npm run dev` fails). `http://localhost:8000`.
-- Tests: `npx playwright test <specs> --project=chromium`. Visual smoke: temp spec → start game → page.evaluate to skip cutscene/hide `titleOverlay`,`testPanel`,`tutorialPanel` → screenshot → Read PNG → delete spec.
-- Repo rules: Playwright tests for every feature; NO AI attribution in commits; `git commit -F file` for messages.
-- Useful test incantations: `window.game.timeScale = 0` to freeze sim; `game.depositSystem.update(0)` to force deposit gen; pulse gate needs `probe.outboundWaypointsCount` set; save key is `probetheus_save_slot_N` (autosave is `csog_save_auto`).
+- Serve: `python -m http.server 8000` from repo root (`npm run dev` fails; vite not installed). Playwright config auto-starts/reuses it.
+- Tests: `npx playwright test <specs> --project=chromium --workers=4`. Visual smoke: temp spec → start game → evaluate to skip cutscene/hide `titleOverlay`,`testPanel`,`tutorialPanel` → screenshot → Read PNG → delete spec.
+- Useful: `window.game.timeScale = 0` freezes sim; drive `game.uplinkSystem.update(ms)` by hand; `game.depositSystem.update(0)` forces deposit gen; save keys `probetheus_save_slot_N` (2 slots), autosave `csog_save_auto`.
+- Repo rules: Playwright tests for every feature; NO AI attribution in commits; commit via `git commit -F <file>` written with BOM-less UTF8 (`[System.IO.File]::WriteAllText` — `Out-File utf8` BOM corrupts the subject line). Beware PS5.1 `Get-Content/Set-Content` mangling UTF-8 (§/—/emoji) — use `[System.IO.File]` with explicit UTF8.
 
-## Steam (user is an accepted Steam developer, 2026-06-11)
+## Steam
 
-SDK v1.64 at `C:\Users\keato\repos\steamworks_sdk\sdk`. Plan: `steamworks.js` npm (not the C++ SDK), develop against App ID 480, SteamPipe ContentBuilder uploads, overlay unreliable in Electron. Integrate at M3, not before. Offline-readiness done (fonts + anime.js self-hosted, CSP locked to 'self').
+Accepted Steam developer (2026-06-11). SDK v1.64 at `C:\Users\keato\repos\steamworks_sdk\sdk`; plan = `steamworks.js` npm against App ID 480, integrate at M3. Offline-ready (fonts + anime.js self-hosted; handoff fonts = same files as `public/fonts/`).
 
 ## Asset generation
 
-Higgsfield MCP; every prompt prepends VISUAL_STYLE.md §"Asset-generation prompt template". Model nano_banana_pro, 16:9. Download CloudFront URLs directly. Approved art → `docs/design/concepts/`. Hold key-art generation until flow-beads prove the look in-game.
+Higgsfield MCP; prompts prepend VISUAL_STYLE.md §"Asset-generation prompt template"; nano_banana_pro, 16:9; approved art → `docs/design/concepts/`. `concepts/start-screen-reference.png` = the canonical style reference (also sent to Claude Design). The design-brief prompt used: `docs/design/CLAUDE_DESIGN_PROMPT.md`.

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Probetheus — In-Game UI</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="scene">
+  <canvas id="playfield"></canvas>
+  <svg id="connector"><line id="conn-line" stroke="#D4AF37" stroke-opacity="0.32" stroke-width="1" stroke-dasharray="4 5"></line><circle id="conn-dot" r="3.5" fill="#D4AF37"></circle></svg>
+
+  <!-- ===================== HUD HEADER ===================== -->
+  <header id="hud" data-screen-label="HUD header bar">
+    <div class="hud-group">
+      <button class="iconbtn" title="Main menu" data-icon="power" data-sz="17"></button>
+      <button class="iconbtn" title="Settings" data-icon="settings" data-sz="17"></button>
+    </div>
+    <div class="hud-div"></div>
+    <div class="sector">
+      <span class="lbl">Sector</span>
+      <span class="val">Hearthfall<span class="coord">Balanced · [0, 0]</span></span>
+    </div>
+    <div class="hud-div"></div>
+
+    <div class="readouts">
+      <div class="rd" title="Minerals"><span data-icon="deposit-mineral" data-sz="17" style="color:var(--mat-min)"></span><div class="rd-txt"><span class="rd-val">1,240</span><span class="rd-lbl">Minerals</span></div></div>
+      <div class="rd" title="Data"><span data-icon="deposit-data" data-sz="17" style="color:var(--mat-data)"></span><div class="rd-txt"><span class="rd-val">318</span><span class="rd-lbl">Data</span></div></div>
+      <div class="rd" title="Artifacts"><span data-icon="deposit-artifact" data-sz="17" style="color:var(--mat-art)"></span><div class="rd-txt"><span class="rd-val">47</span><span class="rd-lbl">Artifacts</span></div></div>
+      <div class="rd" title="Exotic minerals"><span data-icon="deposit-exotic" data-sz="17" style="color:var(--mat-exo)"></span><div class="rd-txt"><span class="rd-val">12</span><span class="rd-lbl">Exotic</span></div></div>
+      <div class="rd built" title="Probes built"><span data-icon="probe" data-sz="16" style="color:var(--fire)"></span><div class="rd-txt"><span class="rd-val">6</span><span class="rd-lbl">Probes</span></div></div>
+      <div class="rd built" title="Recon hubs"><span data-icon="hub" data-sz="16" style="color:var(--fire)"></span><div class="rd-txt"><span class="rd-val">4</span><span class="rd-lbl">Hubs</span></div></div>
+    </div>
+
+    <div class="hud-div"></div>
+    <div class="score" title="Probethium — the stolen fire">
+      <span data-icon="spark" data-sz="18"></span>
+      <div class="rd-txt"><span class="rd-val">128.4</span><span class="rd-lbl">Probethium</span></div>
+    </div>
+    <div class="hud-div"></div>
+    <div class="score flow" title="Network throughput">
+      <span data-icon="flow" data-sz="18"></span>
+      <div class="rd-txt"><span class="rd-val" style="font-size:15px">24.6<span class="trend">/min ↑</span></span><span class="rd-lbl">Flow</span></div>
+    </div>
+
+    <div class="hud-spacer"></div>
+    <div id="time" title="Game speed">
+      <button class="tbn" data-act="pause" title="Pause (Space)" data-icon="pause" data-sz="13"></button>
+      <button class="tbn active" data-scale="1" title="Normal (1)">1×</button>
+      <button class="tbn" data-scale="2" title="Double (2)">2×</button>
+      <button class="tbn" data-scale="4" title="Quadruple (3)">4×</button>
+    </div>
+  </header>
+
+  <!-- ===================== HUB OPERATIONS ===================== -->
+  <section class="panel" id="hubops" data-screen-label="Hub Operations panel">
+    <div class="panel-head">
+      <div class="title"><span data-icon="hub" data-sz="17"></span><h2>Hearthfall · Ops</h2></div>
+      <button class="x" data-icon="close" data-sz="16" title="Collapse"></button>
+    </div>
+
+    <div class="ho-status">
+      <span class="ho-dot"></span><span class="t">Online</span>
+      <span class="m">home hub</span>
+    </div>
+
+    <div class="ho-grid">
+      <div class="ho-cell"><span class="k">Ready Probes</span><span class="v">2 / 4</span></div>
+      <div class="ho-cell"><span class="k">Active Probes</span><span class="v">6</span></div>
+      <div class="ho-cell"><span class="k">Mining Stations</span><span class="v">3</span></div>
+      <div class="ho-cell"><span class="k">Shuttles</span><span class="v">2</span></div>
+    </div>
+
+    <div class="ho-block">
+      <div class="row">
+        <span class="name"><span data-icon="foundry" data-sz="15" style="color:var(--fire)"></span>Intake Bay</span>
+        <span class="lvl">Level 2</span>
+      </div>
+      <div class="ho-rate">16.0 <span class="u">deliveries / min</span></div>
+      <div class="cap-bar"><div class="cap-fill" style="width:72%"></div></div>
+      <button class="cta" id="intakeUpgrade">
+        <span data-icon="upgrade" data-sz="14"></span>Upgrade to Level 3 · 300 M · 120 D · 8 X
+      </button>
+    </div>
+
+    <div class="ho-section-lbl">Operations</div>
+    <div class="ho-actions">
+      <button class="tbtn" data-act="deploy"><span data-icon="probe" data-sz="16"></span>Deploy Probe<span class="key">D</span></button>
+      <button class="tbtn" data-act="hub"><span data-icon="hub" data-sz="16"></span>Build Hub<span class="key">B</span></button>
+      <button class="tbtn" data-act="mining"><span data-icon="mining" data-sz="16"></span>Build Mining Station<span class="key">M</span></button>
+      <button class="tbtn" data-act="shuttle"><span data-icon="shuttle" data-sz="16"></span>Build Shuttle<span class="key">S</span></button>
+    </div>
+
+    <div class="ho-foot">
+      <span class="shell-chip" data-icon="probe" data-sz="17"></span>
+      <div class="sh-txt"><span class="k">Equipped Shell</span><span class="v">Void Walker</span></div>
+      <button class="linkbtn violet change">Change</button>
+    </div>
+  </section>
+
+  <!-- ===================== UPLINK ===================== -->
+  <section class="panel" id="uplink" data-screen-label="Uplink research panel">
+    <div class="panel-head">
+      <div class="title"><span data-icon="uplink" data-sz="17"></span><h2>Uplink</h2></div>
+      <button class="x" data-close="uplink" data-icon="close" data-sz="16"></button>
+    </div>
+    <p class="up-intro">The Uplink streams data through the network to decode recovered protocols. One decodes at a time — research speed <em>is</em> your data throughput.</p>
+    <div class="up-stats">
+      <div class="up-stat"><div class="k">Decode Rate</div><div class="v">24 <span style="font-size:9px;color:var(--mist)">u/min</span></div></div>
+      <div class="up-stat"><div class="k">Data in Store</div><div class="v data">318</div></div>
+    </div>
+    <div class="up-list" id="protoList"><!-- protocols injected --></div>
+  </section>
+
+  <!-- ===================== PROBE FLOATER ===================== -->
+  <section class="panel" id="floater" data-screen-label="Probe detail floater">
+    <div class="fl-head">
+      <span class="fl-badge" data-icon="probe" data-sz="16"></span>
+      <div class="t"><span class="nm">Probe Vetch-09</span><span class="st">Patrolling · Loop</span></div>
+      <button class="x" data-close="floater" data-icon="close" data-sz="15"></button>
+    </div>
+    <div class="fl-toggles">
+      <div class="tog on" data-tog><span data-icon="patrol" data-sz="16"></span>Patrol mode<span class="sw"></span></div>
+      <div class="tog on" data-tog><span data-icon="camera" data-sz="16"></span>Lock camera<span class="sw"></span></div>
+    </div>
+    <div class="fl-slots-lbl">Equipment</div>
+    <div class="slots">
+      <div class="slot" title="Mineral Collector"><span data-icon="deposit-mineral" data-sz="18" style="color:var(--mat-min)"></span></div>
+      <div class="slot" title="Data Collector"><span data-icon="deposit-data" data-sz="18" style="color:var(--mat-data)"></span></div>
+      <div class="slot locked" title="Locked — decode Universal Lattice"><span data-icon="lock" data-sz="16" style="color:var(--mist)"></span></div>
+    </div>
+    <div class="fl-cargo">
+      <span class="clbl">Cargo Hold · 62%</span>
+      <div class="cargo-row"><span data-icon="deposit-mineral" data-sz="14" style="color:var(--mat-min)"></span>Minerals<span class="bar"><i style="width:74%;background:var(--mat-min)"></i></span>34</div>
+      <div class="cargo-row"><span data-icon="deposit-data" data-sz="14" style="color:var(--mat-data)"></span>Data<span class="bar"><i style="width:48%;background:var(--mat-data)"></i></span>18</div>
+    </div>
+  </section>
+
+  <!-- ===================== TUTORIAL CARD ===================== -->
+  <section id="tutorial" data-screen-label="Tutorial card">
+    <div class="tut-top">
+      <span data-icon="spark" data-sz="15"></span>
+      <h3>Chart Your First Filament</h3>
+      <span class="step">Step 3 / 7</span>
+    </div>
+    <p class="tut-body">Select a probe and draw its path through a charted deposit to open a route. Once a route is worked, cargo beads flow along it — the denser the chain, the higher its throughput.</p>
+    <div class="tut-foot">
+      <div class="tut-dots"><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i></div>
+      <button class="linkbtn" data-close="tutorial">Dismiss</button>
+    </div>
+  </section>
+
+  <!-- ===================== TOAST TIP ===================== -->
+  <aside id="toast" data-screen-label="Toast tip">
+    <div class="tt-top"><span data-icon="flow" data-sz="13"></span><span class="k">Tip</span></div>
+    <div class="tt-body">Your Arc Relay route is running near capacity. Upgrade an <b>Intake Bay</b> to keep beads from backing up.</div>
+  </aside>
+
+  <!-- ===================== DOCK ===================== -->
+  <div id="dock">
+    <button class="dockbtn active" id="toggleUplink"><span data-icon="uplink" data-sz="15"></span>Uplink</button>
+    <button class="dockbtn violet" id="openMarket"><span data-icon="spark" data-sz="15"></span>Dark Market<span class="pip"></span></button>
+  </div>
+
+  <nav id="kitlinks">
+    <a href="Probetheus — Icon Kit.html">▦ icon kit</a>
+    <a href="Probetheus — Design Spec.html">◇ design spec</a>
+  </nav>
+
+  <!-- ===================== DARK MARKET MODAL ===================== -->
+  <div id="market-scrim" data-screen-label="Dark Market modal">
+    <div id="market">
+      <button class="x" data-close="market" data-icon="close" data-sz="20"></button>
+      <div class="mk-head">
+        <div class="mk-portrait" data-icon="deposit-exotic" data-sz="30"></div>
+        <div class="mk-titles">
+          <div class="ey">Encrypted Channel · Signal Decaying</div>
+          <h2>Keth-Varn</h2>
+          <div class="theme">Dealer in data &amp; calculation</div>
+        </div>
+      </div>
+      <p class="mk-greet">"You routed far enough to hear me. Good. I trade in what the open sectors won't carry — shells, caches, the quiet arithmetic of the void. Spend your Probethium before the channel closes."</p>
+
+      <div class="mk-sec">Shell Cosmetics</div>
+      <div class="mk-grid" id="marketShells"><!-- injected --></div>
+
+      <div class="mk-sec">Special Cache</div>
+      <div class="mk-special">
+        <span class="mk-swatch" data-icon="deposit-data" data-sz="22" style="color:var(--mat-data)"></span>
+        <div class="info">
+          <div class="nm">Keth-Varn's Data Cache</div>
+          <div class="ds">A compressed archive of calculated insights — yields 100 Data and 25 Artifacts on decode.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:9px">
+          <div class="mk-price"><span data-icon="spark" data-sz="14"></span>150</div>
+          <button class="mk-buy">Acquire</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="icons.js"></script>
+<script src="playfield.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>
