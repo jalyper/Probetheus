@@ -1351,92 +1351,71 @@ class GameController {
                 modalContent.insertBefore(headerSection, container);
             }
 
-            const eyeColor = npcTheme.eyeColor || npcConfig.color || '#9400d3';
+            const greeting = npcTheme.flavorText || npcConfig.description || 'A mysterious merchant...';
 
             headerSection.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid ${eyeColor}44;">
-                    <div style="width: 80px; height: 80px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #222, #0a0a0f); border: 2px solid ${eyeColor}; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px ${eyeColor}44;">
-                        <div style="display: flex; gap: 12px;">
-                            <div style="width: 8px; height: 8px; border-radius: 50%; background: ${eyeColor}; box-shadow: 0 0 10px ${eyeColor};"></div>
-                            <div style="width: 8px; height: 8px; border-radius: 50%; background: ${eyeColor}; box-shadow: 0 0 10px ${eyeColor};"></div>
-                        </div>
-                    </div>
-                    <div style="flex-grow: 1;">
-                        <div style="color: ${eyeColor}; font-size: 24px; font-weight: bold; text-shadow: 0 0 10px ${eyeColor}44;">
-                            ${npcTheme.name || npcId}
-                        </div>
-                        <div style="color: #888; font-size: 14px; margin-top: 4px;">
-                            ${npcTheme.title || npcConfig.theme || ''}
-                        </div>
-                        <div style="color: #666; font-size: 12px; margin-top: 8px;">
-                            ${npcConfig.description || 'A mysterious merchant...'}
-                        </div>
+                <div class="mk-head">
+                    <div class="mk-portrait">${window.icon('probe', { size: 26 })}</div>
+                    <div class="mk-titles">
+                        <div class="ey">Encrypted Channel · Signal Decaying</div>
+                        <h2>${npcTheme.name || npcId}</h2>
+                        <div class="theme">${npcTheme.title || npcConfig.theme || ''}</div>
                     </div>
                 </div>
-                <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
-                    <button class="market-filter-btn active" data-filter="all" style="padding: 8px 16px; background: ${eyeColor}22; border: 1px solid ${eyeColor}; color: ${eyeColor}; border-radius: 4px; cursor: pointer;">All</button>
-                    <button class="market-filter-btn" data-filter="probes" style="padding: 8px 16px; background: transparent; border: 1px solid #555; color: #888; border-radius: 4px; cursor: pointer;">Probes</button>
-                    <button class="market-filter-btn" data-filter="hubs" style="padding: 8px 16px; background: transparent; border: 1px solid #555; color: #888; border-radius: 4px; cursor: pointer;">Hubs</button>
-                    <button class="market-filter-btn" data-filter="miningStations" style="padding: 8px 16px; background: transparent; border: 1px solid #555; color: #888; border-radius: 4px; cursor: pointer;">Stations</button>
-                    <button class="market-filter-btn" data-filter="special" style="padding: 8px 16px; background: transparent; border: 1px solid #555; color: #888; border-radius: 4px; cursor: pointer;">Special</button>
+                <div class="mk-greet">"${greeting}"</div>
+                <div class="mk-filters">
+                    <button class="mk-filter market-filter-btn active" data-filter="all">All</button>
+                    <button class="mk-filter market-filter-btn" data-filter="probes">Probes</button>
+                    <button class="mk-filter market-filter-btn" data-filter="hubs">Hubs</button>
+                    <button class="mk-filter market-filter-btn" data-filter="miningStations">Stations</button>
+                    <button class="mk-filter market-filter-btn" data-filter="special">Special</button>
                 </div>
             `;
 
             // Add filter click handlers
             headerSection.querySelectorAll('.market-filter-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    // Update active state
-                    headerSection.querySelectorAll('.market-filter-btn').forEach(b => {
-                        b.classList.remove('active');
-                        b.style.background = 'transparent';
-                        b.style.borderColor = '#555';
-                        b.style.color = '#888';
-                    });
+                    headerSection.querySelectorAll('.market-filter-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
-                    btn.style.background = `${eyeColor}22`;
-                    btn.style.borderColor = eyeColor;
-                    btn.style.color = eyeColor;
-
-                    // Filter items
                     this.filterMarketItems(btn.dataset.filter);
                 });
             });
         }
 
-        // Build inventory HTML
-        let html = '<div class="market-items-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">';
+        // Build inventory HTML (handoff §6: shell grid + special cache + wallet)
+        let html = '';
 
-        // Add special reward if available
-        if (inventory.specialReward) {
-            const special = inventory.specialReward;
-            html += this.renderMarketItemCard({
-                ...special,
-                category: 'special',
-                isSpecial: true,
-                visual: { color: '#ffd700' },
-                rarity: 'epic'
-            }, npcConfig.color || '#9400d3');
-        }
-
-        // Add all shells
+        const shellCards = [];
         ['probes', 'hubs', 'miningStations'].forEach(category => {
             const shells = inventory.shells?.[category] || [];
             shells.forEach(shell => {
-                html += this.renderMarketItemCard({
-                    ...shell,
-                    category: category
-                }, npcConfig.color || '#9400d3');
+                shellCards.push(this.renderMarketItemCard({ ...shell, category }));
             });
         });
 
-        html += '</div>';
+        if (shellCards.length) {
+            html += `<div class="mk-sec">Shell Cosmetics</div>
+                <div class="mk-grid market-items-grid">${shellCards.join('')}</div>`;
+        }
 
-        // Add Probethium display
+        if (inventory.specialReward) {
+            const special = inventory.specialReward;
+            html += `<div class="mk-sec">Special Cache</div>
+                <div class="mk-special market-item-card" data-category="special">
+                    <div class="info">
+                        <div class="nm">${special.name}</div>
+                        <div class="ds">${special.description}</div>
+                    </div>
+                    <span class="mk-price">${window.icon('spark', { size: 14 })}${special.cost}</span>
+                    <button class="mk-buy market-buy-btn" data-item-id="${special.id}" data-category="special" data-is-special="true">Acquire</button>
+                </div>`;
+        }
+
         const currentProbethium = this.gameState.probethium?.current || 0;
         html += `
-            <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #333;">
-                <span style="color: #888;">Your Probethium:</span>
-                <span id="tradeMenuProbethium" style="color: #ffd700; font-weight: bold; margin-left: 8px;">${currentProbethium.toFixed(4)} P</span>
+            <div class="mk-wallet">
+                <span>Your Probethium</span>
+                <span id="tradeMenuProbethium" class="amt">${currentProbethium.toFixed(1)} P</span>
             </div>
         `;
 
@@ -1449,8 +1428,8 @@ class GameController {
     /**
      * Render a market item card
      */
-    renderMarketItemCard(item, npcColor) {
-        const rarityInfo = window.RARITY?.[item.rarity] || { color: '#aaaaaa', name: 'Common' };
+    renderMarketItemCard(item) {
+        const rarityInfo = window.RARITY?.[item.rarity] || { color: '#8B84A3', name: 'Common' };
         const visualColor = item.visual?.color || rarityInfo.color;
 
         // Category labels
@@ -1464,19 +1443,14 @@ class GameController {
         // Format bonuses
         let bonusHtml = '';
         if (item.bonuses && Object.keys(item.bonuses).length > 0) {
-            const bonusEntries = Object.entries(item.bonuses).map(([type, value]) => {
+            bonusHtml = `<div class="bonuses">${Object.entries(item.bonuses).map(([type, value]) => {
                 const info = window.BONUS_TYPES?.[type] || { icon: '', label: type, unit: '' };
-                const glyph = info.icon ? `<span style="display:inline-flex;vertical-align:-2px;">${window.icon(info.icon, { size: 12 })}</span> ` : '';
-                return `<div style="color: #88ff88; font-size: 11px;">${glyph}+${value}${info.unit} ${info.label}</div>`;
-            });
-            bonusHtml = bonusEntries.join('');
+                const glyph = info.icon ? `<span style="display:inline-flex;vertical-align:-2px;">${window.icon(info.icon, { size: 11 })}</span> ` : '';
+                return `<div>${glyph}+${value}${info.unit} ${info.label}</div>`;
+            }).join('')}</div>`;
         }
 
-        // Unique badge
-        const uniqueBadge = item.isUnique ?
-            `<div style="position: absolute; top: 8px; right: 8px; background: ${npcColor}; color: #000; font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: bold;">UNIQUE</div>` : '';
-
-        // Preview
+        // Swatch preview
         let previewHtml = '';
         if (item.category === 'probes') {
             previewHtml = this.renderProbeSkinPreview(visualColor);
@@ -1484,52 +1458,21 @@ class GameController {
             previewHtml = this.renderHubSkinPreview(visualColor);
         } else if (item.category === 'miningStations') {
             previewHtml = this.renderStationSkinPreview(visualColor);
-        } else if (item.isSpecial) {
-            previewHtml = `<div style="color: var(--violet); display: flex; justify-content: center;">${window.icon('slot', { size: 40 })}</div>`;
         }
 
         return `
-            <div class="market-item-card" data-category="${item.category}" style="
-                border: 2px solid ${rarityInfo.color}44;
-                border-radius: 8px;
-                padding: 15px;
-                background: linear-gradient(135deg, ${rarityInfo.color}11, transparent);
-                position: relative;
-                display: flex;
-                flex-direction: column;
-                min-height: 220px;
-            ">
-                ${uniqueBadge}
-                <div style="text-align: center; margin-bottom: 10px;">
-                    <div style="color: ${rarityInfo.color}; font-size: 10px; text-transform: uppercase; margin-bottom: 4px;">
-                        ${rarityInfo.name} ${categoryLabels[item.category] || ''}
-                    </div>
-                    <div style="color: #fff; font-size: 14px; font-weight: bold;">
-                        ${item.name}
+            <div class="mk-item market-item-card" data-category="${item.category}">
+                <span class="mk-swatch">${previewHtml}</span>
+                <div class="info">
+                    <div class="nm">${item.name}${item.isUnique ? ' <span style="color: var(--violet); font-size: 8.5px; letter-spacing: 0.18em;">UNIQUE</span>' : ''}</div>
+                    <div class="rar" style="color: ${rarityInfo.color};">${rarityInfo.name} · ${categoryLabels[item.category] || ''}</div>
+                    <div class="ds">${item.description || ''}</div>
+                    ${bonusHtml}
+                    <div class="buy">
+                        <span class="mk-price">${window.icon('spark', { size: 14 })}${item.price}</span>
+                        <button class="mk-buy market-buy-btn" data-item-id="${item.id}" data-category="${item.category}" data-is-special="${item.isSpecial || false}">Acquire</button>
                     </div>
                 </div>
-                <div style="width: 60px; height: 60px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center;">
-                    ${previewHtml}
-                </div>
-                <div style="flex-grow: 1;">
-                    ${bonusHtml || '<div style="color: #666; font-size: 11px; text-align: center;">No stat bonuses</div>'}
-                </div>
-                <div style="color: #888; font-size: 11px; margin-bottom: 10px; text-align: center;">
-                    ${item.description || ''}
-                </div>
-                <button class="market-buy-btn" data-item-id="${item.id}" data-category="${item.category}" data-is-special="${item.isSpecial || false}" style="
-                    background: linear-gradient(135deg, ${rarityInfo.color}44, ${rarityInfo.color}22);
-                    border: 1px solid ${rarityInfo.color};
-                    color: ${rarityInfo.color};
-                    padding: 8px;
-                    border-radius: 4px;
-                    cursor: pointer;
-                    font-weight: bold;
-                    width: 100%;
-                    transition: all 0.2s;
-                ">
-                    ${item.price} P
-                </button>
             </div>
         `;
     }
@@ -1591,16 +1534,6 @@ class GameController {
                     this.purchaseMarketShell(category, itemId);
                 }
             });
-
-            // Hover effects
-            btn.addEventListener('mouseenter', () => {
-                btn.style.transform = 'scale(1.02)';
-                btn.style.boxShadow = '0 0 10px currentColor';
-            });
-            btn.addEventListener('mouseleave', () => {
-                btn.style.transform = 'scale(1)';
-                btn.style.boxShadow = 'none';
-            });
         });
     }
 
@@ -1650,40 +1583,44 @@ class GameController {
         if (!inventory) return;
         
         let html = '';
-        
+
+        // Cosmetics (handoff §6 mk-item grammar)
+        if (inventory.cosmetics?.length) {
+            html += `<div class="mk-sec">Shell Cosmetics</div><div class="mk-grid">`;
+            inventory.cosmetics.forEach(cosmetic => {
+                html += `
+                    <div class="mk-item">
+                        <span class="mk-swatch">${this.renderProbeSkinPreview(cosmetic.color)}</span>
+                        <div class="info">
+                            <div class="nm">${cosmetic.name}</div>
+                            <div class="ds">${cosmetic.description}</div>
+                            <div class="buy">
+                                <span class="mk-price">${window.icon('spark', { size: 14 })}${cosmetic.cost}</span>
+                                <button class="mk-buy dark-market-buy-btn" data-item-id="${cosmetic.id}">Acquire</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+        }
+
         // Special reward
         const special = inventory.specialReward;
-        html += `
-            <div style="border: 2px solid #ff0; border-radius: 8px; padding: 15px; background: rgba(255,255,0,0.05); max-width: 100%;">
-                <div style="color: #ff0; font-size: 16px; font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-                    ${window.icon('spark', { size: 16 })} Special Offer
-                </div>
-                <div style="color: #fff; font-size: 14px; margin-bottom: 5px; word-wrap: break-word;">${special.name}</div>
-                <div style="color: #aaa; font-size: 12px; margin-bottom: 10px; word-wrap: break-word;">${special.description}</div>
-                <button class="dark-market-buy-btn" data-item-id="${special.id}" style="background: #ff0; color: #000; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%;">
-                    Buy for ${special.cost} Probethium
-                </button>
-            </div>
-        `;
-        
-        // Cosmetics
-        inventory.cosmetics.forEach(cosmetic => {
+        if (special) {
             html += `
-                <div style="border: 2px solid ${cosmetic.color}; border-radius: 8px; padding: 15px; background: ${cosmetic.color}11; max-width: 100%;">
-                    <div style="color: ${cosmetic.color}; font-size: 16px; font-weight: bold; margin-bottom: 10px; word-wrap: break-word;">
-                        ${cosmetic.name}
+                <div class="mk-sec">Special Cache</div>
+                <div class="mk-special">
+                    <div class="info">
+                        <div class="nm">${special.name}</div>
+                        <div class="ds">${special.description}</div>
                     </div>
-                    <div style="width: 80px; height: 80px; margin: 10px auto; display: flex; align-items: center; justify-content: center;">
-                        ${this.renderProbeSkinPreview(cosmetic.color)}
-                    </div>
-                    <div style="color: #aaa; font-size: 12px; margin-bottom: 10px; word-wrap: break-word;">${cosmetic.description}</div>
-                    <button class="dark-market-buy-btn" data-item-id="${cosmetic.id}" style="background: ${cosmetic.color}; color: #000; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%;">
-                        Buy for ${cosmetic.cost} Probethium
-                    </button>
+                    <span class="mk-price">${window.icon('spark', { size: 14 })}${special.cost}</span>
+                    <button class="mk-buy dark-market-buy-btn" data-item-id="${special.id}">Acquire</button>
                 </div>
             `;
-        });
-        
+        }
+
         container.innerHTML = html;
         
         // Add purchase event listeners

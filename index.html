@@ -309,10 +309,10 @@
             </div>
         </div>
         
-        <!-- Dark Market Modal -->
-        <div id="darkMarketModal" class="modal" style="display: none; background: rgba(0,0,0,0.98);">
-            <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto; border: 1px solid rgba(176,107,255,0.45); box-shadow: 0 6px 24px rgba(0,0,0,0.6); background: var(--panel); position: relative; padding: 25px;">
-                <button id="closeDarkMarket" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: var(--mist); font-size: 28px; cursor: pointer; padding: 5px 10px; z-index: 10; transition: color 0.2s;" onmouseover="this.style.color='#B06BFF'" onmouseout="this.style.color='var(--mist)'">&times;</button>
+        <!-- Dark Market Modal (handoff §6) — rift-violet identity, still glass -->
+        <div id="darkMarketModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <button id="closeDarkMarket" class="x" style="position: absolute; top: 18px; right: 18px; z-index: 10;" data-icon="close" data-sz="16"></button>
 
                 <!-- NPC header will be dynamically inserted here by JavaScript -->
 
@@ -323,8 +323,8 @@
                     </div>
                 </div>
 
-                <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(176,107,255,0.2);">
-                    <button id="closeDarkMarketBottom" class="control-btn" style="border-color: rgba(176,107,255,0.45); color: #B06BFF; padding: 10px 30px; font-size: 14px;">Close Market</button>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button id="closeDarkMarketBottom" class="cta violet" style="width: auto; padding: 10px 30px;">Close Channel</button>
                 </div>
             </div>
         </div>
