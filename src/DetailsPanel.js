@@ -162,128 +162,91 @@ class DetailsPanel {
      * Show hub details
      */
     showHubDetails(hub) {
-        this.icon.innerHTML = `
-            <svg width="24" height="24" viewBox="0 0 24 24">
-                <!-- Hub base structure -->
-                <rect x="6" y="6" width="12" height="12" fill="rgba(212,175,55,0.08)" stroke="#D4AF37" stroke-width="1" rx="2"/>
-                <!-- Inner grid pattern -->
-                <line x1="9" y1="6" x2="9" y2="18" stroke="rgba(212,175,55,0.28)" stroke-width="1"/>
-                <line x1="12" y1="6" x2="12" y2="18" stroke="rgba(212,175,55,0.28)" stroke-width="1"/>
-                <line x1="15" y1="6" x2="15" y2="18" stroke="rgba(212,175,55,0.28)" stroke-width="1"/>
-                <line x1="6" y1="9" x2="18" y2="9" stroke="rgba(212,175,55,0.28)" stroke-width="1"/>
-                <line x1="6" y1="12" x2="18" y2="12" stroke="rgba(212,175,55,0.28)" stroke-width="1"/>
-                <line x1="6" y1="15" x2="18" y2="15" stroke="rgba(212,175,55,0.28)" stroke-width="1"/>
-                <!-- Central hub core -->
-                <circle cx="12" cy="12" r="3" fill="#D4AF37" stroke="#E8E4F0" stroke-width="1"/>
-            </svg>
-        `;
-        this.title.textContent = 'Recon Hub';
+        this.icon.innerHTML = `<span style="color: var(--fire); display: flex;">${window.icon('hub', { size: 18 })}</span>`;
+        this.title.textContent = 'Recon Hub · Ops';
         this.title.style.color = 'var(--fire)';
-        
-        const probeCount = hub.probes ? hub.probes.length : 0;
+
         const maxProbes = hub.maxProbes || 5;
-        
+
         // Count available (ready) probes - built but not currently patrolling
         const availableProbes = this.getAvailableProbeCount(hub);
-        const deployedProbes = probeCount - availableProbes;
-        
+        const activeProbes = this.getActiveProbeCount(hub) - availableProbes;
+
+        // Hub-owned logistics (handoff §2 stat grid)
+        const isHomeHub = this.gameState.entities.reconHubs[0] === hub;
+        const hubStations = this.gameState.mining?.stations?.filter(s => s.hubId === hub.id) || [];
+        const hubShuttles = this.gameState.mining?.shuttles?.filter(s => s.hubId === hub.id) || [];
+
+        // Intake Bay
+        const intakeLevel = hub.intakeLevel || 1;
+        const maxIntake = window.GAME_CONSTANTS.HUB.MAX_INTAKE_LEVEL;
+        const intakeRate = window.GAME_CONSTANTS.HUB.INTAKE_PER_MIN_BASE * intakeLevel;
+        const nextIntakeRecipe = intakeLevel < maxIntake ? window.RECIPES.intakeBay[intakeLevel + 1] : null;
+
         // Get shell information for equipped shell
         const equippedShellId = this.gameState.cosmetics?.equippedShells?.hubs || 'default';
         const shell = window.SHELL_CATALOG?.hubs?.[equippedShellId] || null;
-        const shellColor = shell?.visual?.color || '#D4AF37';
+        const shellColor = shell?.visual?.color || 'var(--violet)';
 
         this.content.innerHTML = `
-            <div style="background: var(--panel); border: 1px solid var(--line-soft); border-radius: 4px; padding: 10px; margin-bottom: 12px;">
-                <div style="color: var(--mist); font-size: 12px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px;">Hub Status</div>
-                <div style="color: var(--mist); font-size: 12px; line-height: 1.6;">
-                    <div>ID: ${hub.id || 'Unknown'}</div>
-                    <div>Position: (${Math.round(hub.x)}, ${Math.round(hub.y)})</div>
-                    <div>Total Probes: ${probeCount}/${maxProbes}</div>
-                    <div style="color: var(--fire); font-weight: 400;">Available: ${availableProbes} | Deployed: ${deployedProbes}</div>
-                    <div>Sector: [${hub.sectorX || 0}, ${hub.sectorY || 0}]</div>
-                </div>
+            <div class="ho-status">
+                <span class="ho-dot"></span>
+                <span class="t">Online</span>
+                <span class="m">${isHomeHub ? 'home hub' : (hub.id || 'hub')}</span>
             </div>
 
-            <div style="background: rgba(212,175,55,0.05); border: 1px solid var(--line); border-radius: 4px; padding: 10px; margin-bottom: 12px;">
-                <div style="color: var(--fire); font-size: 12px; margin-bottom: 6px; letter-spacing: 0.08em; text-transform: uppercase;">Intake Bay</div>
-                <div style="color: var(--mist); font-size: 12px; line-height: 1.6; margin-bottom: 8px;">
-                    <span style="color: var(--signal); font-family: var(--font-data);">Lv ${hub.intakeLevel || 1}</span>
-                    · processes <span style="color: var(--signal); font-family: var(--font-data);">${(window.GAME_CONSTANTS.HUB.INTAKE_PER_MIN_BASE) * (hub.intakeLevel || 1)}/min</span>
+            <div class="ho-grid">
+                <div class="ho-cell"><span class="k">Ready Probes</span><span class="v">${availableProbes} / ${maxProbes}</span></div>
+                <div class="ho-cell"><span class="k">Active Probes</span><span class="v">${activeProbes}</span></div>
+                <div class="ho-cell"><span class="k">Mining Stations</span><span class="v">${hubStations.length}</span></div>
+                <div class="ho-cell"><span class="k">Shuttles</span><span class="v">${hubShuttles.length}</span></div>
+            </div>
+
+            <div class="ho-block">
+                <div class="row">
+                    <span class="name">${window.icon('foundry', { size: 15 })}Intake Bay</span>
+                    <span class="lvl">Level ${intakeLevel}</span>
                 </div>
-                ${(hub.intakeLevel || 1) < window.GAME_CONSTANTS.HUB.MAX_INTAKE_LEVEL ? `
-                <button id="upgradeIntakeBtn" class="control-btn" style="font-size: 12px; padding: 8px 12px; width: 100%;">
-                    Upgrade Intake Bay (${window.RecipeUtils.format(window.RECIPES.intakeBay[(hub.intakeLevel || 1) + 1])})
+                <div class="ho-rate">${intakeRate.toFixed(1)} <span class="u">deliveries / min</span></div>
+                <div class="cap-bar"><div class="cap-fill" style="width: ${Math.round(intakeLevel / maxIntake * 100)}%"></div></div>
+                ${nextIntakeRecipe ? `
+                <button id="upgradeIntakeBtn" class="cta">
+                    ${window.icon('upgrade', { size: 14 })}Upgrade to Level ${intakeLevel + 1} · ${window.RecipeUtils.format(nextIntakeRecipe)}
                 </button>
                 ` : `
-                <div style="color: rgba(139,132,163,0.6); font-size: 11px;">Maximum level</div>
+                <button class="cta disabled" disabled>${window.icon('check', { size: 14 })}Intake Bay at maximum</button>
                 `}
             </div>
 
-            <div style="background: var(--panel); border: 1px solid var(--line-soft); border-radius: 4px; padding: 10px;">
-                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 10px;">
-                    <div style="color: var(--mist); font-size: 12px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase;">Hub Operations</div>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 6px;">
-                    <button id="deployFromHub" class="control-btn" style="font-size: 12px; padding: 8px 12px; width: 100%; display: flex; align-items: center; gap: 8px;">
-                        <svg width="16" height="16" viewBox="0 0 16 16" style="flex-shrink: 0;">
-                            <!-- Probe Body (circular center) -->
-                            <circle cx="8" cy="8" r="3" fill="#E8E4F0" stroke="#E8E4F0" stroke-width="0.5"/>
-                            <!-- Wings (extending perpendicular) -->
-                            <rect x="7" y="2" width="2" height="6" fill="rgba(232,228,240,0.7)" stroke="#E8E4F0" stroke-width="0.5"/>
-                            <rect x="7" y="12" width="2" height="2" fill="rgba(232,228,240,0.7)" stroke="#E8E4F0" stroke-width="0.5"/>
-                            <!-- Front (triangular nose) -->
-                            <polygon points="11,8 14,6 14,10" fill="#E8E4F0"/>
-                            <!-- Antennas (angled lines) -->
-                            <line x1="5" y1="7" x2="2" y2="5" stroke="rgba(232,228,240,0.7)" stroke-width="1"/>
-                            <line x1="5" y1="9" x2="2" y2="11" stroke="rgba(232,228,240,0.7)" stroke-width="1"/>
-                        </svg>
-                        <span style="text-decoration: underline;">D</span>eploy Probe
-                    </button>
-                    <button id="buildProbeForHub" class="control-btn" style="font-size: 12px; padding: 8px 12px; width: 100%; display: flex; align-items: center; gap: 8px;">
-                        <svg width="16" height="16" viewBox="0 0 16 16" style="flex-shrink: 0;">
-                            <!-- Probe Body (circular center) -->
-                            <circle cx="8" cy="8" r="3" fill="#E8E4F0" stroke="#E8E4F0" stroke-width="0.5"/>
-                            <!-- Wings (extending perpendicular) -->
-                            <rect x="7" y="2" width="2" height="6" fill="rgba(232,228,240,0.7)" stroke="#E8E4F0" stroke-width="0.5"/>
-                            <rect x="7" y="12" width="2" height="2" fill="rgba(232,228,240,0.7)" stroke="#E8E4F0" stroke-width="0.5"/>
-                            <!-- Front (triangular nose) -->
-                            <polygon points="11,8 14,6 14,10" fill="#E8E4F0"/>
-                            <!-- Antennas (angled lines) -->
-                            <line x1="5" y1="7" x2="2" y2="5" stroke="rgba(232,228,240,0.7)" stroke-width="1"/>
-                            <line x1="5" y1="9" x2="2" y2="11" stroke="rgba(232,228,240,0.7)" stroke-width="1"/>
-                        </svg>
-                        Build <span style="text-decoration: underline;">P</span>robe (25M)
-                    </button>
-                    <button id="buildShuttleBtn" class="control-btn" style="font-size: 12px; padding: 8px 12px; width: 100%; display: flex; align-items: center; gap: 8px;">
-                        <svg width="16" height="16" viewBox="0 0 16 16" style="flex-shrink: 0;">
-                            <!-- Triangle shuttle pointing right -->
-                            <polygon points="12,8 4,4 4,12" fill="#D4AF37" stroke="#E8E4F0" stroke-width="0.8"/>
-                            <!-- Cargo indicator (small circle) -->
-                            <circle cx="6" cy="8" r="1.5" fill="rgba(232,228,240,0.7)"/>
-                        </svg>
-                        <span style="text-decoration: underline;">S</span>huttle (50M, 25D)
-                    </button>
-                    ${this.gameState.hasProtocol('exotic_synthesis') ? `
-                    <button id="synthesizeBtn" class="control-btn" style="font-size: 12px; padding: 8px 12px; width: 100%; display: flex; align-items: center; gap: 8px; border-color: var(--fire);">
-                        <span style="color: var(--fire); flex-shrink: 0; display: flex;">${window.icon('spark', { size: 14 })}</span>
-                        <span>Synthesize Probethium (5 Exotic)</span>
-                    </button>
-                    ` : ''}
-                </div>
+            <div class="ho-section-lbl">Operations</div>
+            <div class="ho-actions">
+                <button id="deployFromHub" class="tbtn">
+                    ${window.icon('probe', { size: 16 })}<span>Deploy Probe</span><span class="key">D</span>
+                </button>
+                <button id="buildProbeForHub" class="tbtn">
+                    ${window.icon('plus', { size: 16 })}<span>Build Probe · 25 M</span><span class="key">P</span>
+                </button>
+                <button id="buildShuttleBtn" class="tbtn">
+                    ${window.icon('shuttle', { size: 16 })}<span>Build Shuttle · 50 M 25 D</span><span class="key">S</span>
+                </button>
+                ${this.gameState.hasProtocol('exotic_synthesis') ? `
+                <button id="synthesizeBtn" class="tbtn">
+                    ${window.icon('spark', { size: 16 })}<span>Synthesize Probethium (5 Exotic)</span>
+                </button>
+                ` : ''}
             </div>
 
-            <div style="background: var(--panel); border: 1px solid var(--line-soft); border-radius: 4px; padding: 10px; margin-top: 12px;">
-                <div style="color: var(--mist); font-size: 12px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px;">Equipped Shell</div>
-                <div id="hubShellIndicator" style="display: flex; align-items: center; gap: 8px; cursor: default;">
-                    <div style="width: 24px; height: 24px; border-radius: 4px; background: ${shellColor}; border: 1px solid var(--line-soft);"></div>
-                    <div>
-                        <div style="color: ${shellColor}; font-size: 11px; font-weight: 400;">${shell?.name || 'Default'}</div>
-                        <div style="color: var(--mist); font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em;">${shell?.rarity || 'standard'}</div>
-                    </div>
+            <div class="ho-foot">
+                <div class="shell-chip" style="border-color: ${shellColor};">
+                    <span style="color: ${shellColor}; display: flex;">${window.icon('hub', { size: 16 })}</span>
+                </div>
+                <div class="sh-txt" id="hubShellIndicator" style="cursor: default;">
+                    <span class="k">Equipped Shell</span>
+                    <span class="v">${shell?.name || 'Default'}</span>
                 </div>
             </div>
         `;
-        
+
         // Add button listeners
         this.setupHubButtons(hub);
 

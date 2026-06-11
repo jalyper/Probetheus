@@ -902,6 +902,72 @@ body {
 .linkbtn.violet:hover { color: #C99BFF; }
 .linkbtn.violet::after { background: var(--violet); }
 
+/* --- Hub Operations panel (handoff §2) — components live in #detailsPanel ---------- */
+
+.ho-status { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.ho-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--fire);
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.7);
+    flex: none;
+}
+.ho-status .t { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--signal); }
+.ho-status .m { font-size: 11px; color: var(--mist); margin-left: auto; font-family: var(--font-data); }
+
+.ho-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--line-soft);
+    border: 1px solid var(--line-soft);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+.ho-cell { background: var(--panel); padding: 9px 11px; display: flex; flex-direction: column; gap: 3px; }
+.ho-cell .k { font-size: 8.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mist); }
+.ho-cell .v { font-family: var(--font-data); font-size: 14px; color: var(--signal); }
+
+.ho-block { border: 1px solid var(--line-soft); border-radius: 3px; padding: 12px 13px; margin-bottom: 16px; }
+.ho-block .row { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+.ho-block .name { display: flex; align-items: center; gap: 8px; font-size: 12px; letter-spacing: 0.1em; color: var(--signal); }
+.ho-block .name .ic { color: var(--fire); }
+.ho-block .lvl { font-family: var(--font-data); font-size: 10px; color: var(--fire); letter-spacing: 0.1em; }
+.ho-rate { font-family: var(--font-data); font-size: 13px; color: var(--signal); margin-bottom: 9px; }
+.ho-rate .u { color: var(--mist); font-size: 10px; }
+.cap-bar { height: 3px; background: rgba(212, 175, 55, 0.12); border-radius: 2px; overflow: hidden; margin-bottom: 12px; }
+.cap-fill { height: 100%; background: var(--fire); border-radius: 2px; }
+
+.ho-section-lbl { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--mist); margin: 4px 0; }
+.ho-actions { display: flex; flex-direction: column; }
+.ho-actions .tbtn + .tbtn { border-top: 1px solid var(--line-soft); }
+.tbtn.insufficient { opacity: 0.4; cursor: not-allowed; }
+.tbtn.insufficient:hover { color: var(--mist); }
+.tbtn.insufficient:hover .ic { color: var(--mist); }
+.tbtn.insufficient:hover::after { transform: scaleX(0); }
+
+.ho-foot {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    border-top: 1px solid var(--line-soft);
+    margin-top: 14px;
+    padding-top: 13px;
+}
+.shell-chip {
+    width: 34px; height: 34px;
+    border: 1px solid var(--violet-line);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(176, 107, 255, 0.08);
+    flex: none;
+}
+.ho-foot .sh-txt { display: flex; flex-direction: column; gap: 2px; }
+.ho-foot .sh-txt .k { font-size: 8.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mist); }
+.ho-foot .sh-txt .v { font-size: 12px; color: var(--signal); letter-spacing: 0.06em; }
+
 /* --- Uplink panel (REBUILD.md §1 + §6 — premium chrome reference) ------------------ */
 
 #uplinkPanel {
