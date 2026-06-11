@@ -141,6 +141,9 @@ class SectorManager {
                 // Emit event to trigger research unlock check
                 this.eventBus.emit('research:pointAwarded', { source: 'sector_discovery' });
 
+                // Canonical discovery event (SFX, dashboard, future completion tracking)
+                this.eventBus.emit('sector:discovered', { sector, x, y });
+
                 this.showSectorDiscovery(sector.type, sector.name, sector);
 
                 // Show sector report button

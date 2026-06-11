@@ -41,30 +41,37 @@ class MiningManager {
      * Mining station types and their properties
      */
     getStationTypes() {
+        // Output rates: docs/design/ECONOMY.md.
+        // `output` = resource units per cycle (sector-profile resources).
+        // `probethiumOutput` = Probethium per cycle in probethium-rich sectors —
+        // targets ~10/20/30 P/hour at level 1 while supplied.
         return {
             basic: {
                 name: 'Basic Mining Station',
                 cost: { minerals: 100, data: 50 },
                 requirements: { minerals: 100, data: 50 }, // Direct requirement to start mining
-                output: 0.001, // Probetheum per minute
+                output: 5,               // resources per 30s cycle (~600/hr)
+                probethiumOutput: 0.085, // ~10 P/hr at 120 cycles/hr
                 maxLevel: 3,
                 icon: '⛏️',
-                operationDuration: 30000 // 30 seconds per operation cycle (for testing)
+                operationDuration: 30000 // 30 seconds per operation cycle
             },
             advanced: {
                 name: 'Advanced Mining Station',
                 cost: { minerals: 200, data: 100, artifacts: 50 },
                 requirements: { minerals: 150, data: 100, artifacts: 75 }, // Direct requirement to start mining
-                output: 0.005,
+                output: 12,              // ~1440/hr
+                probethiumOutput: 0.17,  // ~20 P/hr
                 maxLevel: 5,
                 icon: '🏭',
-                operationDuration: 30000 // 30 seconds per operation cycle (for testing)
+                operationDuration: 30000 // 30 seconds per operation cycle
             },
             quantum: {
                 name: 'Quantum Mining Station',
                 cost: { minerals: 500, data: 300, artifacts: 150, exoticMinerals: 50 },
                 requirements: { minerals: 200, data: 150, artifacts: 100, exoticMinerals: 50 },
-                output: 0.02,
+                output: 60,              // ~720/hr at 12 cycles/hr
+                probethiumOutput: 2.5,   // ~30 P/hr
                 maxLevel: 7,
                 icon: '💠',
                 operationDuration: 300000
@@ -272,7 +279,17 @@ class MiningManager {
             // Shell bonus: miningEfficiency increases output
             const efficiencyShellBonus = window.game?.shellSystem ? window.game.shellSystem.getEntityBonus('miningStations', null, 'miningEfficiency') : 0;
             const efficiencyShellMultiplier = 1 + efficiencyShellBonus / 100;
-            const productionPerMs = (stationType.output * station.level * station.efficiency * this.gameState.mining.efficiencyBonus * sectorBonus * efficiencyShellMultiplier) / stationType.operationDuration;
+            // ECONOMY.md: probethium and resource outputs are tuned separately
+            const stationOutputResource = this.getStationOutputResource(station);
+            let baseOutput = stationOutputResource === 'probethium'
+                ? stationType.probethiumOutput
+                : stationType.output;
+            if (stationOutputResource === 'probethium') {
+                // Shell bonus: probethiumRate (moved here from the removed wall-clock trickle)
+                const probethiumShellBonus = window.game?.shellSystem ? window.game.shellSystem.getEntityBonus('miningStations', null, 'probethiumRate') : 0;
+                baseOutput *= 1 + probethiumShellBonus / 100;
+            }
+            const productionPerMs = (baseOutput * station.level * station.efficiency * this.gameState.mining.efficiencyBonus * sectorBonus * efficiencyShellMultiplier) / stationType.operationDuration;
             const continuousProduction = productionPerMs * deltaTime;
 
             // Consume resources continuously during the cycle
@@ -682,12 +699,11 @@ class MiningManager {
 
     /**
      * Update total Probetheum display
+     * Header rendering is owned by UIManager.updateResourceDisplay (single source of truth);
+     * this hook is kept for compatibility with callers.
      */
     updateProbetheum() {
-        const probethiumElement = document.getElementById('probethium');
-        if (probethiumElement) {
-            probethiumElement.textContent = this.gameState.mining.totalProbetheum.toFixed(10);
-        }
+        // no-op: UIManager renders the wallet (gameState.probethium.current)
     }
 
     /**

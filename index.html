@@ -100,7 +100,17 @@
             </div>
             <div class="stat-item">
                 <span class="stat-label">Probethium:</span>
-                <span id="probethium" style="color: #c9f; font-weight: bold;">0.0000000000</span>
+                <span id="probethium" style="color: #c9f; font-weight: bold;">0</span>
+            </div>
+            <div class="stat-item" id="throughputStat" title="Network throughput — click for dashboard">
+                <span class="stat-label">⚡</span>
+                <span id="throughputValue" style="color: #0ff;">0.0/min ─</span>
+            </div>
+            <div class="stat-item" id="timeControls" title="Game speed">
+                <button class="time-btn" id="timePauseBtn" title="Pause (Space)">⏸</button>
+                <button class="time-btn time-scale-btn active" data-scale="1" title="Normal speed (1)">1×</button>
+                <button class="time-btn time-scale-btn" data-scale="2" title="Double speed (2)">2×</button>
+                <button class="time-btn time-scale-btn" data-scale="4" title="Quadruple speed (3)">4×</button>
             </div>
         </div>
 
@@ -599,6 +609,7 @@
 
     <!-- Modular Game System -->
     <!-- StorageAdapter must load first -->
+    <script src="src/GameConstants.js"></script>
     <script src="src/StorageAdapter.js"></script>
     <script>
         // Immediately verify StorageAdapter loaded
@@ -636,6 +647,9 @@
     <script src="src/UIManager.js"></script>
     <script src="src/DetailsPanel.js"></script>
     <script src="src/SynthesisAnimationManager.js"></script>
+    <script src="src/SfxManager.js"></script>
+    <script src="src/ComboSystem.js"></script>
+    <script src="src/StatsManager.js"></script>
     <script src="src/GameController.js"></script>
     
     <!-- Verify all modules loaded -->

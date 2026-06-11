@@ -27,6 +27,9 @@ class GameController {
         this.dialogueSystem = new DialogueSystem(this.gameState, this.eventBus);
         this.musicManager = new MusicManager(this.gameState, this.eventBus);
         this.synthesisAnimation = new SynthesisAnimationManager(this.eventBus);
+        this.sfxManager = new SfxManager(this.eventBus);
+        this.comboSystem = new ComboSystem(this.gameState, this.eventBus);
+        this.statsManager = new StatsManager(this.gameState, this.eventBus);
         this.uiManager = new UIManager(this.gameState, this.eventBus, this.probeManager, this.buildingSystem);
         
         // Make managers available to gameState for easy access
@@ -70,27 +73,31 @@ class GameController {
             this.openDarkMarketForNPC(data.npcId, data.npcType);
         });
 
-        // Listen for probethium synthesis
+        // Listen for probethium synthesis (rates: docs/design/ECONOMY.md — primary active P source)
         this.eventBus.on('synthesis:triggered', (data) => {
             const resources = this.gameState.getResources();
-            const batchCount = Math.floor(resources.exoticMinerals / 5);
+            const { EXOTIC_PER_BATCH, PROBETHIUM_PER_BATCH } = window.GAME_CONSTANTS.SYNTHESIS;
+            const batchCount = Math.floor(resources.exoticMinerals / EXOTIC_PER_BATCH);
 
             if (batchCount > 0) {
-                const exoticsConsumed = batchCount * 5;
-                const probethiumGained = batchCount * 0.001;
+                const exoticsConsumed = batchCount * EXOTIC_PER_BATCH;
+                const probethiumGained = batchCount * PROBETHIUM_PER_BATCH;
 
-                // Update resources
+                // Update resources — getResources() returns a copy, so the
+                // deduction must be written back via updateResources
                 resources.exoticMinerals -= exoticsConsumed;
+                this.gameState.updateResources(resources, this.eventBus);
                 this.gameState.probethium.current += probethiumGained;
+                this.gameState.probethium.totalAccumulated += probethiumGained;
 
                 // Emit updates
                 this.eventBus.emit('ui:update');
                 this.eventBus.emit('ui:message', {
-                    text: `Synthesized ${probethiumGained.toFixed(3)} Probethium from ${exoticsConsumed} exotic minerals!`,
+                    text: `Synthesized ${probethiumGained} Probethium from ${exoticsConsumed} exotic minerals!`,
                     type: 'success'
                 });
 
-                console.log(`[Synthesis] Converted ${exoticsConsumed} exotics -> ${probethiumGained.toFixed(3)} probethium`);
+                console.log(`[Synthesis] Converted ${exoticsConsumed} exotics -> ${probethiumGained} probethium`);
             }
         });
 
@@ -104,10 +111,14 @@ class GameController {
         
         // Timing
         this.lastTime = 0;
-        
+        // Time controls (CORE_LOOP.md): 0 = paused, 1/2/4 = speed multiplier
+        this.timeScale = 1;
+        this.prePauseTimeScale = 1;
+
         this.setupCanvas();
         this.initializeGame();
         this.setupEventListeners();
+        this.setupTimeControls();
         
         // Add camera change tracker for debugging camera snap issue
         this.lastViewOffset = { ...this.gameState.world.viewOffset };
@@ -142,6 +153,54 @@ class GameController {
         }, 100);
         
         this.gameLoop();
+    }
+
+    /**
+     * Time controls (CORE_LOOP.md): pause + 1x/2x/4x speed
+     */
+    setupTimeControls() {
+        const pauseBtn = document.getElementById('timePauseBtn');
+        if (pauseBtn) {
+            pauseBtn.addEventListener('click', () => this.togglePause());
+        }
+        document.querySelectorAll('.time-scale-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.setTimeScale(parseInt(btn.dataset.scale, 10));
+            });
+        });
+        this.updateTimeControlsUI();
+    }
+
+    setTimeScale(scale) {
+        if (!window.GAME_CONSTANTS.TIME.SCALES.includes(scale)) return;
+        this.timeScale = scale;
+        this.prePauseTimeScale = scale;
+        this.updateTimeControlsUI();
+        this.eventBus.emit('time:scaleChanged', { scale });
+    }
+
+    togglePause() {
+        if (this.timeScale === 0) {
+            this.timeScale = this.prePauseTimeScale || 1;
+        } else {
+            this.prePauseTimeScale = this.timeScale;
+            this.timeScale = 0;
+        }
+        this.updateTimeControlsUI();
+        this.eventBus.emit('time:scaleChanged', { scale: this.timeScale });
+    }
+
+    updateTimeControlsUI() {
+        const pauseBtn = document.getElementById('timePauseBtn');
+        if (pauseBtn) {
+            pauseBtn.classList.toggle('paused', this.timeScale === 0);
+            pauseBtn.textContent = this.timeScale === 0 ? '▶' : '⏸';
+            pauseBtn.title = this.timeScale === 0 ? 'Resume (Space)' : 'Pause (Space)';
+        }
+        document.querySelectorAll('.time-scale-btn').forEach(btn => {
+            btn.classList.toggle('active',
+                this.timeScale !== 0 && parseInt(btn.dataset.scale, 10) === this.timeScale);
+        });
     }
 
     /**
@@ -320,7 +379,7 @@ class GameController {
                         currentWaypoint: 0,
                         current: { x: hub.x, y: hub.y },
                         segmentProgress: 0,
-                        speed: 0.0001,
+                        speed: window.GAME_CONSTANTS.PROBE.BASE_SPEED,
                         pulseTimer: 0,
                         pulses: [],
                         radarPulses: [],
@@ -328,7 +387,7 @@ class GameController {
                         hub: hub,
                         recoveryMode: false,
                         outboundWaypointsCount: 0,
-                        returnSpeed: 0.0003,
+                        returnSpeed: window.GAME_CONSTANTS.PROBE.BASE_SPEED * window.GAME_CONSTANTS.PROBE.RETURN_SPEED_MULT,
                         patrolMode: true,
                         equipment: [],
                         maxEquipmentSlots: 2,
@@ -492,11 +551,32 @@ class GameController {
 
         // Add keyboard controls for zooming
         document.addEventListener('keydown', (e) => {
+            // Don't hijack keys while the player is typing in an input
+            const target = e.target;
+            if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+                return;
+            }
+
             // Prevent default behavior for game keys to stop browser scrolling/actions
-            const gameKeys = ['d', 'D', 'F12', '+', '=', '-', '_', 'Escape'];
+            const gameKeys = ['d', 'D', 'F12', '+', '=', '-', '_', 'Escape', ' ', '1', '2', '3'];
             if (gameKeys.includes(e.key)) {
                 e.preventDefault();
                 e.stopPropagation();
+            }
+
+            // Time controls (CORE_LOOP.md): Space = pause, 1/2/3 = 1x/2x/4x
+            if (e.key === ' ') {
+                this.togglePause();
+                return;
+            } else if (e.key === '1') {
+                this.setTimeScale(1);
+                return;
+            } else if (e.key === '2') {
+                this.setTimeScale(2);
+                return;
+            } else if (e.key === '3') {
+                this.setTimeScale(4);
+                return;
             }
             
             // Debug camera snapping issue
@@ -1214,10 +1294,19 @@ class GameController {
      */
     collectSignal(signal) {
         console.log('Signal collected:', signal.rarity);
-        
+
         // Emit events for tutorial
         this.eventBus.emit('signal:clicked');  // For tutorial step 2
         this.eventBus.emit('signal:identified');
+
+        // Canonical collection event (combo chain + SFX) — manual clicks extend
+        // the chain; cargo bonuses apply on auto-collections (ComboSystem)
+        this.eventBus.emit('signal:collected', {
+            manual: true,
+            rarity: signal.rarity,
+            x: signal.x,
+            y: signal.y
+        });
         
         // Remove signal from world
         const index = this.gameState.entities.signals.indexOf(signal);
@@ -2787,15 +2876,22 @@ class GameController {
      * Main game loop
      */
     gameLoop(currentTime = 0) {
-        const deltaTime = currentTime - this.lastTime;
+        // Clamp raw delta so tab-switches don't teleport probes, then apply time scale
+        const rawDelta = Math.min(currentTime - this.lastTime, window.GAME_CONSTANTS.TIME.MAX_FRAME_DELTA);
         this.lastTime = currentTime;
+        const deltaTime = Math.max(0, rawDelta) * this.timeScale;
+
+        // Advance signal sim-time ages (supports pause/speed; replaces wall-clock aging)
+        this.gameState.entities.signals.forEach(signal => {
+            signal.age = (signal.age || 0) + deltaTime;
+        });
 
         // Update game systems
         this.eventBus.emit('game:update', { deltaTime });
-        
+
         // Update Probethium accumulation
         this.gameState.calculateProbethium(deltaTime);
-        
+
         // Clean up expired signals
         this.cleanupExpiredSignals();
         
@@ -3382,14 +3478,12 @@ class GameController {
      * Render signals with pulsing animations
      */
     renderSignals() {
-        const currentTime = Date.now();
-        
         this.gameState.entities.signals.forEach(signal => {
             const screenX = signal.x - this.gameState.world.viewOffset.x;
             const screenY = signal.y - this.gameState.world.viewOffset.y;
-            
-            // Calculate age and fade effect
-            const age = currentTime - (signal.createdAt || currentTime);
+
+            // Calculate age and fade effect (sim-time age — respects pause/speed)
+            const age = signal.age || 0;
             const maxAge = signal.duration || 3000;
             const fadeStart = maxAge * 0.5; // Start fading at 50% of lifetime for short signals
             
@@ -4324,11 +4418,10 @@ class GameController {
      * Clean up expired signals
      */
     cleanupExpiredSignals() {
-        const currentTime = Date.now();
         const initialCount = this.gameState.entities.signals.length;
-        
+
         this.gameState.entities.signals = this.gameState.entities.signals.filter(signal => {
-            const age = currentTime - (signal.createdAt || currentTime);
+            const age = signal.age || 0; // sim-time age (respects pause/speed)
             const maxAge = signal.duration || 3000; // Default 3 seconds
             return age < maxAge;
         });
@@ -4343,18 +4436,19 @@ class GameController {
      * Add a resource indicator at a specific location
      */
     addResourceIndicator(data) {
-        const { x, y, amount, resourceType, pending } = data;
-        
+        const { x, y, amount, resourceType, pending, label, color: colorOverride } = data;
+
         const colors = {
             minerals: '#fff',     // White (common signals)
             data: '#fff',         // White (common signals)
             artifacts: '#fff',    // White (common signals)
             all: '#ffd700'        // Gold (universal collection)
         };
-        
-        // Different styling for pending vs delivered resources
-        const text = pending ? `+${amount} (pending)` : `+${amount}`;
-        const color = pending ? '#ff9900' : (colors[resourceType] || '#fff'); // Orange for pending
+
+        // Different styling for pending vs delivered resources;
+        // `label` overrides the default text (combo callouts etc.)
+        const text = label || (pending ? `+${amount} (pending)` : `+${amount}`);
+        const color = colorOverride || (pending ? '#ff9900' : (colors[resourceType] || '#fff')); // Orange for pending
         
         this.resourceIndicators.push({
             x: x,

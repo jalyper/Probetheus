@@ -297,7 +297,6 @@ class DetailsPanel {
         const stationType = stationTypes[station.type] || { name: 'Unknown', icon: '❓' };
         const efficiency = Math.round(station.efficiency * 100);
         const activeStatus = station.active ? '🟢 Active' : '🔴 Inactive';
-        const productionRate = station.active ? '0.001' : '0';
 
         // Get mining station type data
         const miningManager = this.gameState.miningManager;
@@ -305,6 +304,12 @@ class DetailsPanel {
 
         // PROF-06: Get station output resource based on sector profile
         const outputResource = miningManager ? miningManager.getStationOutputResource(station) : 'probethium';
+
+        // Per-cycle output for display (ECONOMY.md: probethium and resources tuned separately)
+        const baseOutput = fullStationType
+            ? (outputResource === 'probethium' ? fullStationType.probethiumOutput : fullStationType.output)
+            : 0;
+        const productionRate = station.active ? (baseOutput * (station.level || 1)).toFixed(2) : '0';
 
         // Map output resource to display labels with icons
         const outputResourceLabels = {
@@ -381,7 +386,7 @@ class DetailsPanel {
                         <span>${outputLabel.icon}</span>
                         <span>Mining Output: <span style="color: #0f8; font-weight: bold;">${outputLabel.name}</span></span>
                     </div>
-                    <div>Production Rate: ${productionRate}/min</div>
+                    <div>Production Rate: ${productionRate}/cycle</div>
                     <div>Total Produced: ${station.totalProduced?.toFixed(6) || '0.000000'}</div>
                     <div>Connected Shuttles: ${connectedShuttles.length}</div>
                 </div>
@@ -593,7 +598,7 @@ class DetailsPanel {
                 if (textSpan) {
                     textSpan.textContent = `Synthesize Probethium (${batchCount}x batches)`;
                 }
-                synthesizeBtn.title = `Convert ${batchCount * 5} exotic minerals to ${(batchCount * 0.001).toFixed(3)} probethium`;
+                synthesizeBtn.title = `Convert ${batchCount * window.GAME_CONSTANTS.SYNTHESIS.EXOTIC_PER_BATCH} exotic minerals to ${batchCount * window.GAME_CONSTANTS.SYNTHESIS.PROBETHIUM_PER_BATCH} probethium`;
             } else {
                 const textSpan = synthesizeBtn.querySelector('span:last-child');
                 if (textSpan) {

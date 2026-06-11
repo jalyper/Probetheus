@@ -1,6 +1,6 @@
 /**
- * Tutorial System Tests
- * Tests the new step-based tutorial system
+ * Tutorial System Tests — the Guided Minute (docs/design/ONBOARDING.md)
+ * Rewritten 2026-06-10 for the 5-step Act-1 onboarding + just-in-time tips.
  */
 
 const { test, expect } = require('@playwright/test');
@@ -16,134 +16,103 @@ test.describe('Tutorial System', () => {
         await page.waitForLoadState('networkidle');
     });
 
-    test('should show tutorial on new game', async ({ page }) => {
-        // Start new game
+    async function startGameAndTutorial(page) {
         await page.click('#newGameBtn');
         await page.waitForSelector('#galaxyCanvas');
-
-        // Wait for game to initialize, then trigger tutorial manually
-        // (In live game, tutorial is triggered after title animation completes)
-        await page.waitForTimeout(1000);
+        await page.waitForFunction(() => !!(window.game && window.game.tutorialManager), { timeout: 10000 });
         await page.evaluate(() => {
-            if (window.game && window.game.tutorialManager) {
-                window.game.tutorialManager.startTutorial();
-            }
+            window.game.tutorialManager.startTutorial();
         });
         await page.waitForTimeout(500);
+    }
 
-        // Tutorial banner should be visible
+    test('should show the Guided Minute step 1 on new game', async ({ page }) => {
+        await startGameAndTutorial(page);
+
         const tutorialPanel = await page.$('#tutorialPanel');
         expect(tutorialPanel).not.toBeNull();
+        expect(await tutorialPanel.isVisible()).toBe(true);
 
-        const isVisible = await tutorialPanel.isVisible();
-        expect(isVisible).toBe(true);
-
-        // Should show step 1
         const content = await page.textContent('#tutorialPanel');
-        expect(content).toContain('Deploy Your First Probe');
+        expect(content).toContain('Your Hub');
         expect(content).toContain('Step 1');
     });
 
-    test('should progress through tutorial steps', async ({ page }) => {
-        await page.click('#newGameBtn');
-        await page.waitForSelector('#galaxyCanvas');
+    test('selecting the hub completes step 1', async ({ page }) => {
+        await startGameAndTutorial(page);
 
-        // Wait for game to initialize, then trigger tutorial manually
-        await page.waitForTimeout(1000);
         await page.evaluate(() => {
-            if (window.game && window.game.tutorialManager) {
-                window.game.tutorialManager.startTutorial();
-            }
-        });
-        await page.waitForTimeout(500);
-
-        // Step 1: Deploy first probe
-        let content = await page.textContent('#tutorialPanel');
-        expect(content).toContain('Deploy Your First Probe');
-
-        // Select hub and deploy a probe programmatically
-        await page.evaluate(() => {
-            const hubs = window.game.gameState.entities.reconHubs;
-            if (hubs && hubs.length > 0) {
-                const hub = hubs[0];
-                hub.selected = true;
-                window.game.eventBus.emit('entity:selected', { entity: hub, type: 'hub' });
-            }
+            const hub = window.game.gameState.entities.reconHubs[0];
+            hub.selected = true;
+            window.game.eventBus.emit('hub:selected', { hub });
         });
 
-        await page.waitForTimeout(500);
+        // Step advance has a 1.5s feedback delay
+        await page.waitForTimeout(2500);
 
-        // Click deploy button if visible
-        const deployBtn = await page.$('#deployFromHub');
-        if (deployBtn && await deployBtn.isVisible()) {
-            await deployBtn.click();
-            await page.waitForTimeout(500);
-
-            // Place waypoints on canvas
-            const canvas = await page.$('#galaxyCanvas');
-            const canvasBox = await canvas.boundingBox();
-            if (canvasBox) {
-                await page.click('#galaxyCanvas', { position: { x: canvasBox.width / 2 - 100, y: canvasBox.height / 2 } });
-                await page.waitForTimeout(200);
-                await page.click('#galaxyCanvas', { position: { x: canvasBox.width / 2 - 200, y: canvasBox.height / 2 - 100 }, button: 'right' });
-            }
-
-            await page.waitForTimeout(2000);
-
-            // Check if tutorial progressed (may show step 2 content)
-            content = await page.textContent('#tutorialPanel');
-            // Either shows step 2 or still on step 1 depending on deployment success
-            expect(content).toContain('Step');
-        }
+        const state = await page.evaluate(() => ({
+            step1Done: window.game.tutorialManager.steps[0].completed,
+            currentStep: window.game.tutorialManager.currentStep
+        }));
+        expect(state.step1Done).toBe(true);
+        expect(state.currentStep).toBeGreaterThanOrEqual(1);
     });
 
-    test('tutorial should stay visible until step completed', async ({ page }) => {
-        await page.click('#newGameBtn');
-        await page.waitForSelector('#galaxyCanvas');
+    test('collect_signals step spawns a guaranteed signal cluster', async ({ page }) => {
+        await startGameAndTutorial(page);
 
-        // Wait for game to initialize, then trigger tutorial manually
-        await page.waitForTimeout(1000);
-        await page.evaluate(() => {
-            if (window.game && window.game.tutorialManager) {
-                window.game.tutorialManager.startTutorial();
-            }
+        const spawned = await page.evaluate(() => {
+            // Fake a deployed probe so the cluster has a route to target
+            const probe = window.game.gameState.entities.probes[0];
+            probe.waypoints = [{ x: 900, y: 500 }, { x: 1100, y: 520 }, { x: 900, y: 500 }];
+            probe.outboundWaypointsCount = 2;
+
+            const before = window.game.gameState.entities.signals.length;
+            window.game.tutorialManager.handleStepActions('collect_signals');
+            return window.game.gameState.entities.signals.length - before;
         });
-        await page.waitForTimeout(500);
 
-        // Tutorial should be visible
-        let isVisible = await page.isVisible('#tutorialPanel');
-        expect(isVisible).toBe(true);
-
-        // Wait 3 seconds - tutorial should still be visible
-        await page.waitForTimeout(3000);
-        isVisible = await page.isVisible('#tutorialPanel');
-        expect(isVisible).toBe(true);
-
-        // Content should still show step 1
-        const content = await page.textContent('#tutorialPanel');
-        expect(content).toContain('Deploy Your First Probe');
+        expect(spawned).toBe(4);
     });
 
-    test('tutorial banner should not block gameplay', async ({ page }) => {
+    test('just-in-time tips fire once and persist as shown', async ({ page }) => {
+        await startGameAndTutorial(page);
+
+        const result = await page.evaluate(async () => {
+            const tm = window.game.tutorialManager;
+            tm.showTip('tip_test_once', 'Test tip body.');
+            tm.showTip('tip_test_once', 'Test tip body.'); // second call should no-op
+            await new Promise(r => setTimeout(r, 100));
+            const container = document.getElementById('tipToastContainer');
+            return {
+                toastCount: container ? container.children.length : 0,
+                persisted: JSON.parse(localStorage.getItem('csog_tips_shown') || '[]').includes('tip_test_once')
+            };
+        });
+
+        expect(result.toastCount).toBe(1);
+        expect(result.persisted).toBe(true);
+    });
+
+    test('tutorial disabled setting suppresses steps and tips', async ({ page }) => {
         await page.click('#newGameBtn');
         await page.waitForSelector('#galaxyCanvas');
-        await page.waitForTimeout(2000);
+        await page.waitForFunction(() => !!(window.game && window.game.tutorialManager), { timeout: 10000 });
 
-        // Tutorial should be at top
-        const tutorialPanel = await page.$('#tutorialPanel');
-        if (tutorialPanel && await tutorialPanel.isVisible()) {
-            const box = await tutorialPanel.boundingBox();
+        const result = await page.evaluate(async () => {
+            const tm = window.game.tutorialManager;
+            tm.setTutorialEnabled(false);
+            tm.startTutorial();
+            tm.showTip('tip_disabled_check', 'Should not appear.');
+            await new Promise(r => setTimeout(r, 100));
+            const container = document.getElementById('tipToastContainer');
+            return {
+                active: tm.tutorialActive,
+                toasts: container ? container.children.length : 0
+            };
+        });
 
-            if (box) {
-                expect(box.y).toBeLessThan(200); // Should be near top
-                expect(box.height).toBeLessThan(150); // Should be reasonably short
-            }
-        }
-
-        // Canvas should still be present and visible
-        const canvas = await page.$('#galaxyCanvas');
-        expect(canvas).not.toBeNull();
-        const canvasVisible = await canvas.isVisible();
-        expect(canvasVisible).toBe(true);
+        expect(result.active).toBe(false);
+        expect(result.toasts).toBe(0);
     });
 });

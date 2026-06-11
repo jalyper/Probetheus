@@ -13,67 +13,45 @@ class TutorialManager {
         this.tutorialActive = false;
         this.tutorialsDisabled = this.loadTutorialDisabledState();
 
-        // Step tracking — 7 streamlined steps
+        // Act 1 — The Guided Minute (docs/design/ONBOARDING.md)
+        // Five steps, one instruction at a time, ≤2 short sentences each.
+        // Everything past the core loop is taught just-in-time via `tips`.
         this.steps = [
             {
-                id: 'deploy_and_explore',
-                title: 'Deploy & Explore',
-                message: 'Click on your Recon Hub (green hexagon), then click "Deploy Probe" and place waypoints to explore! Your probes detect SIGNALS — click on one to explore a planet and gather resources!',
-                checkCondition: () => {
-                    return this.signalClicked === true && this.explorationActionChosen === true;
-                },
+                id: 'select_hub',
+                title: 'Your Hub',
+                message: 'Click your Hub — the green hexagon.',
+                checkCondition: () => !!(this.gameState.ui?.selectedHub ||
+                    this.gameState.entities.reconHubs.some(h => h.selected)),
                 completed: false
             },
             {
-                id: 'expand_fleet',
-                title: 'Deploy More Probes',
-                message: 'Each Hub supports up to 5 probes. More probes means more signals! Click on your Hub and deploy your remaining probes.',
-                checkCondition: () => {
-                    const deployedProbes = this.gameState.entities.probes.filter(p =>
-                        p.active && p.waypoints && p.waypoints.length > 0
-                    ).length;
-                    return deployedProbes >= 3;
-                },
+                id: 'deploy_probe',
+                title: 'Deploy',
+                message: 'Click "Deploy Probe", then click out in the dark. Right-click to launch early.',
+                checkCondition: () => this.gameState.entities.probes.some(p =>
+                    p.active && p.waypoints && p.waypoints.length > 0),
                 completed: false
             },
             {
-                id: 'build_hub',
-                title: 'Expand Your Network',
-                message: 'Gather 100 Minerals, then select an active probe and click "Build Hub" to place one along the probe\'s outbound route. New hubs let you reach new sectors with unique resources!',
-                checkCondition: () => {
-                    return this.gameState.entities.reconHubs && this.gameState.entities.reconHubs.length >= 2;
-                },
+                id: 'collect_signals',
+                title: 'Signals',
+                message: 'Signals! Click one before it fades.',
+                checkCondition: () => this.explorationActionChosen === true,
                 completed: false
             },
             {
-                id: 'research_and_equip',
-                title: 'Research & Upgrade',
-                message: 'You\'ve unlocked the Research Lab! Open it and research an Auto-Collector, then select a probe and click "Manage Equipment" to install it. Equipment lets probes gather resources automatically!',
-                checkCondition: () => {
-                    return this.gameState.entities.probes.some(p =>
-                        p.equipment && (Array.isArray(p.equipment) ? p.equipment.length > 0 : true)
-                    );
-                },
-                triggerAfterResearchUnlock: true,
+                id: 'cargo_return',
+                title: 'Delivery',
+                message: 'Your probe hauls it home. Cargo pays out on return.',
+                checkCondition: () => this.cargoDelivered === true,
                 completed: false
             },
             {
-                id: 'mining_operations',
-                title: 'Mining Operations',
-                message: 'Mining stations produce resources based on the sector they\'re in — check the Sector Survey to see what each sector produces! Select a probe, build a Mining Station (100M, 50D), then build a Shuttle (50M, 25D) from a nearby Hub to supply it.',
-                checkCondition: () => {
-                    return this.miningStationBuilt === true && this.shuttleBuilt === true;
-                },
-                completed: false
-            },
-            {
-                id: 'advanced_resources',
-                title: 'Probethium & Synthesis',
-                message: 'Probethium is the ultimate resource. Find rare <strong style="color: #ffd700;">Probethium-rich sectors</strong> for direct mining, or research <strong style="color: #0ff;">Probethium Synthesis</strong> in the Alien Tech tree to convert exotic minerals at any Hub. Explore far from home to find richer sectors!',
-                checkCondition: () => {
-                    // Auto-completes via timer (informational step)
-                    return this.advancedResourcesRead === true;
-                },
+                id: 'release',
+                title: 'The Loop',
+                message: 'That\'s the loop — build, explore, optimize. You\'re on your own.',
+                checkCondition: () => this.releaseRead === true,
                 completed: false
             }
         ];
@@ -81,24 +59,16 @@ class TutorialManager {
         // Event tracking flags
         this.explorationActionChosen = false;
         this.signalClicked = false;
-        this.collectionResearchCompleted = false;
-        this.researchLabUnlocked = false;
-        this.miningStationBuilt = false;
-        this.shuttleBuilt = false;
-        this.advancedResourcesRead = false;
+        this.cargoDelivered = false;
+        this.releaseRead = false;
 
-        // Research access gating - research can only be accessed after build_hub step
-        this.researchAccessAllowed = false;
+        // Research gating removed (ONBOARDING.md: no tutorial-only restrictions)
+        this.researchAccessAllowed = true;
 
         // Listen for relevant events
         this.eventBus.on('probe:deployed', this.checkStepCompletion.bind(this));
-        this.eventBus.on('probe:returned', this.checkStepCompletion.bind(this));
-        this.eventBus.on('hub:built', () => {
-            this.checkStepCompletion();
-            this.checkResearchAccessGate();
-        });
-        this.eventBus.on('signal:discovered', this.checkStepCompletion.bind(this));
-        this.eventBus.on('planet:explored', this.checkStepCompletion.bind(this));
+        this.eventBus.on('hub:selected', this.checkStepCompletion.bind(this));
+        this.eventBus.on('entity:selected', this.checkStepCompletion.bind(this));
         this.eventBus.on('signal:clicked', () => {
             this.signalClicked = true;
             this.checkStepCompletion();
@@ -107,37 +77,12 @@ class TutorialManager {
             this.explorationActionChosen = true;
             this.checkStepCompletion();
         });
-        this.eventBus.on('research:completed', (data) => {
-            const autoCollectorResearch = ['auto_minerals', 'auto_data', 'auto_artifacts'];
-            if (data.node && autoCollectorResearch.includes(data.node.id)) {
-                this.collectionResearchCompleted = true;
-            }
+        this.eventBus.on('probe:cargoDelivered', () => {
+            this.cargoDelivered = true;
             this.checkStepCompletion();
-        });
-        this.eventBus.on('research:unlocked', () => {
-            this.researchLabUnlocked = true;
-        });
-        this.eventBus.on('research:showTree', () => {
-            if (this.researchLabUnlocked) {
-                this.triggerResearchStep();
-            }
         });
         this.eventBus.on('research:pointAwarded', () => {
-            if (this.researchAccessAllowed) {
-                this.eventBus.emit('tutorial:checkResearchUnlock');
-            }
-        });
-        this.eventBus.on('mining:stationBuilt', () => {
-            this.miningStationBuilt = true;
-            this.checkStepCompletion();
-        });
-        this.eventBus.on('mining:shuttleBuilt', () => {
-            this.shuttleBuilt = true;
-            const shuttleBtn = document.getElementById('buildShuttleBtn');
-            if (shuttleBtn) {
-                shuttleBtn.classList.remove('tutorial-highlight');
-            }
-            this.checkStepCompletion();
+            this.eventBus.emit('tutorial:checkResearchUnlock');
         });
 
         // Also check periodically in case events don't fire
@@ -148,6 +93,121 @@ class TutorialManager {
         }, 1000);
 
         this.createTutorialPanel();
+
+        // Act 2 — just-in-time tips (ONBOARDING.md): each fires once on first
+        // encounter as a small toast; ≤2 short sentences; never repeats.
+        this.shownTips = this.loadShownTips();
+        this.setupTips();
+    }
+
+    /**
+     * Just-in-time tips — Act 2 of onboarding (docs/design/ONBOARDING.md)
+     */
+    setupTips() {
+        const on = (event, id, text, condition = null) => {
+            this.eventBus.on(event, (data) => {
+                if (condition && !condition(data)) return;
+                this.showTip(id, text);
+            });
+        };
+
+        on('research:pointAwarded', 'tip_research',
+            'Research Point earned. The Lab is open — milestones earn more.');
+        on('probe:cargoDelivered', 'tip_full_cargo',
+            'That probe came home stuffed — full cargo is slow cargo. Shorter routes pay faster.',
+            (d) => (d?.capacityRatio || 0) >= 0.9);
+        on('sector:discovered', 'tip_sector',
+            'New sector. Different sectors favor different resources — check the Sector Survey.');
+        on('mining:stationBuilt', 'tip_station',
+            'Stations eat resources to produce more. Shuttles feed them — watch the supply line.');
+        on('mining:shuttleBuilt', 'tip_shuttle',
+            'Shuttle deployed. It ferries supplies from Hub to station automatically.');
+        on('remnant:spawned', 'tip_remnant',
+            'Something is out there, watching. Click it… if you like.');
+        on('probe:destroyed', 'tip_probe_lost',
+            'Probe lost. Asteroid fields are rich but deadly — research durability or phase tech.');
+        on('combo:chain', 'tip_combo',
+            'Combo! Chained collections earn bonus resources. Dense routes pay.');
+        on('synthesis:triggered', 'tip_synthesis',
+            'Exotic minerals became Probethium. Spend it with the Remnants — when you find them.');
+
+        // Condition-polled tips (no event fires for these)
+        this.tipPollInterval = setInterval(() => {
+            const resources = this.gameState.getResources();
+            if (resources.minerals >= 100 && this.gameState.entities.reconHubs.length === 1) {
+                this.showTip('tip_second_hub',
+                    '100 minerals banked. A second Hub extends your reach — build it on an outbound route.');
+            }
+            if (this.allTipsShown()) {
+                clearInterval(this.tipPollInterval);
+                this.tipPollInterval = null;
+            }
+        }, 2000);
+    }
+
+    allTipsShown() {
+        return this.shownTips.includes('tip_second_hub');
+    }
+
+    showTip(id, text) {
+        if (this.tutorialsDisabled) return;
+        if (this.shownTips.includes(id)) return;
+        this.shownTips.push(id);
+        this.saveShownTips();
+
+        let container = document.getElementById('tipToastContainer');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'tipToastContainer';
+            container.style.cssText = 'position: fixed; top: 120px; right: 15px; width: 280px; z-index: 10002; display: flex; flex-direction: column; gap: 8px; pointer-events: none;';
+            document.body.appendChild(container);
+        }
+
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            background: linear-gradient(135deg, rgba(10, 15, 25, 0.97), rgba(5, 10, 20, 0.97));
+            border: 1px solid rgba(0, 255, 255, 0.25);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: #bdd;
+            font-size: 12px;
+            line-height: 1.45;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+            pointer-events: auto;
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        `;
+        toast.innerHTML = `
+            <span style="flex-shrink:0;">💡</span>
+            <span style="flex:1;">${text}</span>
+            <button style="background:none;border:none;color:#678;cursor:pointer;font-size:14px;line-height:1;padding:0;">×</button>
+        `;
+        toast.querySelector('button').addEventListener('click', () => toast.remove());
+        container.appendChild(toast);
+        requestAnimationFrame(() => { toast.style.opacity = '1'; });
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 350);
+        }, 9000);
+    }
+
+    loadShownTips() {
+        try {
+            return JSON.parse(localStorage.getItem('csog_tips_shown') || '[]');
+        } catch (e) {
+            return [];
+        }
+    }
+
+    saveShownTips() {
+        try {
+            localStorage.setItem('csog_tips_shown', JSON.stringify(this.shownTips));
+        } catch (e) { /* non-fatal */ }
     }
 
     /**
@@ -192,53 +252,11 @@ class TutorialManager {
     }
 
     /**
-     * Trigger research & equip step when player opens the research lab
-     */
-    triggerResearchStep() {
-        if (this.tutorialsDisabled) return;
-
-        const researchStepIndex = this.steps.findIndex(s => s.id === 'research_and_equip');
-        if (researchStepIndex === -1) return;
-
-        const researchStep = this.steps[researchStepIndex];
-
-        if (researchStep.completed) return;
-        if (this.currentStep === researchStepIndex) return;
-
-        const allPriorStepsCompleted = this.steps.slice(0, researchStepIndex).every(s => s.completed);
-
-        if (allPriorStepsCompleted || this.currentStep >= researchStepIndex - 1) {
-            console.log('Triggering Research & Equip tutorial');
-            this.currentStep = researchStepIndex;
-            this.tutorialActive = true;
-            this.showCurrentStep();
-        }
-    }
-
-    /**
-     * Check if player has passed the research access gate (after building second hub)
-     */
-    checkResearchAccessGate() {
-        const hubCount = this.gameState.entities.reconHubs?.length || 0;
-        const buildHubStep = this.steps.find(s => s.id === 'build_hub');
-
-        if (hubCount >= 2 || (buildHubStep && buildHubStep.completed) || this.tutorialsDisabled) {
-            if (!this.researchAccessAllowed) {
-                this.researchAccessAllowed = true;
-                console.log('Research access gate passed - research can now be unlocked');
-                this.eventBus.emit('tutorial:checkResearchUnlock');
-            }
-        }
-    }
-
-    /**
-     * Check if research access is currently allowed by the tutorial
+     * Research access is never tutorial-gated anymore
+     * (ONBOARDING.md: no tutorial-only restrictions). Kept for callers.
      */
     isResearchAccessAllowed() {
-        if (this.tutorialsDisabled) {
-            return true;
-        }
-        return this.researchAccessAllowed;
+        return true;
     }
 
     /**
@@ -271,40 +289,43 @@ class TutorialManager {
     handleStepActions(stepId) {
         this.clearAllHighlights();
 
-        if (stepId === 'build_hub') {
-            // Auto-select hub and probe, highlight build panel
-            this.autoSelectStartingHub();
-            setTimeout(() => {
-                this.autoSelectProbeFromHub();
-            }, 100);
-            setTimeout(() => {
-                this.highlightProbeBuildingPanel();
-            }, 300);
+        if (stepId === 'collect_signals') {
+            // Guaranteed cluster on the new probe's path (ONBOARDING.md Act 1)
+            this.spawnTutorialSignalCluster();
         }
 
-        if (stepId === 'research_and_equip') {
-            this.openResearchScreen();
-        }
-
-        if (stepId === 'mining_operations') {
-            // If mining station is already built, guide to shuttle
-            if (this.miningStationBuilt && !this.shuttleBuilt) {
-                this.snapCameraToNearestHub();
-                setTimeout(() => {
-                    this.autoSelectNearestHub();
-                }, 100);
-                setTimeout(() => {
-                    this.highlightShuttleButton();
-                }, 300);
-            }
-        }
-
-        if (stepId === 'advanced_resources') {
-            // Auto-complete this informational step after 8 seconds
+        if (stepId === 'release') {
+            // Auto-dismiss the send-off, then surface the time-controls tip
             setTimeout(() => {
-                this.advancedResourcesRead = true;
+                this.releaseRead = true;
                 this.checkStepCompletion();
-            }, 8000);
+                this.showTip('tip_time_controls',
+                    'Press 1 / 2 / 3 for game speed, Space to pause.');
+            }, 5000);
+        }
+    }
+
+    /**
+     * Spawn a guaranteed cluster of common signals near the tutorial probe's
+     * route so the collection lesson can't fizzle (ONBOARDING.md Act 1 step 3)
+     */
+    spawnTutorialSignalCluster() {
+        const probe = this.gameState.entities.probes.find(p =>
+            p.active && p.waypoints && p.waypoints.length > 1);
+        if (!probe) return;
+
+        const target = probe.waypoints[Math.min(1, probe.waypoints.length - 1)];
+        for (let i = 0; i < 4; i++) {
+            this.gameState.entities.signals.push({
+                x: target.x + (Math.random() - 0.5) * 180,
+                y: target.y + (Math.random() - 0.5) * 180,
+                radius: 9 + Math.random() * 3,
+                rarity: 'common',
+                signalType: 'standard',
+                duration: 20000, // generous window — this is a lesson, not a test
+                createdAt: Date.now(),
+                age: 0
+            });
         }
     }
 
@@ -532,8 +553,8 @@ class TutorialManager {
 
         setTimeout(() => {
             this.showTutorialMessage(
-                'Tutorial Complete!',
-                'You\'re ready to explore the galaxy! Discover rare sectors, trade with mysterious Remnants, and unlock the secrets of Probethium.',
+                'Good hunting.',
+                'The frontier is that way. →',
                 true
             );
         }, 500);

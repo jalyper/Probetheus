@@ -135,7 +135,7 @@ class SaveManager {
                         damage: probe.damage || 0,
                         cargo: probe.cargo ? { ...probe.cargo } : null,
                         outboundWaypointsCount: probe.outboundWaypointsCount || 0,
-                        returnSpeed: probe.returnSpeed || 0.0003,
+                        returnSpeed: probe.returnSpeed || (window.GAME_CONSTANTS.PROBE.BASE_SPEED * window.GAME_CONSTANTS.PROBE.RETURN_SPEED_MULT),
                         shellId: probe.shellId || 'default',
                         baseMaxDamage: probe.baseMaxDamage || probe.maxDamage || 3
                     })),
@@ -515,15 +515,16 @@ class SaveManager {
                 waypoints: probeData.waypoints || [],
                 pulses: [],
                 radarPulses: [],
-                returnSpeed: probeData.returnSpeed || 0.0003,
+                // Force current-tuning speeds regardless of saved values — migrates old saves
+                // to new tempo constants and prevents accumulation issues
+                returnSpeed: window.GAME_CONSTANTS.PROBE.BASE_SPEED * window.GAME_CONSTANTS.PROBE.RETURN_SPEED_MULT,
                 outboundWaypointsCount: probeData.outboundWaypointsCount || 0,
                 returnedToHub: false,
                 pulseTimer: Math.random() * 1000, // Randomize pulse timer to restart signal generation
                 maxDamage: 3,
                 lastDamageTime: 0,
                 maxEquipmentSlots: probeData.maxEquipmentSlots || 2,
-                // Ensure base speed is always correct (0.0001) regardless of saved speed
-                speed: 0.0001  // Force base speed to prevent accumulation issues
+                speed: window.GAME_CONSTANTS.PROBE.BASE_SPEED
             };
 
             // Migrate equipment to array format if needed

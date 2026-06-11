@@ -241,7 +241,7 @@ test.describe('Progression Gates System', () => {
     // 2. Research System Gates (6 tests)
     // ==========================================================
 
-    test('research system locked at game start', async ({ page }) => {
+    test('research locked at game start but never tutorial-gated (ONBOARDING.md)', async ({ page }) => {
         await startGame(page);
 
         const state = await page.evaluate(() => {
@@ -253,49 +253,29 @@ test.describe('Progression Gates System', () => {
             };
         });
 
+        // No points yet → locked, but access is never gated by the tutorial
         expect(state.researchUnlocked).toBe(false);
-        expect(state.researchAccessAllowed).toBe(false);
+        expect(state.researchAccessAllowed).toBe(true);
     });
 
-    test('research requires BOTH points AND tutorial gate', async ({ page }) => {
+    test('research unlocks with points alone — no tutorial gate', async ({ page }) => {
         await startGame(page);
 
         const result = await page.evaluate(() => {
-            const gs = window.game.gameState;
-            const research = gs.getResearchSystem();
-            const tm = window.game.tutorialManager;
+            const research = window.game.gameState.getResearchSystem();
 
-            // Give 5 research points but keep tutorial gate closed
+            // Earning points is the only requirement now
             research.points = 5;
             window.uiManager.checkResearchUnlock();
 
-            const withPointsOnly = {
-                unlocked: research.unlocked,
-                accessAllowed: tm.isResearchAccessAllowed()
-            };
-
-            // Now open tutorial gate
-            tm.researchAccessAllowed = true;
-            window.game.eventBus.emit('tutorial:checkResearchUnlock');
-
-            const withBoth = {
-                unlocked: research.unlocked,
-                accessAllowed: tm.isResearchAccessAllowed()
-            };
-
             return {
-                withPointsOnly,
-                withBoth
+                unlocked: research.unlocked,
+                accessAllowed: window.game.tutorialManager.isResearchAccessAllowed()
             };
         });
 
-        // With points only, research stays locked
-        expect(result.withPointsOnly.unlocked).toBe(false);
-        expect(result.withPointsOnly.accessAllowed).toBe(false);
-
-        // With both, research unlocks
-        expect(result.withBoth.unlocked).toBe(true);
-        expect(result.withBoth.accessAllowed).toBe(true);
+        expect(result.unlocked).toBe(true);
+        expect(result.accessAllowed).toBe(true);
     });
 
     test('cannot research child before parent', async ({ page }) => {

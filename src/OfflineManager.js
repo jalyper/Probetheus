@@ -179,33 +179,49 @@ class OfflineManager {
      * Calculate offline Probethium accumulation
      */
     async calculateOfflineProbethium(offlineTimeMs, results) {
-        // Get current Probethium generation rate
-        const currentStats = this.gameState.probethium.stats;
-        const currentMultipliers = this.gameState.probethium.multipliers;
-        
-        // Simulate reduced Probethium generation while offline
-        const offlineSeconds = offlineTimeMs / 1000;
-        const baseRate = 0.0000000001; // Very small base rate
-        
-        // Apply efficiency multipliers but reduce for offline play
-        let offlineMultiplier = 1;
-        if (currentMultipliers.efficiency) {
-            offlineMultiplier *= Math.sqrt(currentMultipliers.efficiency); // Square root for offline reduction
-        }
-        if (currentMultipliers.discovery) {
-            offlineMultiplier *= Math.sqrt(currentMultipliers.discovery);
-        }
-        
-        // Apply offline rate reduction
-        offlineMultiplier *= this.config.probethiumOfflineRate;
-        
-        const offlineProbethium = baseRate * offlineMultiplier * offlineSeconds;
-        results.probethium = offlineProbethium;
-        
-        if (offlineProbethium > 0.0000000001) {
-            results.details.push(
-                `Probethium accumulated at reduced rate: +${offlineProbethium.toFixed(10)}`
-            );
+        // ECONOMY.md: offline Probethium comes from mining stations in
+        // probethium-rich sectors, limited by the supplies they were left with.
+        const miningManager = this.gameState.miningManager || window.game?.miningManager;
+        const stations = this.gameState.mining?.stations || [];
+        results.probethium = 0;
+        if (!stations.length || !miningManager) return;
+
+        const stationTypes = miningManager.getStationTypes();
+        let total = 0;
+
+        stations.forEach(station => {
+            if (!station.active) return;
+            if (miningManager.getStationOutputResource(station) !== 'probethium') return;
+            const type = stationTypes[station.type];
+            if (!type || !type.probethiumOutput) return;
+
+            const timeCycles = offlineTimeMs / type.operationDuration;
+            // Each cycle consumes the station's full requirements — production
+            // stops when the inventory it was left with runs out
+            let supplyCycles = Infinity;
+            Object.entries(type.requirements).forEach(([resource, amt]) => {
+                if (amt > 0) {
+                    const inv = station.stationInventory?.[resource] || 0;
+                    supplyCycles = Math.min(supplyCycles, inv / amt);
+                }
+            });
+
+            const cycles = Math.min(timeCycles, supplyCycles);
+            if (!isFinite(cycles) || cycles <= 0) return;
+
+            total += type.probethiumOutput * (station.level || 1) * cycles;
+
+            // Consume the simulated supplies
+            Object.entries(type.requirements).forEach(([resource, amt]) => {
+                if (station.stationInventory && station.stationInventory[resource] !== undefined) {
+                    station.stationInventory[resource] = Math.max(0, station.stationInventory[resource] - amt * cycles);
+                }
+            });
+        });
+
+        results.probethium = total;
+        if (total > 0.05) {
+            results.details.push(`Mining stations produced +${total.toFixed(1)} Probethium`);
         }
     }
 
@@ -352,11 +368,11 @@ class OfflineManager {
         });
         
         // Add Probethium if gained
-        if (results.probethium > 0.0000000001) {
+        if (results.probethium > 0.05) {
             resourceHTML += `
                 <div style="background: rgba(201,255,201,0.1); border: 1px solid rgba(201,255,201,0.3); border-radius: 5px; padding: 10px; text-align: center;">
                     <div style="font-size: 24px; margin-bottom: 5px;">🎯</div>
-                    <div style="color: #c9f; font-size: 16px; font-weight: bold;">+${results.probethium.toFixed(10)}</div>
+                    <div style="color: #c9f; font-size: 16px; font-weight: bold;">+${results.probethium.toFixed(1)}</div>
                     <div style="color: #aaa; font-size: 12px;">Probethium</div>
                 </div>
             `;

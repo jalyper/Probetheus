@@ -766,62 +766,17 @@ class GameState {
     }
 
     /**
-     * Calculate and accumulate Probethium based on efficiency and progress
-     * Only generates probetheum after first mining station is built
+     * Probethium accumulation (docs/design/ECONOMY.md)
+     *
+     * The old wall-clock trickle (0.00000000277/s — 1P per 100 hours) is removed.
+     * Probethium now comes from active play and station production:
+     *   - Exotic synthesis (5 exotic -> 1P) — GameController 'synthesis:triggered'
+     *   - Mining stations in probethium-rich sectors — MiningManager.updateStation
+     * This method is kept as a hook for future passive sources; stats multipliers
+     * remain available via this.probethium.multipliers.
      */
     calculateProbethium(deltaTime) {
-        // Don't accumulate probetheum until player has built at least one mining station
-        if (!this.mining || !this.mining.stations || this.mining.stations.length === 0) {
-            return;
-        }
-
-        const now = Date.now();
-        const timeDelta = now - this.probethium.lastUpdateTime;
-
-        if (timeDelta < 1000) return; // Only update once per second
-        
-        const stats = this.probethium.stats;
-        const multipliers = this.probethium.multipliers;
-        
-        // Base accumulation rate - EXTREMELY small (0.00000000277 per second)
-        // This equals 1 Probethium after 100 hours of continuous optimal play
-        let baseRate = 0.00000000277; // 1 / (100 * 3600) seconds
-        
-        // Efficiency multiplier (resources per probe/building)
-        const totalInvestment = stats.totalProbesBuilt + stats.totalBuildingsConstructed;
-        multipliers.efficiency = totalInvestment > 0 ? 
-            Math.log(1 + stats.totalResourcesGathered / totalInvestment) : 1.0;
-        
-        // Exploration multiplier (sector discovery bonus)
-        multipliers.exploration = 1.0 + (stats.totalSectorsDiscovered * 0.1);
-        
-        // Research multiplier (knowledge progression)
-        multipliers.research = 1.0 + (stats.totalResearchUnlocked * 0.2);
-        
-        // Endurance multiplier (time played continuously)
-        const hoursPlayed = (now - stats.sessionStartTime) / (1000 * 3600);
-        multipliers.endurance = 1.0 + Math.min(hoursPlayed * 0.05, 2.0); // Cap at 3x for 40+ hours
-        
-        // Calculate final rate
-        const totalMultiplier = multipliers.efficiency * multipliers.exploration *
-                               multipliers.research * multipliers.endurance;
-
-        // Shell bonus: probethiumRate increases probethium generation
-        const probethiumShellBonus = window.game?.shellSystem ? window.game.shellSystem.getEntityBonus('miningStations', null, 'probethiumRate') : 0;
-        const shellMultiplier = 1 + probethiumShellBonus / 100;
-
-        const finalRate = baseRate * totalMultiplier * shellMultiplier;
-        
-        // Accumulate Probethium
-        const accumulated = finalRate * (timeDelta / 1000);
-        this.probethium.current += accumulated;
-        this.probethium.totalAccumulated += accumulated;
-        this.probethium.lastUpdateTime = now;
-        
-        // Console logging for debugging (remove in production)
-        if (Math.random() < 0.001) { // Log occasionally
-            console.log(`Probethium rate: ${finalRate.toExponential(3)}/s, Total: ${this.probethium.current.toFixed(10)}`);
-        }
+        // Intentionally no passive wall-clock accumulation.
     }
 }
 

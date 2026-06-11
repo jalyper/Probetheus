@@ -34,10 +34,10 @@ class ProbeManager {
         console.log('Full waypoint path:', allWaypoints);
         console.log('Outbound waypoint count:', outboundWaypoints.length);
 
-        // Calculate speeds
-        const baseSpeed = 0.0001;
+        // Calculate speeds (tempo: docs/design/CORE_LOOP.md)
+        const baseSpeed = window.GAME_CONSTANTS.PROBE.BASE_SPEED;
         const outboundSpeed = baseSpeed;
-        const returnSpeed = baseSpeed * 3;
+        const returnSpeed = baseSpeed * window.GAME_CONSTANTS.PROBE.RETURN_SPEED_MULT;
 
         // Check for ready probe to redeploy
         let probe = this.gameState.entities.probes.find(p => 
@@ -87,7 +87,7 @@ class ProbeManager {
                 currentWaypoint: 0,
                 current: { x: hub.x, y: hub.y },
                 segmentProgress: 0,
-                speed: 0.0001,
+                speed: window.GAME_CONSTANTS.PROBE.BASE_SPEED,
                 pulseTimer: 0,
                 pulses: [],
                 radarPulses: [],
@@ -95,7 +95,7 @@ class ProbeManager {
                 hub: hub,
                 recoveryMode: false,
                 outboundWaypointsCount: 0,
-                returnSpeed: 0.0003,
+                returnSpeed: window.GAME_CONSTANTS.PROBE.BASE_SPEED * window.GAME_CONSTANTS.PROBE.RETURN_SPEED_MULT,
                 patrolMode: true,
                 equipment: [],
                 maxEquipmentSlots: 2,
@@ -312,11 +312,22 @@ class ProbeManager {
                     deliveryMessage += deliveryParts.join(', ');
                     console.log(`Probe ${probe.id} delivered cargo:`, probe.cargo);
                     
-                    this.eventBus.emit('ui:message', { 
-                        text: deliveryMessage, 
-                        type: 'success' 
+                    this.eventBus.emit('ui:message', {
+                        text: deliveryMessage,
+                        type: 'success'
                     });
-                    
+
+                    // Juice + dashboard hook (CORE_LOOP.md / PROBE_NETWORKS.md)
+                    const deliveredTotal = (probe.cargo.minerals || 0) + (probe.cargo.data || 0) +
+                        (probe.cargo.artifacts || 0) + (probe.cargo.exoticMinerals || 0);
+                    const capacity = this.getCargoCapacity(probe);
+                    this.eventBus.emit('probe:cargoDelivered', {
+                        probe,
+                        cargo: { ...probe.cargo },
+                        total: deliveredTotal,
+                        capacityRatio: capacity > 0 ? deliveredTotal / capacity : 0
+                    });
+
                     // Clear cargo after delivery
                     probe.cargo = {
                         minerals: 0,
@@ -343,7 +354,7 @@ class ProbeManager {
                 probe.segmentProgress = 0;
                 probe.current = { x: probe.hub.x, y: probe.hub.y }; // Reset position to hub
                 // Always reset to base outbound speed for patrol restart
-                probe.speed = 0.0001; // Base outbound speed
+                probe.speed = window.GAME_CONSTANTS.PROBE.BASE_SPEED; // Base outbound speed
                 probe.returnedToHub = false; // Reset for next patrol cycle
             } else {
                 // Mark as ready at hub
@@ -526,10 +537,11 @@ class ProbeManager {
                         radius: isDarkMarket ? 12 : isExclusive ? 10 + Math.random() * 3 : 8 + Math.random() * 4,
                         rarity: signalRarity,
                         signalType: signalType,
-                        duration: isDarkMarket ? 5000
-                            : isExclusive ? 5000 + Math.random() * 3000  // VIS-05: 5-8 seconds
-                            : 2000 + Math.random() * 1000,                // Standard: 2-3 seconds
-                        createdAt: Date.now()
+                        duration: isDarkMarket ? window.GAME_CONSTANTS.SIGNAL.DARK_MARKET_DURATION
+                            : isExclusive ? window.GAME_CONSTANTS.SIGNAL.EXCLUSIVE_DURATION_MIN + Math.random() * window.GAME_CONSTANTS.SIGNAL.EXCLUSIVE_DURATION_RAND  // VIS-05: 5-8 seconds
+                            : window.GAME_CONSTANTS.SIGNAL.STANDARD_DURATION_MIN + Math.random() * window.GAME_CONSTANTS.SIGNAL.STANDARD_DURATION_RAND, // Standard: 1.5-2.5s (arcade tempo)
+                        createdAt: Date.now(),
+                        age: 0 // sim-time age, advanced by the scaled game loop (supports pause/speed)
                     };
                     
                     this.gameState.entities.signals.push(signal);
@@ -954,7 +966,17 @@ class ProbeManager {
                 if (signalIndex > -1) {
                     this.gameState.entities.signals.splice(signalIndex, 1);
                 }
-                
+
+                // Canonical collection event — combo system + SFX (CORE_LOOP.md)
+                this.eventBus.emit('signal:collected', {
+                    probe,
+                    rarity: signal.rarity,
+                    amount: totalResourcesGained,
+                    primaryResourceType: primaryResourceType || 'minerals',
+                    x: signal.x,
+                    y: signal.y
+                });
+
                 console.log(`Auto-collected ${signal.rarity} signal with probe ${probe.id}: +${totalResourcesGained} resources`);
                 
                 // Force UI update to show new resource values
@@ -1042,11 +1064,12 @@ class ProbeManager {
             this.eventBus.emit('ui:probeDestroyed', { probe });
         }
         
-        this.eventBus.emit('ui:message', { 
-            text: 'Probe destroyed by asteroids! Build a new one at the hub.', 
-            type: 'error' 
+        this.eventBus.emit('ui:message', {
+            text: 'Probe destroyed by asteroids! Build a new one at the hub.',
+            type: 'error'
         });
-        
+
+        this.eventBus.emit('probe:destroyed', { probe });
         this.eventBus.emit('ui:update');
     }
 

@@ -784,13 +784,14 @@ class UIManager {
         document.getElementById('artifacts').textContent = Math.floor(resources.artifacts);
         document.getElementById('exoticMinerals').textContent = Math.floor(resources.exoticMinerals);
         
-        // Update Probethium display with appropriate precision (keep decimals)
+        // Probethium is a meaningful currency now (ECONOMY.md) — show 1 decimal,
+        // whole numbers once large
         const probethiumElement = document.getElementById('probethium');
         if (probethiumElement) {
-            if (probethium.current >= 1) {
-                probethiumElement.textContent = probethium.current.toFixed(6);
+            if (probethium.current >= 100) {
+                probethiumElement.textContent = Math.floor(probethium.current).toString();
             } else {
-                probethiumElement.textContent = probethium.current.toFixed(10);
+                probethiumElement.textContent = probethium.current.toFixed(1);
             }
         }
     }

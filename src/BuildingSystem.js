@@ -104,13 +104,11 @@ class BuildingSystem {
         } else {
             if (!this.selectedProbe) return;
 
-            // For reconHub, only allow placement on outbound path (not return journey)
+            // ONBOARDING.md: tutorial-era outbound-only restriction removed —
+            // hubs can be placed anywhere along the probe's full route
             const probe = this.selectedProbe;
-            const outboundCount = probe.outboundWaypointsCount || Math.ceil(probe.waypoints.length / 2);
-            const outboundWaypoints = probe.waypoints.slice(0, outboundCount);
-
             closestPoint = this.findClosestPointOnPath(
-                outboundWaypoints,
+                probe.waypoints,
                 mouseX,
                 mouseY
             );
