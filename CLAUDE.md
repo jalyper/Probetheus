@@ -16,14 +16,13 @@
 - `npm run test:save` - Run save system tests only
 - `npx playwright test --project=chromium` - Run tests on Chromium only (faster)
 
+## Design Direction (2026-06-10)
+The game direction was rewritten — see `docs/design/` (start with `VISION.md`, sequencing in `EA_ROADMAP.md`). Three pillars: the network is the factory, arcade tempo, the frontier always pulls. Superseded design docs are in `docs/archive/`. New work should serve a pillar and follow the EA_ROADMAP milestone order (M1 "Feels Alive" first).
+
 ## Current Priority Tasks
-1. ~~Update automated integration tests~~ ✓ DONE (25/25 tests passing)
-2. ~~Add color coding for rarity text in planet descriptions~~ ✓ DONE
-3. ~~Finish building out the tutorial system~~ ✓ DONE (see `.planning/tutorial-system-prd.md`)
-4. ~~Add ability to turn off tips/tutorial from main menu~~ ✓ DONE
-5. Implement new signal distribution system
-6. **Fix mining bug** - Mining sometimes doesn't start when station has full resources (100% capacity)
-7. **Apply shell visuals to probes** - Make equipped shells change probe appearance (color, trail effects) - reference solar/red skin for trail implementation
+1. **M1 "Feels Alive"** (see `docs/design/EA_ROADMAP.md`): Probethium rebalance, tempo + time controls, SFX/combo juice, cargo system, new onboarding, Dark Market fix
+2. **M2 "Read Your Network"**: throughput dashboard, bottleneck visuals, route copying, sector completion, viewport culling
+3. Carried over: **Apply shell visuals to probes** - Make equipped shells change probe appearance (color, trail effects) - reference solar/red skin for trail implementation
 
 ### Tutorial System Sprint (Jan 2026) - COMPLETE
 See `.planning/tutorial-system-prd.md` for full PRD.

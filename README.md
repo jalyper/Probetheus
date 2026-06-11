@@ -1,7 +1,9 @@
 # Probetheus
 **Version 0.7.1-dev**
 
-A space exploration idle game where you deploy probes from Recon Hubs to discover signals, explore planets, and collect resources across an infinite procedural galaxy. Features advanced probe management, cargo delivery systems, research trees, automated collection mechanics, and Probethium mining operations.
+> **⚠ Direction update (2026-06-10):** the game's design direction was rewritten around three pillars — *the network is the factory, arcade tempo, the frontier always pulls*. The authoritative design docs now live in [`docs/design/`](docs/design/README.md) (start with `VISION.md`). Roadmap/idea sections below in this README are historical; the current plan is [`docs/design/EA_ROADMAP.md`](docs/design/EA_ROADMAP.md). Superseded design docs were moved to `docs/archive/`.
+
+An arcade-paced factory game about building probe networks in deep space — deploy probes from Recon Hubs to discover signals, explore planets, and collect resources across an infinite procedural galaxy. Features advanced probe management, cargo delivery systems, research trees, automated collection mechanics, and Probethium mining operations.
 
 **Now available as desktop app with Electron!**
 
