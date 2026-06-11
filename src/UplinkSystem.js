@@ -133,7 +133,11 @@ class UplinkSystem {
 
     // --------------------------------------------------------------- canvas
 
-    /** A slow data-blue arc around the home hub while the network thinks. */
+    /**
+     * The Uplink dish (handoff §8): a small gold dish bowl with a bright
+     * feed dot orbiting the home hub, rotation speed ∝ decoding, plus a
+     * faint orbit guide. Streaming progress adds a data-blue arc.
+     */
     render(ctx, viewOffset) {
         const state = this.getState();
         if (!state.built) return;
@@ -142,25 +146,48 @@ class UplinkSystem {
 
         const x = hub.x - viewOffset.x;
         const y = hub.y - viewOffset.y;
-        const color = window.PALETTE.MATERIALS.data;
+        const dataColor = window.PALETTE.MATERIALS.data;
+        const orbit = 26;
+
+        // Idle dish drifts slowly; an active decode spins it up
+        if (!state.active) this.dishAngle += 0.0035;
+        const rot = this.dishAngle;
+        const cx = x + Math.cos(rot) * orbit;
+        const cy = y + Math.sin(rot) * orbit;
 
         ctx.save();
+
+        // faint orbit guide
+        ctx.beginPath();
+        ctx.arc(x, y, orbit, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(212, 175, 55, 0.07)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // data-blue stream arc while decoding
         if (state.active) {
             ctx.beginPath();
-            ctx.arc(x, y, 26, this.dishAngle, this.dishAngle + Math.PI * 0.6);
-            ctx.strokeStyle = color;
-            ctx.globalAlpha = 0.7;
-            ctx.lineWidth = 1.5;
+            ctx.arc(x, y, orbit, rot - Math.PI * 0.5, rot - Math.PI * 0.1);
+            ctx.strokeStyle = dataColor;
+            ctx.globalAlpha = 0.55;
+            ctx.lineWidth = 1.2;
             ctx.stroke();
-        } else {
-            // Idle dish: a faint full ring — built but listening to nothing
-            ctx.beginPath();
-            ctx.arc(x, y, 26, 0, Math.PI * 2);
-            ctx.strokeStyle = color;
-            ctx.globalAlpha = 0.18;
-            ctx.lineWidth = 1;
-            ctx.stroke();
+            ctx.globalAlpha = 1;
         }
+
+        // dish bowl + bright feed dot
+        ctx.translate(cx, cy);
+        ctx.rotate(rot + Math.PI / 2);
+        ctx.strokeStyle = 'rgba(212, 175, 55, 0.8)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(0, 0, 6, Math.PI * 0.15, Math.PI * 0.85);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(0, 0, 1.4, 0, Math.PI * 2);
+        ctx.fillStyle = state.active ? window.PALETTE.FIRE_BRIGHT : window.PALETTE.FIRE;
+        ctx.fill();
+
         ctx.restore();
     }
 

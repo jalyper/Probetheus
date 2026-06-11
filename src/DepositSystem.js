@@ -239,22 +239,51 @@ class DepositSystem {
             const size = 6 + Math.min(8, d.richness * 0.4);
             const color = colors[d.type] || '#8B84A3';
 
-            // Diamond outline, alpha tracks remaining rate (a worked-dry vein dims)
+            // Per-material thin glyph (handoff §8: rhombus / arcs / triangle /
+            // star); alpha tracks remaining rate (a worked-dry vein dims)
             ctx.save();
+            ctx.translate(x, y);
             ctx.globalAlpha = (0.35 + 0.55 * saturation) * breathe;
             ctx.strokeStyle = color;
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(x, y - size);
-            ctx.lineTo(x + size * 0.7, y);
-            ctx.lineTo(x, y + size);
-            ctx.lineTo(x - size * 0.7, y);
-            ctx.closePath();
-            ctx.stroke();
+            ctx.lineWidth = 1.1;
+            ctx.lineJoin = 'round';
+            if (d.type === 'minerals') {
+                // rhombus with a cross-line
+                ctx.beginPath();
+                ctx.moveTo(0, -size); ctx.lineTo(size * 0.78, 0);
+                ctx.lineTo(0, size); ctx.lineTo(-size * 0.78, 0);
+                ctx.closePath();
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(-size * 0.78, 0); ctx.lineTo(size * 0.78, 0);
+                ctx.stroke();
+            } else if (d.type === 'data') {
+                // nested broadcast arcs
+                ctx.beginPath();
+                ctx.arc(-size * 0.2, 0, size * 0.7, -Math.PI / 2.2, Math.PI / 2.2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(-size * 0.55, 0, size * 0.95, -Math.PI / 2.4, Math.PI / 2.4);
+                ctx.stroke();
+            } else if (d.type === 'artifacts') {
+                // triangle
+                ctx.beginPath();
+                ctx.moveTo(0, -size); ctx.lineTo(size * 0.85, size * 0.7);
+                ctx.lineTo(-size * 0.85, size * 0.7);
+                ctx.closePath();
+                ctx.stroke();
+            } else {
+                // exotic — shimmer star
+                ctx.beginPath();
+                ctx.moveTo(0, -size); ctx.lineTo(0, size);
+                ctx.moveTo(-size * 0.86, -size * 0.5); ctx.lineTo(size * 0.86, size * 0.5);
+                ctx.moveTo(size * 0.86, -size * 0.5); ctx.lineTo(-size * 0.86, size * 0.5);
+                ctx.stroke();
+            }
 
             // Inner core dot
             ctx.beginPath();
-            ctx.arc(x, y, 1.6, 0, Math.PI * 2);
+            ctx.arc(0, 0, 1.6, 0, Math.PI * 2);
             ctx.fillStyle = color;
             ctx.fill();
 
@@ -263,7 +292,7 @@ class DepositSystem {
             ctx.font = "9px 'IBM Plex Mono', monospace";
             ctx.textAlign = 'center';
             ctx.fillStyle = saturation < 0.15 ? '#E0524D' : '#8B84A3';
-            ctx.fillText(`${Math.round(d.ratePerMin * (1 - saturation))}/${d.ratePerMin}`, x, y + size + 12);
+            ctx.fillText(`${Math.round(d.ratePerMin * (1 - saturation))}/${d.ratePerMin}`, 0, size + 12);
             ctx.restore();
         }
     }

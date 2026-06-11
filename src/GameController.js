@@ -2277,6 +2277,18 @@ class GameController {
         this.ctx.fillStyle = window.PALETTE.VOID;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
+        // Rift nebula rising from the lower-right sector the camera faces
+        // (handoff §8 "Ground") — viewport-fixed, beneath the world transform
+        const nebula = this.ctx.createRadialGradient(
+            this.canvas.width * 0.72, this.canvas.height * 1.05, 0,
+            this.canvas.width * 0.72, this.canvas.height * 1.05,
+            Math.max(this.canvas.width, this.canvas.height) * 0.9);
+        nebula.addColorStop(0, 'rgba(26, 16, 48, 0.55)');
+        nebula.addColorStop(0.5, 'rgba(26, 16, 48, 0.16)');
+        nebula.addColorStop(1, 'rgba(26, 16, 48, 0)');
+        this.ctx.fillStyle = nebula;
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
         // Save context and apply zoom
         this.ctx.save();
         this.ctx.scale(this.gameState.world.zoomLevel, this.gameState.world.zoomLevel);
@@ -2339,15 +2351,21 @@ class GameController {
      * Render stars
      */
     renderStars() {
-        this.ctx.fillStyle = 'rgba(139, 132, 163, 0.4)';
+        // Two parallax tiers with breathing alpha (handoff §8). Tier and
+        // phase derive from position so no extra state is saved.
+        const t = Date.now() * 0.0004;
         this.gameState.entities.stars.forEach(star => {
-            const x = star.x - this.gameState.world.viewOffset.x;
-            const y = star.y - this.gameState.world.viewOffset.y;
-            
-            if (x >= -10 && x <= this.canvas.width + 10 && 
+            const tier = Math.abs(Math.floor(star.x * 7 + star.y * 13)) % 2 === 0 ? 1 : 0.55;
+            const x = star.x - this.gameState.world.viewOffset.x * tier;
+            const y = star.y - this.gameState.world.viewOffset.y * tier;
+
+            if (x >= -10 && x <= this.canvas.width + 10 &&
                 y >= -10 && y <= this.canvas.height + 10) {
+                const phase = (star.x * 0.37 + star.y * 0.61) % (Math.PI * 2);
+                const a = 0.4 * (0.65 + 0.35 * Math.sin(t + phase));
+                this.ctx.fillStyle = `rgba(139, 132, 163, ${a.toFixed(3)})`;
                 this.ctx.beginPath();
-                this.ctx.arc(x, y, star.size, 0, Math.PI * 2);
+                this.ctx.arc(x, y, star.size * (tier === 1 ? 1 : 0.8), 0, Math.PI * 2);
                 this.ctx.fill();
             }
         });
@@ -2390,6 +2408,16 @@ class GameController {
             // Draw trail effect if enabled
             if (probe.cosmetic && probe.cosmetic.trailEnabled) {
                 this.drawProbeTrail(probe, screenX, screenY);
+            }
+
+            // Selected probe gets a gold breathing selection ring (handoff §8)
+            if (probe === this.gameState.ui.selectedProbe) {
+                const ringBreathe = 0.5 + 0.5 * Math.sin(Date.now() * 0.0014);
+                this.ctx.beginPath();
+                this.ctx.arc(screenX, screenY, 11 + ringBreathe * 3, 0, Math.PI * 2);
+                this.ctx.strokeStyle = `rgba(212, 175, 55, ${(0.4 + ringBreathe * 0.3).toFixed(3)})`;
+                this.ctx.lineWidth = 1;
+                this.ctx.stroke();
             }
             
             // Calculate probe rotation based on movement direction
@@ -2667,12 +2695,7 @@ class GameController {
             // Determine if this segment is part of the return journey
             // Return journey starts after outbound waypoints are complete
             const isReturnSegment = probe.outboundWaypointsCount && i >= probe.outboundWaypointsCount - 1;
-            
-            // Debug coloring logic occasionally
-            if (Math.random() < 0.01 && probe.waypoints.length > 2) {
-                console.log(`Probe ${probe.id} segment ${i}: outboundCount=${probe.outboundWaypointsCount}, isReturn=${isReturnSegment}, totalSegments=${probe.waypoints.length - 1}`);
-            }
-            
+
             // Set color for this segment
             this.ctx.strokeStyle = isReturnSegment ? colors.return : colors.exploration;
             
@@ -2724,11 +2747,15 @@ class GameController {
                 this.ctx.setLineDash([]);
             }
             
-            // Hub icon — thin gold hexagon stroke over near-void fill (the network is gold)
-            this.ctx.strokeStyle = hub.selected ? window.PALETTE.FIRE_BRIGHT : window.PALETTE.FIRE;
+            // Hub icon — breathing gold hexagon stroke over near-void fill
+            // (handoff §8: alpha 0.55–0.9 breathing, never strobing)
+            const hubBreathe = 0.5 + 0.5 * Math.sin(Date.now() * 0.0007 + hub.x * 0.01);
+            this.ctx.strokeStyle = hub.selected
+                ? window.PALETTE.FIRE_BRIGHT
+                : `rgba(212, 175, 55, ${(0.55 + hubBreathe * 0.35).toFixed(3)})`;
             this.ctx.fillStyle = hub.selected ? 'rgba(212, 175, 55, 0.12)' : 'rgba(7, 6, 11, 0.7)';
-            this.ctx.lineWidth = hub.selected ? 2 : 1;
-            
+            this.ctx.lineWidth = hub.selected ? 2 : 1.2;
+
             // Draw hexagon
             const size = 12;
             this.ctx.beginPath();
@@ -2745,6 +2772,22 @@ class GameController {
             this.ctx.closePath();
             this.ctx.fill();
             this.ctx.stroke();
+
+            // Thin inner intake ring
+            this.ctx.beginPath();
+            this.ctx.arc(screenX, screenY, size * 0.52, 0, Math.PI * 2);
+            this.ctx.strokeStyle = 'rgba(212, 175, 55, 0.22)';
+            this.ctx.lineWidth = 1;
+            this.ctx.stroke();
+
+            // Breathing gold core with a soft glow
+            this.ctx.beginPath();
+            this.ctx.arc(screenX, screenY, 2 + hubBreathe * 1.4, 0, Math.PI * 2);
+            this.ctx.fillStyle = window.PALETTE.FIRE;
+            this.ctx.shadowColor = 'rgba(212, 175, 55, 0.7)';
+            this.ctx.shadowBlur = 8 + hubBreathe * 8;
+            this.ctx.fill();
+            this.ctx.shadowBlur = 0;
             
             // Selected hub breathes gold on a slow cycle (never strobes)
             if (hub.selected) {
