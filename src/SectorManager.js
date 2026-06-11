@@ -421,30 +421,30 @@ class SectorManager {
     buildExclusiveSignalSection(sectorType) {
         const exclusiveInfo = {
             'ore_vein': {
-                emoji: '⛏️',
+                glyph: 'deposit-mineral',
                 name: 'Ore Vein',
-                color: '#ff6600',
+                color: 'var(--mat-min)',
                 description: 'Dense mineral formations unique to Resource-Rich sectors',
                 yields: 'Yields: 2x Minerals'
             },
             'data_cache': {
-                emoji: '📡',
+                glyph: 'deposit-data',
                 name: 'Data Cache',
-                color: '#00ddff',
+                color: 'var(--mat-data)',
                 description: 'Concentrated data streams unique to Data Haven sectors',
                 yields: 'Yields: 2x Data'
             },
             'relic': {
-                emoji: '🏛️',
+                glyph: 'deposit-artifact',
                 name: 'Relic',
-                color: '#ffd700',
+                color: 'var(--fire-bright)',
                 description: 'Ancient technology fragments unique to Ancient sectors',
                 yields: 'Yields: Guaranteed Rare+ Artifacts'
             },
             'exotic_crystal': {
-                emoji: '💎',
+                glyph: 'deposit-exotic',
                 name: 'Exotic Crystal',
-                color: '#ee82ee',
+                color: 'var(--mat-exo)',
                 description: 'Volatile crystalline deposits unique to Asteroid Fields',
                 yields: 'Yields: Exotic Minerals or Mixed Resources'
             }
@@ -455,25 +455,27 @@ class SectorManager {
         if (!exclusiveType) {
             // Standard sector - "Open Frequency" messaging (DISC-04)
             return `
-                <p style="text-align: center; margin-bottom: 8px; font-size: 18px;">
-                    🌐 <span style="color: #0ff; font-weight: bold;">Open Frequency</span>
+                <p style="text-align: center; margin-bottom: 8px; font-size: 18px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <span style="color: var(--signal); display: flex;">${window.icon('flow', { size: 17 })}</span>
+                    <span style="color: var(--signal); letter-spacing: 0.08em;">Open Frequency</span>
                 </p>
-                <p style="color: #aaa; text-align: center; line-height: 1.6; font-size: 14px; font-style: italic;">
+                <p style="color: var(--mist); text-align: center; line-height: 1.6; font-size: 14px; font-style: italic;">
                     "All signal types can be detected here &mdash;<br>
                     ideal for balanced resource gathering"
                 </p>
-                <p style="color: #888; text-align: center; margin-top: 8px; font-size: 13px;">
+                <p style="color: var(--mist); text-align: center; margin-top: 8px; font-size: 13px;">
                     Yields: Standard rates across all types
                 </p>
             `;
         }
 
         const info = exclusiveInfo[exclusiveType];
-        if (!info) return '<p style="color: #666;">Unknown signal type</p>';
+        if (!info) return '<p style="color: var(--mist);">Unknown signal type</p>';
 
         return `
-            <p style="text-align: center; margin-bottom: 8px; font-size: 18px;">
-                ${info.emoji} <span style="color: ${info.color}; font-weight: bold;">${info.name}</span>
+            <p style="text-align: center; margin-bottom: 8px; font-size: 18px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span style="color: ${info.color}; display: flex;">${window.icon(info.glyph, { size: 17 })}</span>
+                <span style="color: ${info.color}; letter-spacing: 0.08em;">${info.name}</span>
             </p>
             <p style="color: #aaa; text-align: center; line-height: 1.6; font-size: 14px; font-style: italic;">
                 "${info.description}"
@@ -858,11 +860,11 @@ class SectorManager {
      */
     getDiscoveryBonusMessage(sectorTypeName, signalCount) {
         const messages = {
-            'Standard': '🔍 Sector analyzed! Detected energy signatures.',
-            'Resource-Rich': '⛏️ Rich deposits detected! Mineral veins located.',
-            'Data Haven': '📡 Data streams identified! Information caches found.',
-            'Ancient': '🏛️ Ancient technology detected! Artifact sites located.',
-            'Asteroid Field': '💎 Volatile deposits found! High-value signals detected.'
+            'Standard': 'Sector analyzed. Detected energy signatures.',
+            'Resource-Rich': 'Rich deposits detected. Mineral veins located.',
+            'Data Haven': 'Data streams identified. Information caches found.',
+            'Ancient': 'Ancient technology detected. Artifact sites located.',
+            'Asteroid Field': 'Volatile deposits found. High-value signals detected.'
         };
         
         return messages[sectorTypeName] || `${signalCount} discovery signals detected!`;

@@ -53,7 +53,7 @@ class MiningManager {
                 output: 5,               // resources per 30s cycle (~600/hr)
                 probethiumOutput: 0.085, // ~10 P/hr at 120 cycles/hr
                 maxLevel: 3,
-                icon: '⛏️',
+                icon: 'mining',
                 operationDuration: 30000 // 30 seconds per operation cycle
             },
             advanced: {
@@ -63,7 +63,7 @@ class MiningManager {
                 output: 12,              // ~1440/hr
                 probethiumOutput: 0.17,  // ~20 P/hr
                 maxLevel: 5,
-                icon: '🏭',
+                icon: 'foundry',
                 operationDuration: 30000 // 30 seconds per operation cycle
             },
             quantum: {
@@ -73,7 +73,7 @@ class MiningManager {
                 output: 60,              // ~720/hr at 12 cycles/hr
                 probethiumOutput: 2.5,   // ~30 P/hr
                 maxLevel: 7,
-                icon: '💠',
+                icon: 'deposit-exotic',
                 operationDuration: 300000
             }
         };

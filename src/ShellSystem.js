@@ -5,19 +5,20 @@
  */
 
 // Bonus type definitions
+// icon = IconKit glyph name (no emoji — VISUAL_STYLE.md)
 const BONUS_TYPES = {
-    dataSignalDiscovery: { label: 'Data Signal Discovery', unit: '%', icon: '📊' },
-    researchSpeed: { label: 'Research Speed', unit: '%', icon: '🔬' },
-    signalRange: { label: 'Signal Range', unit: '%', icon: '📡' },
-    rareSignalChance: { label: 'Rare Signal Chance', unit: '%', icon: '✨' },
-    probeDurability: { label: 'Probe Durability', unit: '%', icon: '🛡️' },
-    asteroidSurvival: { label: 'Asteroid Survival', unit: '%', icon: '☄️' },
-    artifactDiscovery: { label: 'Artifact Discovery', unit: '%', icon: '🏺' },
-    explorationRewards: { label: 'Exploration Rewards', unit: '%', icon: '🎁' },
-    exoticYield: { label: 'Exotic Mineral Yield', unit: '%', icon: '💎' },
-    probethiumRate: { label: 'Probethium Rate', unit: '%', icon: '⚗️' },
-    miningEfficiency: { label: 'Mining Efficiency', unit: '%', icon: '⛏️' },
-    shuttleSpeed: { label: 'Shuttle Speed', unit: '%', icon: '🚀' }
+    dataSignalDiscovery: { label: 'Data Signal Discovery', unit: '%', icon: 'deposit-data' },
+    researchSpeed: { label: 'Research Speed', unit: '%', icon: 'uplink' },
+    signalRange: { label: 'Signal Range', unit: '%', icon: 'sector' },
+    rareSignalChance: { label: 'Rare Signal Chance', unit: '%', icon: 'spark' },
+    probeDurability: { label: 'Probe Durability', unit: '%', icon: 'probe' },
+    asteroidSurvival: { label: 'Asteroid Survival', unit: '%', icon: 'deposit-mineral' },
+    artifactDiscovery: { label: 'Artifact Discovery', unit: '%', icon: 'deposit-artifact' },
+    explorationRewards: { label: 'Exploration Rewards', unit: '%', icon: 'slot' },
+    exoticYield: { label: 'Exotic Mineral Yield', unit: '%', icon: 'deposit-exotic' },
+    probethiumRate: { label: 'Probethium Rate', unit: '%', icon: 'foundry' },
+    miningEfficiency: { label: 'Mining Efficiency', unit: '%', icon: 'mining' },
+    shuttleSpeed: { label: 'Shuttle Speed', unit: '%', icon: 'shuttle' }
 };
 
 // Rarity definitions
@@ -933,7 +934,10 @@ class ShellSystem {
      */
     formatBonus(bonusType, value) {
         const info = this.getBonusTypeInfo(bonusType);
-        return `${info.icon} +${value}${info.unit} ${info.label}`;
+        const glyph = info.icon && window.icon
+            ? `<span style="display:inline-flex;vertical-align:-2px;">${window.icon(info.icon, { size: 12 })}</span> `
+            : '';
+        return `${glyph}+${value}${info.unit} ${info.label}`;
     }
 }
 
@@ -942,4 +946,5 @@ window.ShellSystem = ShellSystem;
 window.SHELL_CATALOG = SHELL_CATALOG;
 window.NPC_THEMES = NPC_THEMES;
 window.RARITY = RARITY;
+window.BONUS_TYPES = BONUS_TYPES;
 window.BONUS_TYPES = BONUS_TYPES;

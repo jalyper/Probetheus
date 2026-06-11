@@ -191,7 +191,7 @@ class GameController {
         const pauseBtn = document.getElementById('timePauseBtn');
         if (pauseBtn) {
             pauseBtn.classList.toggle('paused', this.timeScale === 0);
-            pauseBtn.textContent = this.timeScale === 0 ? '▶' : '⏸';
+            pauseBtn.innerHTML = window.icon(this.timeScale === 0 ? 'play' : 'pause', { size: 13 });
             pauseBtn.title = this.timeScale === 0 ? 'Resume (Space)' : 'Pause (Space)';
         }
         document.querySelectorAll('.time-scale-btn').forEach(btn => {
@@ -1466,7 +1466,8 @@ class GameController {
         if (item.bonuses && Object.keys(item.bonuses).length > 0) {
             const bonusEntries = Object.entries(item.bonuses).map(([type, value]) => {
                 const info = window.BONUS_TYPES?.[type] || { icon: '', label: type, unit: '' };
-                return `<div style="color: #88ff88; font-size: 11px;">${info.icon} +${value}${info.unit} ${info.label}</div>`;
+                const glyph = info.icon ? `<span style="display:inline-flex;vertical-align:-2px;">${window.icon(info.icon, { size: 12 })}</span> ` : '';
+                return `<div style="color: #88ff88; font-size: 11px;">${glyph}+${value}${info.unit} ${info.label}</div>`;
             });
             bonusHtml = bonusEntries.join('');
         }
@@ -1484,7 +1485,7 @@ class GameController {
         } else if (item.category === 'miningStations') {
             previewHtml = this.renderStationSkinPreview(visualColor);
         } else if (item.isSpecial) {
-            previewHtml = '<div style="font-size: 40px;">🎁</div>';
+            previewHtml = `<div style="color: var(--violet); display: flex; justify-content: center;">${window.icon('slot', { size: 40 })}</div>`;
         }
 
         return `
@@ -1654,8 +1655,8 @@ class GameController {
         const special = inventory.specialReward;
         html += `
             <div style="border: 2px solid #ff0; border-radius: 8px; padding: 15px; background: rgba(255,255,0,0.05); max-width: 100%;">
-                <div style="color: #ff0; font-size: 16px; font-weight: bold; margin-bottom: 10px;">
-                    ⭐ Special Offer
+                <div style="color: #ff0; font-size: 16px; font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                    ${window.icon('spark', { size: 16 })} Special Offer
                 </div>
                 <div style="color: #fff; font-size: 14px; margin-bottom: 5px; word-wrap: break-word;">${special.name}</div>
                 <div style="color: #aaa; font-size: 12px; margin-bottom: 10px; word-wrap: break-word;">${special.description}</div>
@@ -1948,7 +1949,7 @@ class GameController {
                         <span style="color: ${color}; font-size: 12px; margin-left: 6px;">${sectorType.name}</span>
                     </div>
                     <div style="color: #888; font-size: 12px; white-space: nowrap;">
-                        ${profileName}${hasProbethium ? ' <span style="color: #ffd700;">★</span>' : ''}
+                        ${profileName}${hasProbethium ? ` <span style="color: #ffd700; display: inline-flex; vertical-align: -2px;">${window.icon('spark', { size: 11 })}</span>` : ''}
                     </div>
                     <div style="color: #666; font-size: 11px; width: 50px; text-align: right;">
                         ${distance}ly

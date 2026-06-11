@@ -357,10 +357,10 @@ class UIManager {
         const usedSlots = equipmentArray.length;
 
         const icons = {
-            'mineral_collector': { glyph: '◆', color: '#C97B4A' },
-            'data_collector': { glyph: '◆', color: '#5B8CFF' },
-            'artifact_collector': { glyph: '◆', color: '#B06BFF' },
-            'universal_collector': { glyph: '◆', color: 'var(--fire)' }
+            'mineral_collector': { glyph: 'deposit-mineral', color: 'var(--mat-min)' },
+            'data_collector': { glyph: 'deposit-data', color: 'var(--mat-data)' },
+            'artifact_collector': { glyph: 'deposit-artifact', color: 'var(--mat-art)' },
+            'universal_collector': { glyph: 'slot', color: 'var(--fire)' }
         };
 
         let slotsHtml = '';
@@ -384,7 +384,7 @@ class UIManager {
                         align-items: center;
                         justify-content: center;
                     " title="${equipment.name || 'Equipment'}">
-                        <span style="font-size: 16px; color: ${icon.color};">${icon.glyph}</span>
+                        <span style="color: ${icon.color}; display: flex;">${window.icon(icon.glyph, { size: 18 })}</span>
                     </div>
                 `;
             } else {
@@ -419,7 +419,7 @@ class UIManager {
                 justify-content: center;
                 opacity: 0.4;
             " title="Locked - expand via Uplink protocols">
-                <span style="color: var(--mist); font-size: 14px;">◇</span>
+                <span style="color: var(--mist); display: flex;">${window.icon('lock', { size: 14 })}</span>
             </div>
         `;
 
@@ -551,7 +551,7 @@ class UIManager {
 
         if (hasEquipment) {
             // Show equipped items summary
-            equipmentSlot.innerHTML = '<span style="color: var(--fire); font-size: 14px;">◆</span>';
+            equipmentSlot.innerHTML = `<span style="color: var(--fire); display: flex;">${window.icon('slot', { size: 14 })}</span>`;
             equipmentSlot.style.borderColor = 'var(--line)';
             equipmentSlot.style.background = 'var(--panel)';
             equipmentSlot.title = `${equipmentArray.length}/${maxSlots} slots used`;
@@ -744,21 +744,21 @@ class UIManager {
         const viewSectorY = Math.floor(centerY / world.standardSectorHeight);
         
         const sector = world.sectors.get(`${viewSectorX},${viewSectorY}`);
-        let sectorText = '';
-        
-        if (sector && sector.explored) {
-            sectorText = `${sector.name}`;
-        } else {
-            sectorText = `Unexplored Space [${viewSectorX}, ${viewSectorY}]`;
-        }
-        
+        const name = (sector && sector.explored) ? sector.name : 'Unexplored Space';
+        let coord = `[${viewSectorX}, ${viewSectorY}]`;
+
         // Add hub info if selected
         if (selectedHub) {
             const readyCount = this.probeManager.getReadyProbeCountForHub(selectedHub);
-            sectorText += ` | Hub: ${readyCount}/${selectedHub.maxProbes}`;
+            coord += ` · Hub ${readyCount}/${selectedHub.maxProbes}`;
         }
-        
-        document.getElementById('sectorInfo').textContent = sectorText;
+
+        const sectorEl = document.getElementById('sectorInfo');
+        sectorEl.textContent = name;
+        const coordEl = document.createElement('span');
+        coordEl.className = 'coord';
+        coordEl.textContent = coord;
+        sectorEl.appendChild(coordEl);
     }
 
     /**
@@ -883,7 +883,7 @@ class UIManager {
             probeDiv.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                     <div style="display: flex; align-items: center; gap: 6px;">
-                        <span style="font-size: 11px; color: var(--mist);">◇</span>
+                        <span style="color: var(--mist); display: flex;">${window.icon('probe', { size: 11 })}</span>
                         <span style="font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase;">Probe ${index + 1}</span>
                     </div>
                     <span style="color: ${statusColor}; font-size: 11px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 6px; background: rgba(0,0,0,0.3); border-radius: 3px;">${statusText}</span>

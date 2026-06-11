@@ -293,28 +293,28 @@ class OfflineManager {
         const modalHTML = `
             <div id="offlineProgressModal" class="modal">
                 <div class="modal-content" style="max-width: 600px;">
-                    <h2 style="color: #0ff; margin-bottom: 20px; text-align: center;">⏰ Welcome Back!</h2>
-                    
-                    <div style="background: rgba(0,255,255,0.1); border: 1px solid rgba(0,255,255,0.3); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-                        <div style="color: #0ff; font-size: 18px; margin-bottom: 10px;">
-                            You were away for: <span id="offlineTimeDisplay" style="color: #ff0; font-weight: bold;"></span>
+                    <h2 style="color: var(--fire); margin-bottom: 20px; text-align: center; font-weight: 400; letter-spacing: 0.2em; text-transform: uppercase; font-size: 16px;">Welcome Back</h2>
+
+                    <div style="background: rgba(212,175,55,0.05); border: 1px solid var(--line-soft); border-radius: 4px; padding: 20px; margin-bottom: 20px;">
+                        <div style="color: var(--signal); font-size: 15px; margin-bottom: 10px;">
+                            You were away for: <span id="offlineTimeDisplay" style="color: var(--fire); font-family: var(--font-data);"></span>
                         </div>
-                        <div style="color: #aaa; font-size: 14px;">
-                            Your cosmic empire continued working while you were gone!
+                        <div style="color: var(--mist); font-size: 13px;">
+                            The network kept working while you were gone.
                         </div>
                     </div>
-                    
+
                     <div id="offlineResourceGains" style="margin-bottom: 20px;">
                         <!-- Resource gains will be populated here -->
                     </div>
-                    
-                    <div id="offlineDetails" style="background: rgba(0,0,0,0.3); border-radius: 5px; padding: 15px; margin-bottom: 20px; max-height: 200px; overflow-y: auto;">
+
+                    <div id="offlineDetails" style="background: rgba(0,0,0,0.3); border-radius: 4px; padding: 15px; margin-bottom: 20px; max-height: 200px; overflow-y: auto;">
                         <!-- Details will be populated here -->
                     </div>
-                    
+
                     <div style="text-align: center;">
-                        <button id="collectOfflineRewards" class="control-btn" style="font-size: 16px; padding: 12px 24px;">
-                            🚀 Continue Exploring
+                        <button id="collectOfflineRewards" class="control-btn" style="font-size: 14px; padding: 12px 24px;">
+                            Continue Exploring
                         </button>
                     </div>
                 </div>
@@ -341,12 +341,12 @@ class OfflineManager {
         let resourceHTML = '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">';
         
         const resourceIcons = {
-            minerals: '⛏️',
-            data: '📊', 
-            artifacts: '🏺',
-            exoticMinerals: '💎'
+            minerals: { glyph: 'deposit-mineral', color: 'var(--mat-min)' },
+            data: { glyph: 'deposit-data', color: 'var(--mat-data)' },
+            artifacts: { glyph: 'deposit-artifact', color: 'var(--mat-art)' },
+            exoticMinerals: { glyph: 'deposit-exotic', color: 'var(--mat-exo)' }
         };
-        
+
         const resourceNames = {
             minerals: 'Minerals',
             data: 'Data',
@@ -357,11 +357,12 @@ class OfflineManager {
         Object.keys(results.resources).forEach(resourceType => {
             const amount = Math.floor(results.resources[resourceType]);
             if (amount > 0) {
+                const ic = resourceIcons[resourceType];
                 resourceHTML += `
-                    <div style="background: rgba(0,255,0,0.1); border: 1px solid rgba(0,255,0,0.3); border-radius: 5px; padding: 10px; text-align: center;">
-                        <div style="font-size: 24px; margin-bottom: 5px;">${resourceIcons[resourceType]}</div>
-                        <div style="color: #0f0; font-size: 16px; font-weight: bold;">+${amount}</div>
-                        <div style="color: #aaa; font-size: 12px;">${resourceNames[resourceType]}</div>
+                    <div style="background: rgba(212,175,55,0.04); border: 1px solid var(--line-soft); border-radius: 3px; padding: 10px; text-align: center;">
+                        <div style="color: ${ic.color}; display: flex; justify-content: center; margin-bottom: 5px;">${window.icon(ic.glyph, { size: 22 })}</div>
+                        <div style="color: var(--signal); font-family: var(--font-data); font-size: 16px;">+${amount}</div>
+                        <div style="color: var(--mist); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;">${resourceNames[resourceType]}</div>
                     </div>
                 `;
             }
@@ -370,10 +371,10 @@ class OfflineManager {
         // Add Probethium if gained
         if (results.probethium > 0.05) {
             resourceHTML += `
-                <div style="background: rgba(201,255,201,0.1); border: 1px solid rgba(201,255,201,0.3); border-radius: 5px; padding: 10px; text-align: center;">
-                    <div style="font-size: 24px; margin-bottom: 5px;">🎯</div>
-                    <div style="color: #c9f; font-size: 16px; font-weight: bold;">+${results.probethium.toFixed(1)}</div>
-                    <div style="color: #aaa; font-size: 12px;">Probethium</div>
+                <div style="background: rgba(255,215,0,0.05); border: 1px solid var(--line); border-radius: 3px; padding: 10px; text-align: center;">
+                    <div style="color: var(--fire-bright); display: flex; justify-content: center; margin-bottom: 5px;">${window.icon('spark', { size: 22 })}</div>
+                    <div style="color: var(--fire-bright); font-family: var(--font-data); font-size: 16px;">+${results.probethium.toFixed(1)}</div>
+                    <div style="color: var(--mist); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;">Probethium</div>
                 </div>
             `;
         }

@@ -134,23 +134,25 @@ class StatsManager {
         if (valueEl) {
             const current = this.ratePerMin('total');
             const previous = this.ratePerMin('total', this.WINDOW_MS, this.WINDOW_MS);
-            const arrow = current > previous * 1.05 ? '▲' : current < previous * 0.95 ? '▼' : '─';
-            const arrowColor = arrow === '▲' ? '#0f0' : arrow === '▼' ? '#f66' : '#888';
-            valueEl.innerHTML = `${current.toFixed(1)}/min <span style="color:${arrowColor}">${arrow}</span>`;
+            const arrow = current > previous * 1.05 ? '↑' : current < previous * 0.95 ? '↓' : '─';
+            const arrowColor = arrow === '↑' ? 'var(--mat-data)' : arrow === '↓' ? 'var(--danger)' : 'var(--mist)';
+            valueEl.innerHTML = `${current.toFixed(1)}<span class="trend" style="color:${arrowColor}">/min ${arrow}</span>`;
         }
 
         if (!this.panelVisible) return;
 
         const fmt = (v) => v === null ? '—' : `${Math.round(v * 100)}%`;
-        const rateRow = (label, type) =>
-            `<div class="stats-row"><span>${label}</span><span>${this.ratePerMin(type).toFixed(1)}/min</span></div>`;
+        const rateRow = (glyph, color, label, type) =>
+            `<div class="stats-row"><span style="display:flex;align-items:center;gap:7px;">` +
+            `<span style="color:${color};display:flex;">${window.icon(glyph, { size: 12 })}</span>${label}</span>` +
+            `<span>${this.ratePerMin(type).toFixed(1)}/min</span></div>`;
 
         this.panel.innerHTML = `
             <div class="stats-title">NETWORK THROUGHPUT</div>
-            ${rateRow('⛏ Minerals', 'minerals')}
-            ${rateRow('📊 Data', 'data')}
-            ${rateRow('🏺 Artifacts', 'artifacts')}
-            ${rateRow('💎 Exotic', 'exoticMinerals')}
+            ${rateRow('deposit-mineral', 'var(--mat-min)', 'Minerals', 'minerals')}
+            ${rateRow('deposit-data', 'var(--mat-data)', 'Data', 'data')}
+            ${rateRow('deposit-artifact', 'var(--mat-art)', 'Artifacts', 'artifacts')}
+            ${rateRow('deposit-exotic', 'var(--mat-exo)', 'Exotic', 'exoticMinerals')}
             <div class="stats-divider"></div>
             <div class="stats-row"><span>Probe utilization</span><span>${fmt(this.probeUtilization())}</span></div>
             <div class="stats-row"><span>Station uptime</span><span>${fmt(this.stationUptime())}</span></div>

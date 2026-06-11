@@ -69,6 +69,14 @@
     --danger: #E0524D;
     --panel: rgba(10, 8, 18, 0.92);
 
+    --violet: #B06BFF;
+    --violet-line: rgba(176, 107, 255, 0.45);
+    --violet-soft: rgba(176, 107, 255, 0.16);
+    --mat-min: #C97B4A;
+    --mat-data: #5B8CFF;
+    --mat-art: #B06BFF;
+    --mat-exo: #E8E4F0;
+
     --font-display: 'Jost', 'Century Gothic', 'Segoe UI', sans-serif;
     --font-ui: 'Jost', 'Century Gothic', 'Segoe UI', sans-serif;
     --font-data: 'IBM Plex Mono', 'Courier New', monospace;
@@ -164,42 +172,66 @@ body {
     flex-direction: column;
 }
 
-/* --- Header — one thin band ------------------------------------------------ */
+/* --- HUD header — one thin band, made to breathe (handoff §1) -------------- */
+
+.ic { display: block; flex: none; }
 
 #header {
-    background: linear-gradient(180deg, rgba(26, 16, 48, 0.35) 0%, var(--void) 100%);
-    padding: 12px 18px;
+    height: 66px;
+    flex: none;
     display: flex;
-    justify-content: space-around;
     align-items: center;
+    gap: 0;
+    padding: 0 22px;
+    background: linear-gradient(180deg, rgba(26, 16, 48, 0.42) 0%, rgba(7, 6, 11, 0.78) 100%);
     border-bottom: 1px solid var(--line-soft);
+    backdrop-filter: blur(6px);
 }
 
-.stat-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
+.hud-group { display: flex; align-items: center; gap: 18px; }
+.hud-div { width: 1px; height: 30px; background: var(--line-soft); margin: 0 20px; flex: none; }
+.hud-spacer { flex: 1; }
 
-.stat-label {
+.iconbtn {
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent;
+    border: 1px solid var(--line-soft);
+    border-radius: 50%;
     color: var(--mist);
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
+    cursor: pointer;
+    transition: border-color 0.3s var(--ease), color 0.3s var(--ease);
 }
+.iconbtn:hover { border-color: var(--fire); color: var(--fire); }
+.iconbtn:active { transform: scale(0.95); }
 
-.stat-item span:last-child {
-    color: var(--signal);
-    font-family: var(--font-data);
-    font-weight: 300;
-    font-size: 15px;
-}
+/* sector cluster */
+.sector { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.sector .lbl { font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--mist); }
+.sector .val { font-size: 15px; letter-spacing: 0.12em; color: var(--signal); white-space: nowrap; }
+.sector .val .coord { font-family: var(--font-data); font-size: 11px; color: var(--mist); margin-left: 8px; }
 
-/* Probethium — the fire — is the one gold value in the band */
-#probethium {
-    color: var(--fire-bright) !important;
-    font-weight: 400 !important;
+/* resource readouts */
+.readouts { display: flex; align-items: center; gap: 22px; }
+.rd { display: flex; align-items: center; gap: 8px; }
+.rd .rd-txt { display: flex; flex-direction: column; line-height: 1.05; }
+.rd-val { font-family: var(--font-data); font-weight: 300; font-size: 15px; color: var(--signal); }
+.rd-lbl { font-size: 8.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mist); margin-top: 2px; }
+.rd.built .rd-val { color: var(--fire); }
+
+/* probethium score + flow */
+.score { display: flex; align-items: center; gap: 9px; }
+.score .rd-txt { display: flex; flex-direction: column; line-height: 1.05; }
+.score .ic { color: var(--fire-bright); }
+.score .rd-val {
+    font-family: var(--font-data); font-weight: 400; font-size: 19px;
+    color: var(--fire-bright);
+    text-shadow: 0 0 14px rgba(255, 215, 0, 0.25);
 }
+.score .rd-lbl { font-size: 8.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mist); margin-top: 2px; }
+.flow .ic { color: var(--fire); }
+.flow .rd-val { color: var(--fire); }
+.flow .trend { font-family: var(--font-data); font-size: 11px; color: var(--mat-data); margin-left: 4px; }
 
 /* --- Time controls --------------------------------------------------------- */
 
@@ -215,8 +247,10 @@ body {
     font-family: var(--font-data);
     font-weight: 300;
     font-size: 12px;
-    padding: 3px 8px;
+    padding: 4px 9px;
     cursor: pointer;
+    display: flex;
+    align-items: center;
     transition: color 0.24s var(--ease), border-color 0.24s var(--ease);
 }
 

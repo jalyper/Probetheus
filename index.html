@@ -36,64 +36,42 @@
     </div>
 
     <div id="gameContainer" style="display: none;">
-        <!-- Header with stats -->
+        <!-- HUD header — one thin band (handoff §1) -->
         <div id="header">
-            <!-- Power button for main menu -->
-            <div class="stat-item" style="margin-right: 20px;">
-                <button id="mainMenuBtn" class="power-btn" title="Main Menu">
-                    <div class="power-icon">⏻</div>
-                </button>
+            <div class="hud-group">
+                <button id="mainMenuBtn" class="iconbtn" title="Main Menu" data-icon="power" data-sz="15"></button>
+                <button id="settingsBtn" class="iconbtn" title="Settings" data-icon="settings" data-sz="15"></button>
             </div>
-            
-            <!-- Settings button -->
-            <div class="stat-item" style="margin-right: 20px;">
-                <button id="settingsBtn" class="power-btn" title="Settings" style="font-size: 20px;">
-                    ⚙︎
-                </button>
+            <div class="hud-div"></div>
+            <div class="sector">
+                <span class="lbl">Sector</span>
+                <span class="val" id="sectorInfo">Balanced <span class="coord">[0, 0]</span></span>
             </div>
-            
-            <div class="stat-item">
-                <span class="stat-label">Sector:</span>
-                <span id="sectorInfo" style="color: var(--fire-bright);">Balanced [0, 0]</span>
+            <div class="hud-div"></div>
+            <div class="readouts">
+                <div class="rd"><span class="rd-ic" style="color: var(--mat-min);" data-icon="deposit-mineral" data-sz="17"></span>
+                    <span class="rd-txt"><span class="rd-val" id="minerals">0</span><span class="rd-lbl">Minerals</span></span></div>
+                <div class="rd"><span class="rd-ic" style="color: var(--mat-data);" data-icon="deposit-data" data-sz="17"></span>
+                    <span class="rd-txt"><span class="rd-val" id="data">0</span><span class="rd-lbl">Data</span></span></div>
+                <div class="rd"><span class="rd-ic" style="color: var(--mat-art);" data-icon="deposit-artifact" data-sz="17"></span>
+                    <span class="rd-txt"><span class="rd-val" id="artifacts">0</span><span class="rd-lbl">Artifacts</span></span></div>
+                <div class="rd"><span class="rd-ic" style="color: var(--mat-exo);" data-icon="deposit-exotic" data-sz="17"></span>
+                    <span class="rd-txt"><span class="rd-val" id="exoticMinerals">0</span><span class="rd-lbl">Exotic</span></span></div>
+                <div class="rd built"><span class="rd-ic" style="color: var(--mist);" data-icon="probe" data-sz="16"></span>
+                    <span class="rd-txt"><span class="rd-val" id="probeCount">3</span><span class="rd-lbl">Probes</span></span></div>
+                <div class="rd built"><span class="rd-ic" style="color: var(--mist);" data-icon="hub" data-sz="16"></span>
+                    <span class="rd-txt"><span class="rd-val" id="hubCount">1</span><span class="rd-lbl">Hubs</span></span></div>
             </div>
-            <div class="stat-item">
-                <span class="stat-label">Probes:</span>
-                <span id="probeCount">3</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Minerals:</span>
-                <span id="minerals">0</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Data:</span>
-                <span id="data">0</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Artifacts:</span>
-                <span id="artifacts">0</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Exotic:</span>
-                <span id="exoticMinerals" style="color: var(--mist);">0</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Outposts:</span>
-                <span id="outpostCount" style="color: var(--fire-bright);">0</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Recon Hubs:</span>
-                <span id="hubCount" style="color: var(--fire);">1</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Probethium:</span>
-                <span id="probethium" style="color: var(--fire-bright); font-weight: bold;">0</span>
-            </div>
-            <div class="stat-item" id="throughputStat" title="Network throughput — click for dashboard">
-                <span class="stat-label">Flow:</span>
-                <span id="throughputValue" style="color: var(--fire);">0.0/min ─</span>
-            </div>
-            <div class="stat-item" id="timeControls" title="Game speed">
-                <button class="time-btn" id="timePauseBtn" title="Pause (Space)">⏸</button>
+            <div class="hud-div"></div>
+            <div class="score"><span data-icon="spark" data-sz="18"></span>
+                <span class="rd-txt"><span class="rd-val" id="probethium">0</span><span class="rd-lbl">Probethium</span></span></div>
+            <div class="hud-div"></div>
+            <div class="rd flow" id="throughputStat" title="Network throughput — click for dashboard">
+                <span data-icon="flow" data-sz="17"></span>
+                <span class="rd-txt"><span class="rd-val" id="throughputValue">0.0/min ─</span><span class="rd-lbl">Flow</span></span></div>
+            <div class="hud-spacer"></div>
+            <div id="timeControls" title="Game speed">
+                <button class="time-btn" id="timePauseBtn" title="Pause (Space)" data-icon="pause" data-sz="13"></button>
                 <button class="time-btn time-scale-btn active" data-scale="1" title="Normal speed (1)">1×</button>
                 <button class="time-btn time-scale-btn" data-scale="2" title="Double speed (2)">2×</button>
                 <button class="time-btn time-scale-btn" data-scale="4" title="Quadruple speed (3)">4×</button>
@@ -206,7 +184,7 @@
                 <!-- Header -->
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid var(--fire); padding-bottom: 8px;">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <div style="font-size: 20px;">◇</div>
+                        <div style="color: var(--fire); display: flex;" data-icon="probe" data-sz="18"></div>
                         <div style="color: var(--fire); font-size: 16px; font-weight: bold;">Active Probes</div>
                     </div>
                     <div style="color: var(--mist); font-size: 10px;">Click to track</div>
@@ -245,7 +223,7 @@
 
             <div id="probeIcon" style="text-align: center; margin-bottom: 15px;">
                 <div style="width: 60px; height: 60px; margin: 0 auto; border: 2px solid var(--fire); border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(212,175,55,0.1);">
-                    <span style="color: var(--fire); font-size: 24px;">◇</span>
+                    <span style="color: var(--fire); display: flex;" data-icon="probe" data-sz="24"></span>
                 </div>
                 <div id="probeStatusText" style="color: var(--fire); font-size: 12px; margin-top: 5px;">Exploring</div>
             </div>
@@ -314,7 +292,7 @@
         <div id="mainMenuModal" class="modal">
             <div class="modal-content" style="max-width: 400px;">
                 <div style="text-align: center; margin-bottom: 30px;">
-                    <div class="power-icon" style="font-size: 48px; color: var(--fire); margin-bottom: 15px;">⏻</div>
+                    <div class="power-icon" style="color: var(--fire); margin-bottom: 15px; display: flex; justify-content: center;" data-icon="power" data-sz="44"></div>
                     <h2 style="color: var(--fire); margin: 0;">Main Menu</h2>
                 </div>
                 
@@ -457,6 +435,7 @@
     <!-- Modular Game System -->
     <!-- StorageAdapter must load first -->
     <script src="src/GameConstants.js"></script>
+    <script src="src/IconKit.js"></script>
     <script src="src/StartConstellation.js"></script>
     <script src="src/StorageAdapter.js"></script>
     <script>
@@ -544,6 +523,7 @@
     <script>
         // Initialize the start screen when page loads
         document.addEventListener('DOMContentLoaded', () => {
+            if (window.injectIcons) window.injectIcons();
             initializeStartScreen();
         });
 

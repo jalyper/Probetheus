@@ -40,7 +40,20 @@ class DetailsPanel {
             }
         });
     }
-    
+
+    /**
+     * IconKit glyph name for an equipment type/id (VISUAL_STYLE.md — no emoji)
+     */
+    getEquipmentGlyph(type) {
+        const glyphs = {
+            'mineral_collector': 'deposit-mineral',
+            'data_collector': 'deposit-data',
+            'artifact_collector': 'deposit-artifact',
+            'universal_collector': 'slot'
+        };
+        return glyphs[type] || 'slot';
+    }
+
     setupEventListeners() {
         // Close button
         if (this.closeBtn) {
@@ -252,7 +265,7 @@ class DetailsPanel {
                     </button>
                     ${this.gameState.hasProtocol('exotic_synthesis') ? `
                     <button id="synthesizeBtn" class="control-btn" style="font-size: 12px; padding: 8px 12px; width: 100%; display: flex; align-items: center; gap: 8px; border-color: var(--fire);">
-                        <span style="color: var(--fire); flex-shrink: 0;">◇</span>
+                        <span style="color: var(--fire); flex-shrink: 0; display: flex;">${window.icon('spark', { size: 14 })}</span>
                         <span>Synthesize Probethium (5 Exotic)</span>
                     </button>
                     ` : ''}
@@ -885,7 +898,7 @@ class DetailsPanel {
                             align-items: center;
                             justify-content: center;
                         " title="${equipment.name || 'Equipment'}">
-                            <span style="font-size: 18px; color: ${slotColor};">◇</span>
+                            <span style="color: ${slotColor}; display: flex;">${window.icon(this.getEquipmentGlyph(equipment.type), { size: 18 })}</span>
                         </div>
                     `;
                 } else {
@@ -1058,8 +1071,8 @@ class DetailsPanel {
                             const markerColor = equipmentColors[eq.type] || 'var(--mist)';
                             return `
                                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--line-soft);">
-                                    <div style="color: var(--signal);">
-                                        <span style="color: ${markerColor};">◇</span>
+                                    <div style="color: var(--signal); display: flex; align-items: center;">
+                                        <span style="color: ${markerColor}; display: flex;">${window.icon(this.getEquipmentGlyph(eq.type), { size: 14 })}</span>
                                         <span style="margin-left: 8px;">${eq.name || eq.type}</span>
                                     </div>
                                     <button class="control-btn remove-equipment-btn" data-equipment-type="${eq.type}" style="font-size: 10px; padding: 4px 8px; border-color: var(--danger); color: var(--danger);">
@@ -1092,8 +1105,8 @@ class DetailsPanel {
                         return `
                             <div style="background: var(--panel); border: 1px solid ${canEquip ? 'var(--line)' : 'var(--line-soft)'}; border-radius: 4px; padding: 10px; margin-bottom: 8px; opacity: ${canEquip ? 1 : 0.6};">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <div>
-                                        <span style="color: ${eq.markerColor};">◇</span>
+                                    <div style="display: flex; align-items: center;">
+                                        <span style="color: ${eq.markerColor}; display: flex;">${window.icon(this.getEquipmentGlyph(eq.id), { size: 14 })}</span>
                                         <span style="color: ${canEquip ? 'var(--signal)' : 'var(--mist)'}; font-weight: 400; margin-left: 8px;">${eq.name}</span>
                                         <span style="color: var(--mist); font-size: 10px; margin-left: 5px; opacity: 0.7;">(${eq.slotsRequired} slot)</span>
                                     </div>
