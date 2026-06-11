@@ -172,12 +172,13 @@ class UplinkSystem {
         const panel = document.getElementById('uplinkPanel');
         if (panel) {
             panel.addEventListener('click', (e) => {
-                const action = e.target.dataset && e.target.dataset.uplinkAction;
-                if (!action) return;
+                const target = e.target.closest('[data-uplink-action]');
+                if (!target) return;
+                const action = target.dataset.uplinkAction;
                 if (action === 'close') this.togglePanel(false);
                 if (action === 'build') { this.build(); this.renderPanel(); }
                 if (action === 'upgrade') { this.upgrade(); this.renderPanel(); }
-                if (action === 'decode') { this.startDecode(e.target.dataset.protocol); this.renderPanel(); }
+                if (action === 'decode') { this.startDecode(target.dataset.protocol); this.renderPanel(); }
             });
         }
     }
@@ -209,9 +210,9 @@ class UplinkSystem {
                 <p class="uplink-intro">Everything your probes can learn is out there, scrambled in
                 the data they haul home. Build an Uplink and feed it: decoding speed is your data
                 network's throughput.</p>
-                <button class="control-btn uplink-build-btn" data-uplink-action="build"
+                <button class="cta uplink-build-btn" data-uplink-action="build"
                     ${missing.length ? 'disabled' : ''}>
-                    Construct Uplink — ${window.RecipeUtils.format(recipe)}
+                    Construct Uplink · ${window.RecipeUtils.format(recipe)}
                 </button>
                 ${missing.length ? `<div class="uplink-shortfall">Need ${missing.map(m => `${m.need - Math.floor(m.have)} more ${m.key}`).join(', ')}</div>` : ''}`;
         } else {
@@ -223,22 +224,32 @@ class UplinkSystem {
                 const canPayCatalysts = !proto.catalysts || state.paid.has(id) ||
                     window.RecipeUtils.canAfford(proto.catalysts, resources);
 
-                let control;
-                if (decoded) control = `<span class="uplink-state uplink-state-done">DECODED</span>`;
-                else if (active) control = `<span class="uplink-state uplink-state-active">DECODING</span>`;
-                else control = `<button class="control-btn uplink-decode-btn" data-uplink-action="decode"
-                        data-protocol="${id}" ${canPayCatalysts ? '' : 'disabled'}>Decode</button>`;
+                let stateTag, foot;
+                if (decoded) {
+                    stateTag = `<span class="uplink-state uplink-state-done">Decoded</span>`;
+                    foot = `<span style="font-size:10px;color:var(--mist);font-family:var(--font-data)">${proto.data} data streamed</span>`;
+                } else if (active) {
+                    stateTag = `<span class="uplink-state uplink-state-active">Decoding</span>`;
+                    foot = `<div class="uplink-bar"><div class="uplink-bar-fill" style="width:${pct}%"></div></div>` +
+                           `<span class="uplink-pct">${Math.round(pct)}%</span>`;
+                } else {
+                    stateTag = `<span class="uplink-state uplink-state-available">Available</span>`;
+                    foot = `<div class="uplink-bar" style="${streamed > 0 ? '' : 'visibility:hidden;'}"><div class="uplink-bar-fill" style="width:${pct}%;box-shadow:none;"></div></div>` +
+                           `<button class="uplink-decode-btn" data-uplink-action="decode"
+                            data-protocol="${id}" ${canPayCatalysts ? '' : 'disabled'}
+                            title="${canPayCatalysts ? 'Stream stored data into this protocol' : 'Insufficient catalysts'}">Decode</button>`;
+                }
 
                 return `
                 <div class="uplink-protocol ${decoded ? 'is-decoded' : ''} ${active ? 'is-active' : ''}">
                     <div class="uplink-protocol-head">
                         <span class="uplink-protocol-name">${proto.name}</span>
-                        ${control}
+                        ${stateTag}
                     </div>
                     <div class="uplink-protocol-lore">${proto.lore}</div>
                     <div class="uplink-protocol-effect">${proto.effect}</div>
-                    <div class="uplink-protocol-cost">${proto.data} data streamed${this.catalystLabel(proto.catalysts)}</div>
-                    ${decoded ? '' : `<div class="uplink-bar"><div class="uplink-bar-fill" style="width:${pct}%"></div></div>`}
+                    <div class="uplink-protocol-cost"><span class="c-data">${proto.data} data streamed</span>${this.catalystLabel(proto.catalysts)}</div>
+                    <div class="uplink-protocol-foot">${foot}</div>
                 </div>`;
             }).join('');
 
@@ -246,22 +257,22 @@ class UplinkSystem {
             const upgradeRecipe = window.RECIPES.uplinkLevel[next];
             body = `
                 <div class="uplink-stats">
-                    <span><label>ARRAY</label> Level ${state.level}</span>
-                    <span><label>DECODE</label> ${this.decodeRatePerMin().toFixed(0)} data/min</span>
-                    <span><label>RESERVE</label> ${Math.floor(resources.data)} data</span>
+                    <div class="uplink-stat"><div class="k">Array</div><div class="v">Level ${state.level}</div></div>
+                    <div class="uplink-stat"><div class="k">Decode Rate</div><div class="v">${this.decodeRatePerMin().toFixed(0)} u/min</div></div>
+                    <div class="uplink-stat"><div class="k">Data in Store</div><div class="v data">${Math.floor(resources.data)}</div></div>
                 </div>
                 ${upgradeRecipe ? `
-                <button class="control-btn uplink-upgrade-btn" data-uplink-action="upgrade"
+                <button class="cta uplink-upgrade-btn" data-uplink-action="upgrade"
                     ${window.RecipeUtils.canAfford(upgradeRecipe, resources) ? '' : 'disabled'}>
-                    Upgrade Array — ${window.RecipeUtils.format(upgradeRecipe)}
+                    Upgrade Array · ${window.RecipeUtils.format(upgradeRecipe)}
                 </button>` : ''}
                 <div class="uplink-protocols">${rows}</div>`;
         }
 
         panel.innerHTML = `
             <div class="uplink-header">
-                <span class="uplink-title">UPLINK</span>
-                <button class="uplink-close" data-uplink-action="close">×</button>
+                <span class="title">${window.icon('uplink', { size: 16 })}<span class="uplink-title">UPLINK</span></span>
+                <button class="uplink-close" data-uplink-action="close">${window.icon('close', { size: 14 })}</button>
             </div>
             ${body}`;
     }
