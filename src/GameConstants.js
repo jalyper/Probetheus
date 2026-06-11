@@ -36,6 +36,70 @@ window.GAME_CONSTANTS = {
         // "Tune") — exceeding this queues probes visibly at the dock
         INTAKE_PER_MIN_BASE: 8,
         MAX_INTAKE_LEVEL: 3
+    },
+    UPLINK: {
+        // Data units/min the Uplink streams into the active protocol per level
+        // (REBUILD.md §1). Research speed IS data-network throughput.
+        DECODE_PER_MIN_BASE: 12,
+        MAX_LEVEL: 3
+    }
+};
+
+/**
+ * Protocol catalog — the Uplink's decode targets (REBUILD.md §1).
+ * Replaces the Research Lab tree. `data` is the total data units that must
+ * be STREAMED through the Uplink (consumed from stores at the decode rate);
+ * `catalysts` are consumed up front when decoding starts — deep protocols
+ * demand ring-2+ materials, so research gates by where you've dared to route.
+ * Order is presentation order in the Uplink panel.
+ */
+window.PROTOCOLS = {
+    swift_carriage: {
+        name: 'Swift Carriage',
+        data: 40,
+        effect: 'Probes travel 25% faster on every leg.',
+        lore: 'A drive cadence recovered from the wreck-songs of the first fleet.'
+    },
+    deep_resonance: {
+        name: 'Deep Resonance',
+        data: 60,
+        effect: 'Prospecting pulses sweep 40% further.',
+        lore: 'The void answers louder when you ask in its own frequency.'
+    },
+    harvest_lattice: {
+        name: 'Harvest Lattice',
+        data: 80,
+        catalysts: { artifacts: 2 },
+        effect: 'Unlocks collector modules for probe equipment bays.',
+        lore: 'Cargo geometry folded from a derelict\'s hold.'
+    },
+    extraction_harmonics: {
+        name: 'Extraction Harmonics',
+        data: 120,
+        catalysts: { artifacts: 4 },
+        effect: '+1 yield on every deposit extraction pass.',
+        lore: 'Veins give more to those who take in rhythm.'
+    },
+    universal_lattice: {
+        name: 'Universal Lattice',
+        data: 150,
+        catalysts: { artifacts: 6 },
+        effect: 'Unlocks the Universal Collector — one module, every cargo type.',
+        lore: 'All matter is one lattice, sampled at different angles.'
+    },
+    exotic_synthesis: {
+        name: 'Exotic Synthesis',
+        data: 200,
+        catalysts: { exoticMinerals: 4 },
+        effect: 'Unlocks Probethium synthesis from exotic minerals at hubs.',
+        lore: 'What the outer rings hoard, the Probetheus once burned for fuel.'
+    },
+    remnant_protocols: {
+        name: 'Remnant Protocols',
+        data: 250,
+        catalysts: { artifacts: 8, exoticMinerals: 4 },
+        effect: 'Opens deep trade with the Remnants.',
+        lore: 'They will speak plainly only to machines that remember.'
     }
 };
 
@@ -60,6 +124,14 @@ window.RECIPES = {
     intakeBay: {
         2: { minerals: 150, data: 60 },
         3: { minerals: 300, data: 120, exoticMinerals: 8 }
+    },
+
+    // The Uplink (REBUILD.md §1): crafted at the home hub, then upgraded.
+    // Decode rate = UPLINK.DECODE_PER_MIN_BASE × level.
+    uplink: { minerals: 60, data: 25 },
+    uplinkLevel: {
+        2: { minerals: 150, data: 80 },
+        3: { minerals: 300, data: 160, exoticMinerals: 6 }
     }
 };
 

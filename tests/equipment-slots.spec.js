@@ -30,14 +30,13 @@ test.describe('Equipment Slots System', () => {
             if (tutorialPanel) tutorialPanel.style.display = 'none';
         });
 
-        // Give resources and unlock research
+        // Give resources and decode the protocols that gate collectors
         await page.evaluate(({ minerals, data }) => {
             window.game.gameState.resources.minerals = minerals;
             window.game.gameState.resources.data = data;
-            // Unlock auto-collection research
-            window.game.gameState.researchSystem.researched.add('auto_minerals');
-            window.game.gameState.researchSystem.researched.add('auto_data');
-            window.game.gameState.researchSystem.researched.add('auto_artifacts');
+            // Unlock typed + universal collectors via Uplink protocols
+            window.game.gameState.uplink.decoded.add('harvest_lattice');
+            window.game.gameState.uplink.decoded.add('universal_lattice');
             window.uiManager.updateUI();
         }, { minerals, data });
     }
@@ -379,144 +378,3 @@ test.describe('Equipment Slots System', () => {
     });
 });
 
-// Type-Specific Rarity Research Tests
-test.describe('Type-Specific Rarity Research', () => {
-    test.beforeEach(async ({ page }) => {
-        await page.goto('/');
-        await page.evaluate(() => localStorage.clear());
-        await page.reload();
-        await page.waitForLoadState('networkidle');
-    });
-
-    async function startGameWithResources(page, minerals = 500, data = 200) {
-        await page.locator('#newGameBtn').click();
-        await page.waitForTimeout(1500);
-        const skipBtn = page.locator('#skipCutscene');
-        if (await skipBtn.isVisible()) {
-            await skipBtn.click();
-        }
-        await page.waitForSelector('#galaxyCanvas', { timeout: 10000 });
-        await page.waitForTimeout(3000);
-
-        await page.evaluate(() => {
-            const tutorialPanel = document.getElementById('tutorialPanel');
-            if (tutorialPanel) tutorialPanel.style.display = 'none';
-        });
-
-        await page.evaluate(({ minerals, data }) => {
-            window.game.gameState.resources.minerals = minerals;
-            window.game.gameState.resources.data = data;
-            window.uiManager.updateUI();
-        }, { minerals, data });
-    }
-
-    test('research tree should have type-specific rarity nodes', async ({ page }) => {
-        await startGameWithResources(page);
-
-        const result = await page.evaluate(() => {
-            const research = window.game.gameState.getResearchSystem();
-            return {
-                // Mineral rarity nodes
-                hasMineralsUncommon: 'minerals_uncommon' in research.tree,
-                hasMineralsRare: 'minerals_rare' in research.tree,
-                hasMineralsEpic: 'minerals_epic' in research.tree,
-                hasMineralsLegendary: 'minerals_legendary' in research.tree,
-                // Data rarity nodes
-                hasDataUncommon: 'data_uncommon' in research.tree,
-                hasDataRare: 'data_rare' in research.tree,
-                hasDataEpic: 'data_epic' in research.tree,
-                hasDataLegendary: 'data_legendary' in research.tree,
-                // Artifact rarity nodes
-                hasArtifactsUncommon: 'artifacts_uncommon' in research.tree,
-                hasArtifactsRare: 'artifacts_rare' in research.tree,
-                hasArtifactsEpic: 'artifacts_epic' in research.tree,
-                hasArtifactsLegendary: 'artifacts_legendary' in research.tree,
-                // Universal rarity nodes (should still exist)
-                hasRarityUncommon: 'rarity_uncommon' in research.tree,
-                hasRarityRare: 'rarity_rare' in research.tree,
-                hasRarityEpic: 'rarity_epic' in research.tree,
-                hasRarityLegendary: 'rarity_legendary' in research.tree
-            };
-        });
-
-        // Verify all mineral rarity nodes exist
-        expect(result.hasMineralsUncommon).toBe(true);
-        expect(result.hasMineralsRare).toBe(true);
-        expect(result.hasMineralsEpic).toBe(true);
-        expect(result.hasMineralsLegendary).toBe(true);
-        // Verify all data rarity nodes exist
-        expect(result.hasDataUncommon).toBe(true);
-        expect(result.hasDataRare).toBe(true);
-        expect(result.hasDataEpic).toBe(true);
-        expect(result.hasDataLegendary).toBe(true);
-        // Verify all artifact rarity nodes exist
-        expect(result.hasArtifactsUncommon).toBe(true);
-        expect(result.hasArtifactsRare).toBe(true);
-        expect(result.hasArtifactsEpic).toBe(true);
-        expect(result.hasArtifactsLegendary).toBe(true);
-        // Verify universal rarity nodes still exist
-        expect(result.hasRarityUncommon).toBe(true);
-        expect(result.hasRarityRare).toBe(true);
-        expect(result.hasRarityEpic).toBe(true);
-        expect(result.hasRarityLegendary).toBe(true);
-    });
-
-    test('getMaxCollectableRarity should return type-specific rarities', async ({ page }) => {
-        await startGameWithResources(page);
-
-        const result = await page.evaluate(() => {
-            const pm = window.game.probeManager;
-            const research = window.game.gameState.getResearchSystem();
-
-            // Initially all should be common
-            const initialMinerals = pm.getMaxCollectableRarity('minerals');
-            const initialData = pm.getMaxCollectableRarity('data');
-            const initialArtifacts = pm.getMaxCollectableRarity('artifacts');
-            const initialUniversal = pm.getMaxCollectableRarity('universal');
-
-            // Research minerals_uncommon
-            research.researched.add('minerals_uncommon');
-            const afterMineralsUncommon = pm.getMaxCollectableRarity('minerals');
-            const dataStillCommon = pm.getMaxCollectableRarity('data');
-
-            // Research data_rare
-            research.researched.add('data_uncommon');
-            research.researched.add('data_rare');
-            const dataAfterRare = pm.getMaxCollectableRarity('data');
-
-            // Research universal rarity (should only affect universal)
-            research.researched.add('rarity_uncommon');
-            const universalAfterUncommon = pm.getMaxCollectableRarity('universal');
-            const mineralsUnaffected = pm.getMaxCollectableRarity('minerals');
-
-            return {
-                initialMinerals,
-                initialData,
-                initialArtifacts,
-                initialUniversal,
-                afterMineralsUncommon,
-                dataStillCommon,
-                dataAfterRare,
-                universalAfterUncommon,
-                mineralsUnaffected
-            };
-        });
-
-        // Initially all should be common
-        expect(result.initialMinerals).toBe('common');
-        expect(result.initialData).toBe('common');
-        expect(result.initialArtifacts).toBe('common');
-        expect(result.initialUniversal).toBe('common');
-
-        // After minerals_uncommon, minerals should be uncommon but data still common
-        expect(result.afterMineralsUncommon).toBe('uncommon');
-        expect(result.dataStillCommon).toBe('common');
-
-        // After data_rare, data should be rare
-        expect(result.dataAfterRare).toBe('rare');
-
-        // After rarity_uncommon, universal should be uncommon but minerals unaffected
-        expect(result.universalAfterUncommon).toBe('uncommon');
-        expect(result.mineralsUnaffected).toBe('uncommon'); // Still from minerals_uncommon
-    });
-});

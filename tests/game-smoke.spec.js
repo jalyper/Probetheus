@@ -98,7 +98,7 @@ test.describe('Game Startup and Basic Functionality', () => {
     await expect(page.locator('#saveLoadModal')).not.toHaveClass(/active/);
   });
 
-  test('research system initializes correctly', async ({ page }) => {
+  test('uplink system initializes correctly', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
@@ -114,33 +114,25 @@ test.describe('Game Startup and Basic Functionality', () => {
       }
     });
 
-    // Research button should be hidden initially
-    await expect(page.locator('#researchBtn')).not.toBeVisible();
+    // Uplink button is always visible from the start
+    await expect(page.locator('#uplinkBtn')).toBeVisible();
 
-    // Unlock research via game state
-    // Must also allow research access through tutorial gate
+    // Build the Uplink (grant materials, then craft it)
     await page.evaluate(() => {
-      const research = window.game.gameState.getResearchSystem();
-      research.unlocked = true;
-      research.points = 1;
-      // Allow research access (bypass tutorial gate for this test)
-      if (window.game.tutorialManager) {
-        window.game.tutorialManager.researchAccessAllowed = true;
-      }
-      window.uiManager.checkResearchUnlock();
+      window.game.gameState.resources.minerals = 100;
+      window.game.gameState.resources.data = 100;
+      window.game.uplinkSystem.build();
     });
 
-    // Wait for UI to update and research button to become visible
-    await page.waitForTimeout(500);
-    await expect(page.locator('#researchBtn')).toBeVisible();
+    // Click the Uplink button — the panel opens as an overlay over the map
+    await page.locator('#uplinkBtn').click();
+    await expect(page.locator('#uplinkPanel')).toBeVisible();
 
-    // Click research button
-    await page.locator('#researchBtn').click();
-    await expect(page.locator('#researchScreen')).toHaveClass(/active/);
+    // The protocol catalog is shown once built
+    await expect(page.locator('#uplinkPanel .uplink-protocol')).toHaveCount(7);
 
-    // Return to map
-    await page.locator('#returnToMapFromResearch').click();
-    await expect(page.locator('#mapScreen')).toHaveClass(/active/);
+    // The map stays underneath — this is an overlay, not a screen switch
+    await expect(page.locator('#galaxyCanvas')).toBeVisible();
   });
 
   test('probe deployment basic functionality', async ({ page }) => {

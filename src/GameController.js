@@ -15,7 +15,7 @@ class GameController {
         this.probeManager = new ProbeManager(this.gameState, this.eventBus);
         this.buildingSystem = new BuildingSystem(this.gameState, this.eventBus);
         this.miningManager = new MiningManager(this.gameState, this.eventBus);
-        this.researchManager = new ResearchManager(this.gameState, this.eventBus);
+        this.uplinkSystem = new UplinkSystem(this.gameState, this.eventBus);
         this.sectorManager = new SectorManager(this.gameState, this.eventBus);
         this.saveManager = new SaveManager(this.gameState, this.eventBus);
         this.offlineManager = new OfflineManager(this.gameState, this.eventBus);
@@ -50,17 +50,14 @@ class GameController {
         // Listen for resource indicator events
         this.eventBus.on('resource:indicator', this.addResourceIndicator.bind(this));
         
-        // Listen for research completion to update probe equipment
-        this.eventBus.on('research:completed', (data) => {
-            this.onResearchCompleted(data.node);
+        // Listen for protocol decode completion to update probe equipment
+        this.eventBus.on('uplink:decoded', (data) => {
+            this.onProtocolDecoded(data.id);
         });
 
         // Listen for screen switching events
         this.eventBus.on('ui:switchScreen', (data) => {
             this.showScreen(data.screen + 'Screen');
-            if (data.screen === 'research') {
-                this.eventBus.emit('research:showTree');
-            }
         });
         
         // Listen for tutorial hub selection
@@ -730,8 +727,7 @@ class GameController {
                         minerals: (resources.minerals || 0) + amount,
                         data: (resources.data || 0) + amount,
                         artifacts: (resources.artifacts || 0) + amount,
-                        exoticMinerals: (resources.exoticMinerals || 0) + amount,
-                        researchPoints: (resources.researchPoints || 0) + 10
+                        exoticMinerals: (resources.exoticMinerals || 0) + amount
                     }, this.eventBus);
                     console.log(`Added ${amount} to all resources`);
                 } else {
@@ -912,41 +908,6 @@ class GameController {
                 }
             }
         });
-
-        // Research modal buttons
-        const openResearchLabBtn = document.getElementById('openResearchLab');
-        if (openResearchLabBtn) {
-            openResearchLabBtn.addEventListener('click', () => {
-                document.getElementById('researchUnlockModal').classList.remove('active');
-                this.showScreen('researchScreen');
-                this.eventBus.emit('research:showTree');
-            });
-        }
-
-        const researchLaterBtn = document.getElementById('researchLater');
-        if (researchLaterBtn) {
-            researchLaterBtn.addEventListener('click', () => {
-                document.getElementById('researchUnlockModal').classList.remove('active');
-                this.showScreen('mapScreen');
-            });
-        }
-
-        // Return to map from research screen button
-        const returnToMapFromResearchBtn = document.getElementById('returnToMapFromResearch');
-        if (returnToMapFromResearchBtn) {
-            returnToMapFromResearchBtn.addEventListener('click', () => {
-                this.showScreen('mapScreen');
-            });
-        }
-
-        // Research button in header
-        const researchBtn = document.getElementById('researchBtn');
-        if (researchBtn) {
-            researchBtn.addEventListener('click', () => {
-                this.showScreen('researchScreen');
-                this.eventBus.emit('research:showTree');
-            });
-        }
 
         // Sector Report button
         const sectorReportBtn = document.getElementById('sectorReportBtn');
@@ -1910,20 +1871,6 @@ class GameController {
             console.log(`Showing screen: ${screenId}`);
             targetScreen.classList.add('active');
             
-            // Only apply special positioning for the research screen
-            if (screenId === 'researchScreen') {
-                // Force to front but keep resource bar visible
-                targetScreen.style.zIndex = '10000';
-                targetScreen.style.position = 'fixed';
-                targetScreen.style.top = '80px'; // Below resource bar
-                targetScreen.style.left = '0';
-                targetScreen.style.width = '100vw';
-                targetScreen.style.height = 'calc(100vh - 80px)'; // Account for resource bar
-                targetScreen.style.backgroundColor = '#000'; // Solid black background
-                targetScreen.style.overflow = 'auto'; // Allow scrolling if needed
-                targetScreen.style.padding = '20px'; // Add some padding
-            }
-            
             // Check computed style
             const computedStyle = window.getComputedStyle(targetScreen);
             console.log(`Screen ${screenId} computed display:`, computedStyle.display);
@@ -2359,6 +2306,9 @@ class GameController {
         // Update flow beads (sim-time)
         this.flowBeadSystem.update(deltaTime);
 
+        // Update the Uplink decode stream (sim-time)
+        this.uplinkSystem.update(deltaTime);
+
         // Update deposits (lazy sector generation + rate-token refill)
         this.depositSystem.update(deltaTime);
 
@@ -2415,6 +2365,9 @@ class GameController {
 
         // Flow beads ride above the network they illuminate
         this.flowBeadSystem.render(this.ctx, this.gameState.world.viewOffset);
+
+        // Uplink dish arc on the home hub while decoding
+        this.uplinkSystem.render(this.ctx, this.gameState.world.viewOffset);
 
         // Render Remnant NPCs
         if (this.remnantManager) {
@@ -4048,7 +4001,7 @@ class GameController {
                         <div style="color: #aaa; font-size: 12px; line-height: 1.4;">
                             ${slotInfo.date} ${slotInfo.time}<br>
                             Probethium: <span style="color: #c9f;">${slotInfo.probethium}</span><br>
-                            Sectors: ${slotInfo.sectors} • Research: ${slotInfo.research}
+                            Sectors: ${slotInfo.sectors} • Protocols: ${slotInfo.protocols}
                         </div>
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 8px;">
@@ -4389,70 +4342,13 @@ class GameController {
     }
 
     /**
-     * Handle research completion to update probe equipment
+     * A protocol finished decoding at the Uplink — refresh anything gated on it
      */
-    onResearchCompleted(node) {
-        // Check if this is an auto-collection research
-        const autoCollectionResearch = ['auto_minerals', 'auto_data', 'auto_artifacts', 'auto_all'];
-        if (autoCollectionResearch.includes(node.id)) {
-            console.log(`Auto-collection research completed: ${node.id}`);
-            this.updateAllProbeEquipment();
-        }
-    }
-
-    /**
-     * Update all probe equipment to include newly researched collection types
-     */
-    updateAllProbeEquipment() {
-        const probes = this.gameState.entities.probes.filter(probe => probe.equipment && probe.equipment.type === 'auto_collector');
-        
-        if (probes.length === 0) {
-            console.log('No probes with auto-collectors found');
-            return;
-        }
-
-        console.log(`Updating equipment for ${probes.length} probes with auto-collectors`);
-        
-        probes.forEach(probe => {
-            const oldCollectionTypes = [...probe.equipment.collectionTypes];
-            
-            // Recalculate available collection types based on current research
-            const research = this.gameState.getResearchSystem();
-            const availableTypes = [];
-            if (research.researched.has('auto_minerals')) availableTypes.push('minerals');
-            if (research.researched.has('auto_data')) availableTypes.push('data');
-            if (research.researched.has('auto_artifacts')) availableTypes.push('artifacts');
-            
-            // Update the equipment
-            probe.equipment.availableTypes = availableTypes;
-            
-            // If universal collection is researched, set collection to 'all'
-            if (research.researched.has('auto_all')) {
-                probe.equipment.collectionTypes = ['all'];
-            } else {
-                // Add new collection types to existing ones (don't remove existing preferences)
-                const currentTypes = probe.equipment.collectionTypes;
-                const updatedTypes = [...new Set([...currentTypes, ...availableTypes])];
-                probe.equipment.collectionTypes = updatedTypes;
-            }
-            
-            console.log(`Updated probe ${probe.id} equipment:`, {
-                old: oldCollectionTypes,
-                new: probe.equipment.collectionTypes,
-                available: availableTypes
-            });
-        });
-        
-        // Update UI for any selected probe
+    onProtocolDecoded(id) {
+        // Equipment availability may have changed (harvest/universal lattice)
         if (this.gameState.ui.selectedProbe) {
             this.uiManager.updateEquipmentDisplay(this.gameState.ui.selectedProbe);
         }
-        
-        // Show notification
-        this.eventBus.emit('ui:message', { 
-            text: 'Probe equipment updated with new collection capabilities!', 
-            type: 'success' 
-        });
     }
 
     /**

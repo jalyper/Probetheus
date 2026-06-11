@@ -272,29 +272,16 @@ test.describe('Shell Bonus Wiring - Station & Hub', () => {
         expect(result.fasterWithBonus).toBe(true);
     });
 
-    test('HBON-01: researchSpeed shell bonus reduces research cost', async ({ page }) => {
+    test('HBON-01: researchSpeed shell bonus accelerates Uplink decoding', async ({ page }) => {
         await startGame(page);
 
         const result = await page.evaluate(() => {
             const gs = window.game.gameState;
             const ss = window.game.shellSystem;
-            const rm = window.game.researchManager;
+            const sys = window.game.uplinkSystem;
 
-            // Unlock research and collection tree
-            const research = gs.getResearchSystem();
-            research.unlocked = true;
-            research.unlockedTrees = ['collection'];
-
-            // Give plenty of research points
-            research.points = 20;
-
-            // Find a research node that hasn't been researched and costs > 1
-            const testNode = research.tree['auto_minerals']; // cost: 1
-            testNode.available = true;
-            testNode.researched = false;
-            // Use 'collection' node as parent (needs to be researched first)
-            research.tree['collection'].researched = true;
-            research.researched.add('collection');
+            // Baseline decode rate with default shells
+            const baseRate = sys.decodeRatePerMin();
 
             // Equip a shell with researchSpeed bonus
             const catalog = window.SHELL_CATALOG;
@@ -308,59 +295,25 @@ test.describe('Shell Bonus Wiring - Station & Hub', () => {
             }
 
             const bonusValue = ss.getEntityBonus('hubs', null, 'researchSpeed');
+            const boostedRate = sys.decodeRatePerMin();
 
-            // Use a node with higher cost to see the effect
-            const higherCostNode = research.tree['rarity_legendary']; // cost: 12
-            if (higherCostNode) {
-                higherCostNode.available = true;
-                higherCostNode.researched = false;
-
-                const pointsBefore = research.points;
-                rm.researchNode(higherCostNode);
-                const pointsAfter = research.points;
-                const actualCost = pointsBefore - pointsAfter;
-
-                // Cleanup
-                gs.cosmetics.equippedShells.hubs = 'default';
-
-                return {
-                    bonusValue,
-                    shellFound: !!shellWithBonus,
-                    originalCost: higherCostNode.cost,
-                    actualCost,
-                    costReduced: shellWithBonus ? actualCost < higherCostNode.cost : null
-                };
-            }
-
+            // Cleanup
             gs.cosmetics.equippedShells.hubs = 'default';
-            return { error: 'No suitable research node found' };
+
+            return {
+                baseRate,
+                boostedRate,
+                bonusValue,
+                shellFound: !!shellWithBonus
+            };
         });
 
         expect(result.error).toBeUndefined();
         expect(result.shellFound).toBe(true);
         expect(result.bonusValue).toBeGreaterThan(0);
-        expect(result.costReduced).toBe(true);
-        expect(result.actualCost).toBeLessThan(result.originalCost);
-    });
-
-    test('HBON-01: researchSpeed minimum cost is 1 (never free)', async ({ page }) => {
-        await startGame(page);
-
-        const result = await page.evaluate(() => {
-            const gs = window.game.gameState;
-            const research = gs.getResearchSystem();
-
-            // Even with 100% bonus, minimum cost should be 1
-            // Test the formula directly
-            const cost = 1;
-            const bonusPercent = 100; // Max possible bonus
-            const effectiveCost = Math.max(1, Math.ceil(cost * (1 - bonusPercent / 100)));
-
-            return { effectiveCost };
-        });
-
-        // Even with 100% reduction on a cost-1 node, floor is 1
-        expect(result.effectiveCost).toBe(1);
+        // Decode rate multiplied by (1 + bonus/100)
+        expect(result.boostedRate).toBeCloseTo(result.baseRate * (1 + result.bonusValue / 100), 5);
+        expect(result.boostedRate).toBeGreaterThan(result.baseRate);
     });
 
     test('HBON-01: researchSpeed defaults to 0 with no shell equipped', async ({ page }) => {

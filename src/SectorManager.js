@@ -130,16 +130,9 @@ class SectorManager {
                     sector.resourceProfile = this.assignResourceProfile(x, y);
                 }
                 
-                // Award research point for sector discovery
-                const research = this.gameState.getResearchSystem();
-                research.points += 1;
-                console.log(`Research point awarded for discovering ${sector.name}! Total points: ${research.points}`);
-                
-                // Update Probethium stats
+                // Update Probethium stats (research points died with the Lab —
+                // discovery's reward is the territory itself)
                 this.gameState.updateProbethiumStats('sector_discovered');
-                
-                // Emit event to trigger research unlock check
-                this.eventBus.emit('research:pointAwarded', { source: 'sector_discovery' });
 
                 // Canonical discovery event (SFX, dashboard, future completion tracking)
                 this.eventBus.emit('sector:discovered', { sector, x, y });
@@ -255,14 +248,6 @@ class SectorManager {
         world.sectors.set(`${x},${y}`, sector);
         
         if (discovered) {
-            // Award research point for sector discovery
-            const research = this.gameState.getResearchSystem();
-            research.points += 1;
-            console.log(`Research point awarded for discovering new ${name}! Total points: ${research.points}`);
-            
-            // Emit event to trigger research unlock check
-            this.eventBus.emit('research:pointAwarded', { source: 'sector_discovery' });
-
             this.showSectorDiscovery(selectedType, name, sector);
             this.spawnDiscoveryBonusSignals(x, y, selectedType);
         }

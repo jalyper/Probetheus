@@ -38,10 +38,6 @@ class UIManager {
         this.eventBus.on('ui:buildingModeChanged', this.onBuildingModeChanged.bind(this));
         this.eventBus.on('probe:statusChanged', this.updateProbePanel.bind(this));
         this.eventBus.on('ui:probeDestroyed', this.onProbeDestroyed.bind(this));
-        this.eventBus.on('research:milestone', this.onMilestoneAchieved.bind(this));
-        this.eventBus.on('research:pointAwarded', this.onResearchPointAwarded.bind(this));
-        // Listen for tutorial system to trigger research unlock check
-        this.eventBus.on('tutorial:checkResearchUnlock', this.checkResearchUnlock.bind(this));
     }
 
     /**
@@ -424,7 +420,7 @@ class UIManager {
                 align-items: center;
                 justify-content: center;
                 opacity: 0.5;
-            " title="Locked - Upgrade via research">
+            " title="Locked - expand via Uplink protocols">
                 <span style="color: #666; font-size: 14px;">🔒</span>
             </div>
         `;
@@ -601,23 +597,20 @@ class UIManager {
             }
 
             if (equipmentActions) {
-                // Check if auto-collection research is unlocked
-                const research = this.gameState.getResearchSystem();
-                const hasAutoCollection = research.researched.has('auto_minerals') ||
-                                        research.researched.has('auto_data') ||
-                                        research.researched.has('auto_artifacts') ||
-                                        research.researched.has('auto_all');
+                // Collector modules unlock via Uplink protocols (REBUILD.md §1)
+                const hasCollectors = this.gameState.hasProtocol('harvest_lattice') ||
+                                      this.gameState.hasProtocol('universal_lattice');
 
-                if (hasAutoCollection) {
+                if (hasCollectors) {
                     equipmentActions.innerHTML = `
                         <button class="control-btn" style="font-size: 11px; padding: 6px 12px;"
                                 onclick="window.game.detailsPanel.showEquipmentModal(window.game.gameState.entities.probes.find(p => p.id === '${probe.id}'))"
                                 title="Open equipment management">
-                            🔧 Manage Equipment
+                            Manage Equipment
                         </button>
                     `;
                 } else {
-                    equipmentActions.innerHTML = '<div style="color: #666; font-size: 10px; text-align: center; line-height: 1.3;">Research Auto-Collect technology to unlock equipment</div>';
+                    equipmentActions.innerHTML = '<div style="color: var(--mist); font-size: 10px; text-align: center; line-height: 1.3;">Decode the Harvest Lattice protocol at the Uplink to unlock equipment</div>';
                 }
             }
         }
@@ -714,7 +707,6 @@ class UIManager {
         this.updateControlButtons();
         this.updateSectorInfo();
         this.updateProbePanel();
-        this.checkResearchUnlock();
 
         // Update equipment slots if probe panel is visible
         if (this.elements.probeDetailPanel &&
@@ -1024,387 +1016,6 @@ class UIManager {
         // Note: This method is kept for compatibility but panels are now handled by DetailsPanel system
         // Old panels are positioned at fixed locations to avoid conflicts
         return;
-    }
-
-    /**
-     * Check if research should be unlocked based on having research points
-     * Research is gated by the tutorial system - it can only unlock after certain tutorial progress
-     */
-    checkResearchUnlock() {
-        const research = this.gameState.getResearchSystem();
-
-        // Always ensure unlocked trees are set if research is already unlocked
-        if (research.unlocked && research.unlockedTrees.length === 0) {
-            console.log('Research is unlocked but trees are not set, fixing...');
-            research.unlockedTrees = ['collection', 'probe', 'alien'];
-        }
-
-        // Check if tutorial allows research access
-        const tutorialManager = this.gameState.tutorialManager;
-        const researchAccessAllowed = !tutorialManager || tutorialManager.isResearchAccessAllowed();
-
-        // Check if research should be unlocked (player has points AND tutorial allows it)
-        if (!research.unlocked && research.points > 0 && researchAccessAllowed) {
-            research.unlocked = true;
-
-            // Unlock ALL three trees at once
-            research.unlockedTrees = ['collection', 'probe', 'alien'];
-
-            // Auto-research all three root nodes
-            const rootNodes = ['collection', 'probe_tech', 'alien_tech'];
-            rootNodes.forEach(rootId => {
-                const rootNode = research.tree[rootId];
-                if (rootNode && !rootNode.researched) {
-                    rootNode.researched = true;
-                    research.researched.add(rootId);
-
-                    // Unlock children
-                    if (rootNode.children) {
-                        rootNode.children.forEach(childId => {
-                            const childNode = research.tree[childId];
-                            if (childNode) childNode.available = true;
-                        });
-                    }
-                    console.log(`Auto-researched root node: ${rootId}`);
-                }
-            });
-
-            // Show research button
-            const researchBtn = document.getElementById('researchBtn');
-            if (researchBtn) {
-                researchBtn.style.display = 'inline-block';
-            }
-
-            // Emit event for tutorial system
-            this.eventBus.emit('research:unlocked');
-
-            // Show research unlocked message and automatically open research modal
-            this.showResearchUnlockModal();
-            console.log('Research system unlocked! All three trees and root nodes are now available.');
-        }
-
-        // Ensure research button is visible if research is already unlocked (e.g., after loading save)
-        // But only if tutorial allows access
-        if (research.unlocked && researchAccessAllowed) {
-            const researchBtn = document.getElementById('researchBtn');
-            if (researchBtn) {
-                researchBtn.style.display = 'inline-block';
-            }
-        }
-
-        // Show sector report button if any sectors are explored
-        const world = this.gameState.getWorld();
-        if (world && world.sectors) {
-            let hasExplored = false;
-            world.sectors.forEach(s => { if (s.explored) hasExplored = true; });
-            if (hasExplored) {
-                const sectorReportBtn = document.getElementById('sectorReportBtn');
-                if (sectorReportBtn) sectorReportBtn.style.display = 'inline-block';
-            }
-        }
-    }
-
-
-    /**
-     * Animate research points display
-     */
-    animateResearchPoints() {
-        const researchPointsElement = document.getElementById('researchPoints');
-        if (researchPointsElement) {
-            researchPointsElement.textContent = this.gameState.getResearchSystem().points;
-            // Add visual flourish
-            researchPointsElement.style.animation = 'none';
-            setTimeout(() => {
-                researchPointsElement.style.animation = 'pulse 0.5s ease-in-out';
-            }, 10);
-        }
-    }
-
-    /**
-     * Handle milestone achievement event
-     */
-    onMilestoneAchieved(data) {
-        const { resourceType, threshold } = data;
-        
-        // Update research points display
-        this.animateResearchPoints();
-        
-        // Check if research should be unlocked (first research point)
-        this.checkResearchUnlock();
-        
-        // Update UI to show new research points
-        this.updateUI();
-        
-        console.log(`Milestone event handled: ${resourceType} ${threshold}`);
-    }
-
-    /**
-     * Handle research point awarded event
-     */
-    onResearchPointAwarded(data) {
-        const { source } = data;
-        
-        // Update research points display
-        this.animateResearchPoints();
-        
-        // Show alert for research point earned with context
-        let alertText = '🎯 +1 Research Point!';
-        if (source === 'sector_discovery') {
-            alertText = '🎯 +1 Research Point! (Sector Discovery)';
-        } else if (source === 'milestone') {
-            alertText = '🎯 +1 Research Point! (Milestone)';
-        } else if (source === 'tree_unlock') {
-            alertText = '🎯 +1 Research Point! (New Research Tree)';
-        }
-        this.showAlert(alertText, 'success');
-        
-        // Check if research should be unlocked (first research point)
-        this.checkResearchUnlock();
-        
-        // Update UI to show new research points
-        this.updateUI();
-        
-        console.log(`Research point awarded from: ${source}`);
-    }
-
-    /**
-     * Unlock a specific research tree
-     */
-    unlockResearchTree(treeType, treeName, treeIcon, isPrimary = true) {
-        const research = this.gameState.getResearchSystem();
-        
-        // Add the tree to unlocked trees
-        if (!research.unlockedTrees.includes(treeType)) {
-            research.unlockedTrees.push(treeType);
-        }
-        
-        if (!research.unlocked) {
-            // First research unlock
-            research.unlocked = true;
-            research.points = 1; // Award 1 research point for first unlock
-            
-            // Automatically research the root node of the primary tree
-            const rootNodeId = this.getRootNodeId(treeType);
-            if (rootNodeId) {
-                research.researched.add(rootNodeId);
-                const rootNode = research.tree[rootNodeId];
-                if (rootNode) {
-                    rootNode.researched = true;
-                    // Unlock child nodes
-                    this.unlockChildNodes(rootNode, research);
-                }
-                console.log(`Auto-researched root node: ${rootNodeId}`);
-            }
-            
-            const researchBtn = document.getElementById('researchBtn');
-            if (researchBtn) {
-                researchBtn.style.display = 'inline-block';
-            }
-            
-            console.log(`Research unlocked: ${treeName} tree (${treeType}) - Primary unlock`);
-            
-            // Show specialized research unlock modal for primary unlock
-            this.showResearchUnlockModal(treeType, treeName, treeIcon);
-        } else if (!isPrimary) {
-            // Additional tree unlock
-            research.points += 1; // Award 1 research point for additional tree
-            
-            // Emit research point awarded event for alert display
-            this.eventBus.emit('research:pointAwarded', { source: 'tree_unlock' });
-            
-            // Automatically research the root node of the additional tree
-            const rootNodeId = this.getRootNodeId(treeType);
-            if (rootNodeId) {
-                research.researched.add(rootNodeId);
-                const rootNode = research.tree[rootNodeId];
-                if (rootNode) {
-                    rootNode.researched = true;
-                    // Unlock child nodes
-                    this.unlockChildNodes(rootNode, research);
-                }
-                console.log(`Auto-researched root node: ${rootNodeId}`);
-            }
-            
-            console.log(`Additional research tree unlocked: ${treeName} tree (${treeType})`);
-            
-            // Show notification for additional tree unlock
-            this.eventBus.emit('ui:message', { 
-                text: `New Research Tree Unlocked: ${treeName} (+1 RP)`, 
-                type: 'success' 
-            });
-            
-            // Optional: Show brief notification modal or update research points display
-            const researchPointsElement = document.getElementById('researchPoints');
-            if (researchPointsElement) {
-                researchPointsElement.textContent = research.points;
-                // Add visual flourish
-                researchPointsElement.style.animation = 'none';
-                setTimeout(() => {
-                    researchPointsElement.style.animation = 'pulse 0.5s ease-in-out';
-                }, 10);
-            }
-        }
-    }
-
-    /**
-     * Get the root node ID for a research tree type
-     */
-    getRootNodeId(treeType) {
-        const treeRootMapping = {
-            'collection': 'collection',
-            'probe': 'probe_tech',
-            'alien': 'alien_tech'
-        };
-        return treeRootMapping[treeType];
-    }
-
-    /**
-     * Unlock child nodes when parent is researched
-     */
-    unlockChildNodes(parentNode, research) {
-        if (parentNode.children) {
-            parentNode.children.forEach(childId => {
-                const childNode = research.tree[childId];
-                if (childNode) {
-                    // Special case for auto_all which requires all three parents
-                    if (childId === 'auto_all') {
-                        const requiredParents = ['auto_minerals', 'auto_data', 'auto_artifacts'];
-                        const allParentsResearched = requiredParents.every(parentId => 
-                            research.researched.has(parentId)
-                        );
-                        childNode.available = allParentsResearched;
-                    } else {
-                        childNode.available = true;
-                    }
-                }
-            });
-        }
-    }
-
-    /**
-     * Show research unlock modal
-     */
-    showResearchUnlockModal() {
-        const modal = document.getElementById('researchUnlockModal');
-        if (!modal) return;
-        
-        // Update modal content to show all three trees
-        const modalContent = modal.querySelector('.modal-content');
-        if (modalContent) {
-            const descriptions = {
-                'collection': {
-                    subtitle: 'Automated Resource Collection',
-                    description: 'Master the art of automated resource gathering.',
-                    icon: '📦',
-                    color: '#0ff'
-                },
-                'probe': {
-                    subtitle: 'Advanced Probe Engineering', 
-                    description: 'Push the boundaries of probe technology.',
-                    icon: '🛸',
-                    color: '#4f4'
-                },
-                'alien': {
-                    subtitle: 'Reverse-Engineered Alien Tech',
-                    description: 'Unlock the mysteries of alien artifacts.',
-                    icon: '👽',
-                    color: '#f4f'
-                }
-            };
-            
-            modalContent.innerHTML = `
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <div style="font-size: 48px; margin-bottom: 15px;">🔬</div>
-                    <h1 style="color: #0ff; margin: 0 0 10px 0; font-size: 28px; text-shadow: 0 0 20px #0ff80;">
-                        RESEARCH LABORATORY
-                    </h1>
-                    <h2 style="color: #ff0; margin: 0 0 5px 0; font-size: 20px;">UNLOCKED!</h2>
-                    <div style="color: #888; font-size: 14px;">Three Specialization Trees Now Available</div>
-                </div>
-                
-                <div style="background: rgba(0,255,255,0.05); border: 1px solid rgba(0,255,255,0.3); border-radius: 10px; padding: 20px; margin-bottom: 25px;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
-                        <div style="color: #0ff; font-size: 16px; font-weight: bold;">🎯 Research Points Awarded</div>
-                        <div style="color: #0f0; font-size: 20px; font-weight: bold;">+1 RP</div>
-                    </div>
-                    <div style="color: #aaa; font-size: 13px; line-height: 1.4;">
-                        Your scientific breakthrough has unlocked three distinct research paths. Choose your specializations wisely!
-                    </div>
-                </div>
-                
-                <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px; margin-bottom: 25px;">
-                    <div style="color: #0ff; font-size: 14px; font-weight: bold; margin-bottom: 15px;">Available Research Trees:</div>
-                    
-                    <!-- Collection Tree -->
-                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 12px;">
-                        <div style="width: 40px; height: 40px; border: 2px solid ${descriptions.collection.color}; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: ${descriptions.collection.color}20;">
-                            <span style="font-size: 16px;">${descriptions.collection.icon}</span>
-                        </div>
-                        <div style="flex: 1;">
-                            <div style="color: #fff; font-size: 13px; font-weight: bold;">Collection Specialization</div>
-                            <div style="color: #888; font-size: 11px;">${descriptions.collection.description}</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Probe Tree -->
-                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 12px;">
-                        <div style="width: 40px; height: 40px; border: 2px solid ${descriptions.probe.color}; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: ${descriptions.probe.color}20;">
-                            <span style="font-size: 16px;">${descriptions.probe.icon}</span>
-                        </div>
-                        <div style="flex: 1;">
-                            <div style="color: #fff; font-size: 13px; font-weight: bold;">Probe Technology</div>
-                            <div style="color: #888; font-size: 11px;">${descriptions.probe.description}</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Alien Tree -->
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <div style="width: 40px; height: 40px; border: 2px solid ${descriptions.alien.color}; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: ${descriptions.alien.color}20;">
-                            <span style="font-size: 16px;">${descriptions.alien.icon}</span>
-                        </div>
-                        <div style="flex: 1;">
-                            <div style="color: #fff; font-size: 13px; font-weight: bold;">Alien Technology</div>
-                            <div style="color: #888; font-size: 11px;">${descriptions.alien.description}</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div style="display: flex; gap: 15px; justify-content: center;">
-                    <button id="openResearchLab" class="control-btn" style="background: linear-gradient(135deg, #0ff 0%, #0ff80 100%); border-color: #0ff; font-size: 14px; padding: 12px 24px; text-shadow: 0 0 10px #0ff80;">
-                        🔬 Enter Research Lab
-                    </button>
-                    <button id="researchLater" class="control-btn" style="font-size: 14px; padding: 12px 24px;">
-                        Continue Exploring
-                    </button>
-                </div>
-            `;
-        }
-        
-        modal.classList.add('active');
-        
-        // Add event listeners to the new buttons
-        setTimeout(() => {
-            const openResearchLabBtn = document.getElementById('openResearchLab');
-            const researchLaterBtn = document.getElementById('researchLater');
-            
-            if (openResearchLabBtn) {
-                openResearchLabBtn.addEventListener('click', () => {
-                    modal.classList.remove('active');
-                    this.eventBus.emit('ui:switchScreen', { screen: 'research' });
-                });
-            }
-            
-            if (researchLaterBtn) {
-                researchLaterBtn.addEventListener('click', () => {
-                    modal.classList.remove('active');
-                });
-            }
-            
-            // Add some dramatic effects
-            if (modalContent) {
-                modalContent.style.animation = 'researchUnlock 1s ease-out';
-            }
-        }, 100);
     }
 
     /**

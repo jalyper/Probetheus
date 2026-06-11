@@ -197,7 +197,10 @@ class DepositSystem {
         const space = Math.max(0, capacity - used);
         if (space === 0) return 0;
 
-        const granted = Math.min(deposit.richness, Math.floor(deposit.tokens), space);
+        // Extraction Harmonics protocol (Uplink): +1 yield per pass,
+        // still bounded by the deposit's rate cap and cargo space
+        const harmonics = this.gameState.hasProtocol('extraction_harmonics') ? 1 : 0;
+        const granted = Math.min(deposit.richness + harmonics, Math.floor(deposit.tokens), space);
         if (granted <= 0) return 0;
 
         deposit.tokens -= granted;

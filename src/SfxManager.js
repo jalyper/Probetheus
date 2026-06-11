@@ -142,8 +142,8 @@ class SfxManager {
             this.tone({ freq: 140, freqEnd: 90, type: 'triangle', dur: 0.15, vol: 0.35 });
         });
 
-        // Research complete — three-note fanfare
-        bus.on('research:completed', () => {
+        // Uplink protocol decoded — three-note fanfare
+        bus.on('uplink:decoded', () => {
             this.tone({ freq: 523.25, type: 'triangle', dur: 0.12, vol: 0.3 });
             this.tone({ freq: 659.25, type: 'triangle', dur: 0.12, vol: 0.3, delay: 0.1 });
             this.tone({ freq: 783.99, type: 'triangle', dur: 0.22, vol: 0.3, delay: 0.2 });

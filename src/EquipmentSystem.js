@@ -3,6 +3,8 @@
  * Defines equipment types and handles equipment slot management
  */
 
+// Collector modules unlock via Uplink protocols (REBUILD.md §1):
+// Harvest Lattice opens the typed collectors; Universal Lattice the universal.
 const EQUIPMENT_TYPES = {
     mineral_collector: {
         id: 'mineral_collector',
@@ -11,7 +13,7 @@ const EQUIPMENT_TYPES = {
         collectionTypes: ['minerals'],
         slotsRequired: 1,
         cost: 25,
-        requiredResearch: 'auto_minerals'
+        requiredProtocol: 'harvest_lattice'
     },
     data_collector: {
         id: 'data_collector',
@@ -20,7 +22,7 @@ const EQUIPMENT_TYPES = {
         collectionTypes: ['data'],
         slotsRequired: 1,
         cost: 25,
-        requiredResearch: 'auto_data'
+        requiredProtocol: 'harvest_lattice'
     },
     artifact_collector: {
         id: 'artifact_collector',
@@ -29,7 +31,7 @@ const EQUIPMENT_TYPES = {
         collectionTypes: ['artifacts'],
         slotsRequired: 1,
         cost: 25,
-        requiredResearch: 'auto_artifacts'
+        requiredProtocol: 'harvest_lattice'
     },
     universal_collector: {
         id: 'universal_collector',
@@ -38,7 +40,7 @@ const EQUIPMENT_TYPES = {
         collectionTypes: ['all'],
         slotsRequired: 1,
         cost: 50,
-        requiredResearch: 'auto_all',
+        requiredProtocol: 'universal_lattice',
         tier: 'advanced'
     }
 };
@@ -64,19 +66,12 @@ class EquipmentSystem {
     }
 
     /**
-     * Get available equipment based on research unlocks
+     * Get available equipment based on decoded Uplink protocols
      */
     getAvailableEquipment() {
-        const research = this.gameState.getResearchSystem();
-        const available = [];
-
-        Object.values(EQUIPMENT_TYPES).forEach(equipment => {
-            if (research.researched.has(equipment.requiredResearch)) {
-                available.push(equipment);
-            }
-        });
-
-        return available;
+        return Object.values(EQUIPMENT_TYPES).filter(equipment =>
+            this.gameState.hasProtocol(equipment.requiredProtocol)
+        );
     }
 
     /**
@@ -88,10 +83,9 @@ class EquipmentSystem {
             return { canEquip: false, reason: 'Unknown equipment type' };
         }
 
-        // Check research unlock
-        const research = this.gameState.getResearchSystem();
-        if (!research.researched.has(equipment.requiredResearch)) {
-            return { canEquip: false, reason: 'Research required' };
+        // Check protocol unlock
+        if (!this.gameState.hasProtocol(equipment.requiredProtocol)) {
+            return { canEquip: false, reason: 'Uplink protocol required' };
         }
 
         // Check slot availability

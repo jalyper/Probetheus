@@ -250,7 +250,7 @@ class DetailsPanel {
                         </svg>
                         <span style="text-decoration: underline;">S</span>huttle (50M, 25D)
                     </button>
-                    ${this.gameState.researchSystem.tree.probethium_synthesis.researched ? `
+                    ${this.gameState.hasProtocol('exotic_synthesis') ? `
                     <button id="synthesizeBtn" class="control-btn" style="font-size: 12px; padding: 8px 12px; width: 100%; display: flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #9400d3 0%, #ffd700 100%); color: #fff;">
                         <span style="font-size: 16px; flex-shrink: 0;">⚗️</span>
                         <span>Synthesize Probethium (5 Exotic)</span>
@@ -828,11 +828,9 @@ class DetailsPanel {
      * Render equipment section for probe
      */
     renderEquipmentSection(probe) {
-        const research = this.gameState.getResearchSystem();
-        const hasAnyAutoCollector = research.researched.has('auto_minerals') ||
-                                    research.researched.has('auto_data') ||
-                                    research.researched.has('auto_artifacts') ||
-                                    research.researched.has('auto_all');
+        // Collector modules unlock via Uplink protocols (REBUILD.md §1)
+        const hasAnyAutoCollector = this.gameState.hasProtocol('harvest_lattice') ||
+                                    this.gameState.hasProtocol('universal_lattice');
 
         // Get equipment array (handle both array and legacy object formats)
         const equipmentArray = Array.isArray(probe.equipment) ? probe.equipment :
@@ -909,7 +907,7 @@ class DetailsPanel {
                     align-items: center;
                     justify-content: center;
                     opacity: 0.5;
-                " title="Locked - Upgrade via research">
+                " title="Locked - expand via Uplink protocols">
                     <span style="color: #666; font-size: 14px;">🔒</span>
                 </div>
             `;
@@ -927,7 +925,7 @@ class DetailsPanel {
                     </div>
                     ${renderSlotBoxes()}
                     <div style="color: #888; font-size: 11px; text-align: center; padding: 5px;">
-                        🔒 Research auto-collection technology to unlock equipment
+                        Decode the Harvest Lattice protocol at the Uplink to unlock equipment
                     </div>
                 </div>
             `;
@@ -973,7 +971,6 @@ class DetailsPanel {
         const existingModal = document.getElementById('equipmentModal');
         if (existingModal) existingModal.remove();
 
-        const research = this.gameState.getResearchSystem();
         const resources = this.gameState.getResources();
 
         // Build available equipment list from EQUIPMENT_TYPES
@@ -987,7 +984,7 @@ class DetailsPanel {
 
         if (typeof EQUIPMENT_TYPES !== 'undefined') {
             Object.values(EQUIPMENT_TYPES).forEach(eq => {
-                if (research.researched.has(eq.requiredResearch)) {
+                if (this.gameState.hasProtocol(eq.requiredProtocol)) {
                     equipmentTypes.push({
                         ...eq,
                         icon: equipmentIcons[eq.id] || '❓'
@@ -1105,7 +1102,7 @@ class DetailsPanel {
 
                 ${equipmentTypes.length === 0 ? `
                     <div style="color: #888; text-align: center; padding: 20px;">
-                        No equipment available. Research auto-collection technologies first.
+                        No equipment available. Decode collector protocols at the Uplink first.
                     </div>
                 ` : ''}
             </div>

@@ -230,13 +230,13 @@ test.describe('M1 redesign — tempo, economy, juice, stats', () => {
     await startNewGame(page);
 
     const tutorial = await page.evaluate(() => ({
-      ids: window.game.tutorialManager.steps.map(s => s.id),
-      researchOpen: window.game.tutorialManager.isResearchAccessAllowed()
+      ids: window.game.tutorialManager.steps.map(s => s.id)
     }));
 
     expect(tutorial.ids).toEqual([
       'select_hub', 'deploy_probe', 'chart_deposit', 'tap_deposit', 'cargo_return', 'release'
     ]);
-    expect(tutorial.researchOpen).toBe(true);
+    // The Uplink replaced the gated Research Lab — its button is open from the start
+    await expect(page.locator('#uplinkBtn')).toBeVisible();
   });
 });

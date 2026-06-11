@@ -14,13 +14,14 @@ class TutorialManager {
         this.tutorialsDisabled = this.loadTutorialDisabledState();
 
         // Act 1 — The Guided Minutes (LOOP_REDESIGN.md: prospect → chart →
-        // tap → deliver). One instruction at a time, ≤2 short sentences each.
-        // Everything past the core loop is taught just-in-time via `tips`.
+        // tap → deliver). REBUILD.md §7: every step names the mechanic and the
+        // why — the tutorial teaches the numbers that run the game (rate caps,
+        // round-trip time, intake rate, decode rate), not just where to click.
         this.steps = [
             {
                 id: 'select_hub',
                 title: 'Your Hub',
-                message: 'Click your Hub — the gold hexagon.',
+                message: 'The gold hexagon is your Hub: every probe launches from it, and every load of cargo pays out at its dock. Click it to open Hub Operations.',
                 checkCondition: () => !!(this.gameState.ui?.selectedHub ||
                     this.gameState.entities.reconHubs.some(h => h.selected)),
                 completed: false
@@ -28,7 +29,7 @@ class TutorialManager {
             {
                 id: 'deploy_probe',
                 title: 'Scout',
-                message: 'Click "Deploy Probe", then click out in the dark. Its pulse will sweep for deposits.',
+                message: 'Click "Deploy Probe", then click out in the dark to set its route. As it flies, the probe pulses — any hidden deposit a pulse sweeps over raises a ping.',
                 checkCondition: () => this.gameState.entities.probes.some(p =>
                     p.active && p.waypoints && p.waypoints.length > 0),
                 completed: false
@@ -36,28 +37,28 @@ class TutorialManager {
             {
                 id: 'chart_deposit',
                 title: 'Chart',
-                message: 'A ping — your probe found something. Click it to chart the deposit.',
+                message: 'That ping marks a deposit — a permanent vein in the world. Click the ping to chart it; charted deposits never vanish and can be worked forever.',
                 checkCondition: () => this.depositCharted === true,
                 completed: false
             },
             {
                 id: 'tap_deposit',
                 title: 'Tap',
-                message: 'Deposits produce forever. Route a probe over one — enable Patrol Mode to loop it.',
+                message: 'Route a probe across a charted deposit and it extracts cargo on every pass. Each vein has a rate cap — stacking probes on one hits diminishing returns, so spread out. Enable Patrol Mode to loop the route.',
                 checkCondition: () => this.depositTapped === true,
                 completed: false
             },
             {
                 id: 'cargo_return',
                 title: 'Deliver',
-                message: 'Gold means value coming home. Cargo pays out at the hub dock.',
+                message: 'Cargo pays out at the hub dock. Your income is cargo per trip ÷ round-trip time — shorter loops from a well-placed hub literally earn more per minute.',
                 checkCondition: () => this.cargoDelivered === true,
                 completed: false
             },
             {
                 id: 'release',
                 title: 'The Loop',
-                message: 'Chart, tap, route, tune. Richer veins lie further out — and so does the Probetheus.',
+                message: 'Chart, tap, route, tune. Your hub only processes so many deliveries per minute — when probes queue at the dock, that\'s a bottleneck you can fix. Richer veins lie further out, and so does the Probetheus.',
                 checkCondition: () => this.releaseRead === true,
                 completed: false
             }
@@ -68,9 +69,6 @@ class TutorialManager {
         this.depositTapped = false;
         this.cargoDelivered = false;
         this.releaseRead = false;
-
-        // Research gating removed (ONBOARDING.md: no tutorial-only restrictions)
-        this.researchAccessAllowed = true;
 
         // Listen for relevant events
         this.eventBus.on('probe:deployed', this.checkStepCompletion.bind(this));
@@ -87,9 +85,6 @@ class TutorialManager {
         this.eventBus.on('probe:cargoDelivered', () => {
             this.cargoDelivered = true;
             this.checkStepCompletion();
-        });
-        this.eventBus.on('research:pointAwarded', () => {
-            this.eventBus.emit('tutorial:checkResearchUnlock');
         });
 
         // Also check periodically in case events don't fire
@@ -118,8 +113,10 @@ class TutorialManager {
             });
         };
 
-        on('research:pointAwarded', 'tip_research',
-            'Research Point earned. The Lab is open — milestones earn more.');
+        on('uplink:built', 'tip_uplink_feed',
+            'The Uplink streams your stored data into whichever protocol you pick. Decode speed is rate-capped — keep data flowing home and research never stalls.');
+        on('uplink:decoded', 'tip_uplink_catalysts',
+            'Protocol decoded. Deeper protocols also demand catalysts — artifacts and exotics that only exist in the outer rings.');
         on('probe:cargoDelivered', 'tip_full_cargo',
             'That probe came home stuffed — full cargo is slow cargo. Shorter routes pay faster.',
             (d) => (d?.capacityRatio || 0) >= 0.9);
@@ -132,7 +129,7 @@ class TutorialManager {
         on('remnant:spawned', 'tip_remnant',
             'Something is out there, watching. Click it… if you like.');
         on('probe:destroyed', 'tip_probe_lost',
-            'Probe lost. Asteroid fields are rich but deadly — research durability or phase tech.');
+            'Probe lost. Asteroid fields are rich but deadly — route around them, or accept the trade.');
         on('combo:chain', 'tip_combo',
             'Combo! Chained discoveries ring up bonuses — sweep dense fields in one pass.');
         on('hub:intakeQueued', 'tip_intake',
@@ -147,6 +144,11 @@ class TutorialManager {
                 this.showTip('tip_second_hub',
                     '100 minerals banked. A second Hub extends your reach — build it on an outbound route.');
             }
+            if (!this.gameState.uplink?.built && window.RECIPES &&
+                window.RecipeUtils.canAfford(window.RECIPES.uplink, resources)) {
+                this.showTip('tip_uplink_ready',
+                    'You can afford the Uplink — the dish that decodes protocols from hauled data. Open it from the Uplink button.');
+            }
             if (this.allTipsShown()) {
                 clearInterval(this.tipPollInterval);
                 this.tipPollInterval = null;
@@ -155,7 +157,8 @@ class TutorialManager {
     }
 
     allTipsShown() {
-        return this.shownTips.includes('tip_second_hub');
+        return this.shownTips.includes('tip_second_hub') &&
+               this.shownTips.includes('tip_uplink_ready');
     }
 
     showTip(id, text) {
@@ -261,14 +264,6 @@ class TutorialManager {
     }
 
     /**
-     * Research access is never tutorial-gated anymore
-     * (ONBOARDING.md: no tutorial-only restrictions). Kept for callers.
-     */
-    isResearchAccessAllowed() {
-        return true;
-    }
-
-    /**
      * Show the current tutorial step
      */
     showCurrentStep() {
@@ -365,56 +360,6 @@ class TutorialManager {
                 createdAt: Date.now(),
                 age: 0
             });
-        }
-    }
-
-    /**
-     * Open the research screen programmatically
-     */
-    openResearchScreen() {
-        if (!window.game) return;
-
-        const research = this.gameState.getResearchSystem();
-        if (!research.unlocked) {
-            research.unlocked = true;
-        }
-        if (research.unlockedTrees.length === 0) {
-            research.unlockedTrees = ['collection', 'probe', 'alien'];
-        }
-
-        const rootNodeIds = ['collection', 'probe_tech', 'alien_tech'];
-        rootNodeIds.forEach(rootId => {
-            const rootNode = research.tree[rootId];
-            if (rootNode && !rootNode.researched) {
-                rootNode.researched = true;
-                research.researched.add(rootId);
-                if (rootNode.children) {
-                    rootNode.children.forEach(childId => {
-                        const childNode = research.tree[childId];
-                        if (childNode) childNode.available = true;
-                    });
-                }
-            }
-        });
-
-        const researchBtn = document.getElementById('researchBtn');
-        if (researchBtn) {
-            researchBtn.style.display = 'inline-block';
-        }
-
-        window.game.showScreen('researchScreen');
-
-        if (window.game.researchManager) {
-            window.game.researchManager.renderResearchTree();
-
-            const collectorNodes = ['auto_minerals', 'auto_data', 'auto_artifacts'];
-            for (const nodeId of collectorNodes) {
-                const node = research.tree[nodeId];
-                if (node && node.available && !node.researched) {
-                    window.game.researchManager.showResearchDetails(node);
-                    break;
-                }
-            }
         }
     }
 

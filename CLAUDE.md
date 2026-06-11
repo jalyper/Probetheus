@@ -19,6 +19,11 @@
 ## Design Direction (2026-06-10)
 The game direction was rewritten — see `docs/design/` (start with `VISION.md`, sequencing in `EA_ROADMAP.md`). Three pillars: the network is the factory, arcade tempo, the frontier always pulls. Superseded design docs are in `docs/archive/`. New work should serve a pillar and follow the EA_ROADMAP milestone order (M1 "Feels Alive" first).
 
+## The Rebuild Slate (2026-06-11)
+User directive: invent, don't refine — sledgehammer old systems and rebuild per the pillars. The invention slate is `docs/design/REBUILD.md`; it supersedes the LOOP_REDESIGN audit verdicts where they conflict. Status:
+- **The Uplink** (replaces the Research Lab) — DONE. Research is decoded from data flow at `gameState.uplink`; catalog in `window.PROTOCOLS`; `gameState.hasProtocol(id)` gates mechanics. ResearchManager, the research screen/tree/points, the rarity ladder, and milestone RP are deleted. Tests: `tests/uplink.spec.js` (11).
+- **The Foundry** (replaces Mining Stations) — NEXT. Then Premium Chrome sweep, Solar Drift, Resonance, Carrier Signal (build order in REBUILD.md).
+
 ## Current Priority Tasks
 1. **M1 "Feels Alive"** (see `docs/design/EA_ROADMAP.md`): Probethium rebalance, tempo + time controls, SFX/combo juice, cargo system, new onboarding, Dark Market fix
 2. **M2 "Read Your Network"**: throughput dashboard, bottleneck visuals, route copying, sector completion, viewport culling

@@ -5,7 +5,7 @@ import { test, expect } from '@playwright/test';
  * 
  * These tests ensure the save/load functionality is bulletproof by testing:
  * 1. Basic save/load operations
- * 2. Research progress persistence 
+ * 2. Uplink protocol progress persistence
  * 3. Probe equipment state management
  * 4. Cross-session state consistency
  * 5. Error handling and recovery
@@ -130,43 +130,30 @@ test.describe('Save System Integrity', () => {
     await expect(page.locator('#artifacts')).toContainText('25');
   });
 
-  test('research progress persists across save/load cycles', async ({ page }) => {
-    // Add research points and unlock research
+  test('uplink protocol progress persists across save/load cycles', async ({ page }) => {
+    // Build the Uplink and decode a protocol with partial progress on another
     await page.evaluate(() => {
-      const research = window.game.gameState.getResearchSystem();
-      research.points = 5;
-      research.unlocked = true;
-      research.unlockedTrees = ['collection', 'probe', 'alien'];
-
-      // Bypass tutorial gate for research access
-      if (window.game.tutorialManager) {
-        window.game.tutorialManager.researchAccessAllowed = true;
-      }
-
-      // Manually research a node
-      const node = research.tree['auto_minerals'];
-      if (node) {
-        node.researched = true;
-        research.researched.add('auto_minerals');
-        research.points -= 1;
-      }
+      const uplink = window.game.gameState.getUplink();
+      uplink.built = true;
+      uplink.level = 2;
+      uplink.active = 'deep_resonance';
+      uplink.progress = { deep_resonance: 12.5 };
+      uplink.decoded.add('harvest_lattice');
+      uplink.paid.add('harvest_lattice');
 
       window.uiManager.updateUI();
     });
 
-    // Verify research button is visible
-    await expect(page.locator('#researchBtn')).toBeVisible();
-
-    // Verify research state
-    const researchPoints = await page.evaluate(() => {
-      return window.game.gameState.getResearchSystem().points;
+    // Verify uplink state
+    const decodedBefore = await page.evaluate(() => {
+      return Array.from(window.game.gameState.getUplink().decoded);
     });
-    expect(researchPoints).toBe(4);
+    expect(decodedBefore).toContain('harvest_lattice');
 
-    const researchedNodes = await page.evaluate(() => {
-      return Array.from(window.game.gameState.getResearchSystem().researched);
+    const hasProtocol = await page.evaluate(() => {
+      return window.game.gameState.hasProtocol('harvest_lattice');
     });
-    expect(researchedNodes).toContain('auto_minerals');
+    expect(hasProtocol).toBe(true);
 
     // Save game programmatically for reliability
     const saveResult = await page.evaluate(async () => {
@@ -179,25 +166,20 @@ test.describe('Save System Integrity', () => {
     });
     expect(saveResult.success).toBe(true);
 
-    // Modify research state
+    // Scramble uplink state
     await page.evaluate(() => {
-      const research = window.game.gameState.getResearchSystem();
-      research.points = 0;
-      research.researched.clear();
-      research.unlocked = false;
-
-      // Also hide the research button explicitly for testing
-      const researchBtn = document.getElementById('researchBtn');
-      if (researchBtn) {
-        researchBtn.style.display = 'none';
-      }
-
+      window.game.gameState.uplink = {
+        built: false, level: 1, active: null,
+        progress: {}, paid: new Set(), decoded: new Set()
+      };
       window.uiManager.updateUI();
     });
 
-    // Verify research was cleared - wait a bit for UI to update
-    await page.waitForTimeout(500);
-    await expect(page.locator('#researchBtn')).not.toBeVisible();
+    // Verify uplink was cleared
+    const clearedProtocol = await page.evaluate(() => {
+      return window.game.gameState.hasProtocol('harvest_lattice');
+    });
+    expect(clearedProtocol).toBe(false);
 
     // Load save programmatically
     const loadResult = await page.evaluate(async () => {
@@ -211,26 +193,26 @@ test.describe('Save System Integrity', () => {
     expect(loadResult.success).toBe(true);
     await page.waitForTimeout(500);
 
-    // Verify research was restored
-    await expect(page.locator('#researchBtn')).toBeVisible();
-
-    const restoredPoints = await page.evaluate(() => {
-      return window.game.gameState.getResearchSystem().points;
+    // Verify the full uplink state was restored
+    const restored = await page.evaluate(() => {
+      const uplink = window.game.gameState.getUplink();
+      return {
+        built: uplink.built,
+        level: uplink.level,
+        active: uplink.active,
+        progress: uplink.progress.deep_resonance,
+        decoded: Array.from(uplink.decoded),
+        paid: Array.from(uplink.paid),
+        hasProtocol: window.game.gameState.hasProtocol('harvest_lattice')
+      };
     });
-    expect(restoredPoints).toBe(4);
-
-    const restoredNodes = await page.evaluate(() => {
-      return Array.from(window.game.gameState.getResearchSystem().researched);
-    });
-    expect(restoredNodes).toContain('auto_minerals');
-
-    // Verify individual tree nodes have correct researched status
-    const nodeStatus = await page.evaluate(() => {
-      const research = window.game.gameState.getResearchSystem();
-      const node = research.tree['auto_minerals'];
-      return node ? node.researched : false;
-    });
-    expect(nodeStatus).toBe(true);
+    expect(restored.built).toBe(true);
+    expect(restored.level).toBe(2);
+    expect(restored.active).toBe('deep_resonance');
+    expect(restored.progress).toBeCloseTo(12.5, 5);
+    expect(restored.decoded).toContain('harvest_lattice');
+    expect(restored.paid).toContain('harvest_lattice');
+    expect(restored.hasProtocol).toBe(true);
   });
 
   test('probe equipment state is preserved across saves', async ({ page }) => {
@@ -238,12 +220,8 @@ test.describe('Save System Integrity', () => {
     const setupResult = await page.evaluate(() => {
       const gameState = window.game.gameState;
 
-      // Add research for auto-collection
-      const research = gameState.getResearchSystem();
-      research.unlocked = true;
-      research.points = 5;
-      research.researched.add('auto_minerals');
-      research.researched.add('auto_data');
+      // Decode the protocol that gates the typed collectors
+      gameState.uplink.decoded.add('harvest_lattice');
 
       // Add resources
       gameState.updateResources({ minerals: 100, data: 50 });
@@ -474,11 +452,12 @@ test.describe('Save System Integrity', () => {
       const gameState = window.game.gameState;
       gameState.updateResources({ minerals: 123, data: 456, artifacts: 789 });
       gameState.probethium.current = 1.23456789;
-      
-      const research = gameState.getResearchSystem();
-      research.points = 7;
-      research.unlocked = true;
-      
+
+      // Decode two protocols — metadata should show the count
+      gameState.uplink.built = true;
+      gameState.uplink.decoded.add('swift_carriage');
+      gameState.uplink.decoded.add('harvest_lattice');
+
       window.uiManager.updateUI();
       window.confirm = () => true;
     });
@@ -502,7 +481,7 @@ test.describe('Save System Integrity', () => {
     // The save modal should contain text showing slot information
     const modalContent = await page.locator('#saveLoadModal').textContent();
     expect(modalContent).toContain('Slot 1');
-    expect(modalContent).toContain('Research: 7');
+    expect(modalContent).toContain('Protocols: 2');
     expect(modalContent).toContain('1.2345678900'); // Probethium value
   });
 
@@ -538,14 +517,11 @@ test.describe('Cross-Session State Management', () => {
       // Set up complex game state
       gameState.updateResources({ minerals: 500, data: 300, artifacts: 100 });
 
-      // Research progress
-      const research = gameState.getResearchSystem();
-      research.unlocked = true;
-      research.points = 10;
-      research.researched.add('auto_minerals');
-      research.researched.add('auto_data');
-      research.tree['auto_minerals'].researched = true;
-      research.tree['auto_data'].researched = true;
+      // Uplink progress
+      const uplink = gameState.getUplink();
+      uplink.built = true;
+      uplink.decoded.add('harvest_lattice');
+      uplink.decoded.add('swift_carriage');
 
       // Probe with complex state
       const hub = {
@@ -633,12 +609,12 @@ test.describe('Cross-Session State Management', () => {
     const restoredState = await page.evaluate(() => {
       const gameState = window.game.gameState;
       const probe = gameState.entities.probes[0];
-      const research = gameState.getResearchSystem();
+      const uplink = gameState.getUplink();
 
       return {
         resources: gameState.getResources(),
-        researchPoints: research.points,
-        researchedNodes: Array.from(research.researched),
+        uplinkBuilt: uplink.built,
+        decodedProtocols: Array.from(uplink.decoded),
         probeCount: gameState.entities.probes.length,
         probeWaypoints: probe ? probe.waypoints.length : 0,
         probeEquipment: probe ? probe.equipment?.collectionTypes : null,
@@ -651,10 +627,10 @@ test.describe('Cross-Session State Management', () => {
     expect(restoredState.resources.data).toBe(300);
     expect(restoredState.resources.artifacts).toBe(100);
 
-    // Research state should be preserved
-    expect(restoredState.researchPoints).toBeGreaterThanOrEqual(10);
-    expect(restoredState.researchedNodes).toContain('auto_minerals');
-    expect(restoredState.researchedNodes).toContain('auto_data');
+    // Uplink state should be preserved
+    expect(restoredState.uplinkBuilt).toBe(true);
+    expect(restoredState.decodedProtocols).toContain('harvest_lattice');
+    expect(restoredState.decodedProtocols).toContain('swift_carriage');
 
     // Probes may have different count due to new game initialization adding default probes
     // The key is that our custom probe data was preserved (resources, research)

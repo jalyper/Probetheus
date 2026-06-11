@@ -178,41 +178,33 @@ test.describe('Shell Bonuses - Comprehensive', () => {
         expect(result.equippedBonus).toBe(15);
     });
 
-    test('TEST-02: hub researchSpeed reduces effective research cost', async ({ page }) => {
+    test('TEST-02: hub researchSpeed multiplies Uplink decode rate', async ({ page }) => {
         await startGame(page);
 
         const result = await page.evaluate(() => {
             const ss = window.game.shellSystem;
             const gs = window.game.gameState;
+            const sys = window.game.uplinkSystem;
+
+            // Baseline decode rate with default shells
+            const baseRate = sys.decodeRatePerMin();
 
             // Equip hub shell with researchSpeed: 15
             gs.cosmetics.ownedShells.hubs.push('data_nexus');
             gs.cosmetics.equippedShells.hubs = 'data_nexus';
 
             const bonus = ss.getEntityBonus('hubs', null, 'researchSpeed');
-
-            // Test cost reduction formula for various base costs
-            const testCosts = [1, 5, 10, 12, 20];
-            const reductions = testCosts.map(baseCost => {
-                const effective = Math.max(1, Math.ceil(baseCost * (1 - bonus / 100)));
-                return { baseCost, effective };
-            });
+            const boostedRate = sys.decodeRatePerMin();
 
             // Cleanup
             gs.cosmetics.equippedShells.hubs = 'default';
 
-            return { bonus, reductions };
+            return { bonus, baseRate, boostedRate };
         });
 
         expect(result.bonus).toBe(15);
-        // Verify cost reduction formula
-        for (const r of result.reductions) {
-            const expected = Math.max(1, Math.ceil(r.baseCost * (1 - 15 / 100)));
-            expect(r.effective, `cost ${r.baseCost}`).toBe(expected);
-        }
-        // Spot check: cost 12 with 15% reduction = Math.max(1, ceil(12 * 0.85)) = ceil(10.2) = 11
-        const cost12 = result.reductions.find(r => r.baseCost === 12);
-        expect(cost12.effective).toBe(11);
+        // Decode rate scales by (1 + bonus/100): 15% faster decoding
+        expect(result.boostedRate).toBeCloseTo(result.baseRate * 1.15, 5);
     });
 
     // =========================================================

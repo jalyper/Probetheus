@@ -446,6 +446,11 @@ class ProbeManager {
         // Apply cargo penalty to speed
         const cargoSpeedModifier = this.getCargoSpeedModifier(probe);
         currentSpeed *= cargoSpeedModifier;
+
+        // Swift Carriage protocol (Uplink): +25% on every leg
+        if (this.gameState.hasProtocol('swift_carriage')) {
+            currentSpeed *= 1.25;
+        }
         
         // Debug speed logic occasionally
         if (Math.random() < 0.001) {
@@ -532,7 +537,9 @@ class ProbeManager {
 
             // PBON-02: signalRange bonus affects radar pulse visual radius
             const rangeBonus = window.game?.shellSystem ? window.game.shellSystem.getEntityBonus('probes', probe, 'signalRange') : 0;
-            const pulseMaxRadius = 80 * (1 + rangeBonus / 100);
+            // Deep Resonance protocol (Uplink): pulses sweep 40% further
+            const resonanceMult = this.gameState.hasProtocol('deep_resonance') ? 1.4 : 1;
+            const pulseMaxRadius = 80 * (1 + rangeBonus / 100) * resonanceMult;
 
             // Add radar pulse
             probe.radarPulses.push({
@@ -1126,42 +1133,12 @@ class ProbeManager {
     }
 
     /**
-     * Get maximum rarity that can be collected based on research
+     * The collection-rarity ladder died with the Research Lab (REBUILD.md
+     * demolition ledger). Collectors collect what they're typed for, period —
+     * deposit richness and rings carry the progression now.
      */
     getMaxCollectableRarity(resourceType = 'universal') {
-        const research = this.gameState.getResearchSystem();
-
-        // Check type-specific rarity progression
-        if (resourceType === 'minerals') {
-            if (research.researched.has('minerals_legendary')) return 'legendary';
-            if (research.researched.has('minerals_epic')) return 'epic';
-            if (research.researched.has('minerals_rare')) return 'rare';
-            if (research.researched.has('minerals_uncommon')) return 'uncommon';
-            return 'common';
-        }
-
-        if (resourceType === 'data') {
-            if (research.researched.has('data_legendary')) return 'legendary';
-            if (research.researched.has('data_epic')) return 'epic';
-            if (research.researched.has('data_rare')) return 'rare';
-            if (research.researched.has('data_uncommon')) return 'uncommon';
-            return 'common';
-        }
-
-        if (resourceType === 'artifacts') {
-            if (research.researched.has('artifacts_legendary')) return 'legendary';
-            if (research.researched.has('artifacts_epic')) return 'epic';
-            if (research.researched.has('artifacts_rare')) return 'rare';
-            if (research.researched.has('artifacts_uncommon')) return 'uncommon';
-            return 'common';
-        }
-
-        // Universal collector uses global rarity research
-        if (research.researched.has('rarity_legendary')) return 'legendary';
-        if (research.researched.has('rarity_epic')) return 'epic';
-        if (research.researched.has('rarity_rare')) return 'rare';
-        if (research.researched.has('rarity_uncommon')) return 'uncommon';
-        return 'common';
+        return 'legendary';
     }
     
     /**

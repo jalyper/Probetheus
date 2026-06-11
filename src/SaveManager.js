@@ -107,7 +107,7 @@ class SaveManager {
                     efficiencyBonus: this.gameState.mining.efficiencyBonus || 1.0,
                     lastUpdateTime: this.gameState.mining.lastUpdateTime || Date.now()
                 } : null,
-                researchSystem: this.createResearchSystemSaveData(),
+                uplink: this.createUplinkSaveData(),
                 tutorial: {
                     completed: tutorialCompleted === 'true',
                     progress: tutorialProgress
@@ -190,52 +190,21 @@ class SaveManager {
     }
 
     /**
-     * Create research system save data with error handling
+     * Create Uplink save data (REBUILD.md §1 — replaces research system saves)
      */
-    createResearchSystemSaveData() {
-        try {
-            console.log('createResearchSystemSaveData: Starting research system data creation...');
-            
-            if (!this.gameState.researchSystem) {
-                console.warn('createResearchSystemSaveData: Research system not initialized, using defaults');
-                return {
-                    points: 0,
-                    unlocked: false,
-                    researched: [],
-                    unlockedTrees: [],
-                    firstResourceThreshold: false,
-                    milestones: { minerals: [], data: [], artifacts: [], exoticMinerals: [] }
-                };
-            }
-            
-            const researchData = {
-                points: this.gameState.researchSystem.points || 0,
-                unlocked: this.gameState.researchSystem.unlocked || false,
-                researched: this.gameState.researchSystem.researched ? Array.from(this.gameState.researchSystem.researched) : [],
-                unlockedTrees: this.gameState.researchSystem.unlockedTrees ? [...this.gameState.researchSystem.unlockedTrees] : [],
-                firstResourceThreshold: this.gameState.researchSystem.firstResourceThreshold || false,
-                milestones: {
-                    minerals: this.gameState.researchSystem.milestones?.minerals ? Array.from(this.gameState.researchSystem.milestones.minerals) : [],
-                    data: this.gameState.researchSystem.milestones?.data ? Array.from(this.gameState.researchSystem.milestones.data) : [],
-                    artifacts: this.gameState.researchSystem.milestones?.artifacts ? Array.from(this.gameState.researchSystem.milestones.artifacts) : [],
-                    exoticMinerals: this.gameState.researchSystem.milestones?.exoticMinerals ? Array.from(this.gameState.researchSystem.milestones.exoticMinerals) : []
-                }
-            };
-            
-            console.log('createResearchSystemSaveData: Research system data created successfully:', researchData);
-            return researchData;
-        } catch (error) {
-            console.error('createResearchSystemSaveData: Error creating research data:', error);
-            console.log('createResearchSystemSaveData: Falling back to safe defaults');
-            return {
-                points: 0,
-                unlocked: false,
-                researched: [],
-                unlockedTrees: [],
-                firstResourceThreshold: false,
-                milestones: { minerals: [], data: [], artifacts: [], exoticMinerals: [] }
-            };
+    createUplinkSaveData() {
+        const uplink = this.gameState.uplink;
+        if (!uplink) {
+            return { built: false, level: 1, active: null, progress: {}, paid: [], decoded: [] };
         }
+        return {
+            built: !!uplink.built,
+            level: uplink.level || 1,
+            active: uplink.active || null,
+            progress: { ...(uplink.progress || {}) },
+            paid: uplink.paid ? Array.from(uplink.paid) : [],
+            decoded: uplink.decoded ? Array.from(uplink.decoded) : []
+        };
     }
 
     /**
@@ -310,11 +279,7 @@ class SaveManager {
             console.log('Probethium being saved:', saveData.gameState.probethium.current);
             console.log('Mining stations being saved:', saveData.gameState.mining?.stations?.length || 0);
             console.log('Mining shuttles being saved:', saveData.gameState.mining?.shuttles?.length || 0);
-            console.log('Research data being saved:');
-            console.log('- Points:', saveData.gameState.researchSystem.points);
-            console.log('- Unlocked:', saveData.gameState.researchSystem.unlocked);
-            console.log('- Researched nodes:', saveData.gameState.researchSystem.researched);
-            console.log('- Unlocked trees:', saveData.gameState.researchSystem.unlockedTrees);
+            console.log('Uplink data being saved:', saveData.gameState.uplink);
             
             const saveKey = `${this.savePrefix}slot_${slotNumber}`;
             
@@ -329,7 +294,7 @@ class SaveManager {
                 lastSaveTime: saveData.lastSaveTime,
                 probethium: parseFloat(saveData.gameState.probethium.current), // Ensure it's a clean number
                 sectorsDiscovered: parseInt(saveData.gameState.probethium.stats.totalSectorsDiscovered),
-                researchPoints: parseInt(saveData.gameState.researchSystem.points),
+                protocols: saveData.gameState.uplink.decoded.length,
                 version: saveData.version
             };
             
@@ -438,18 +403,34 @@ class SaveManager {
         
         console.log('✓ Probethium restored:', this.gameState.probethium.current);
         
-        // Restore research system
-        this.gameState.researchSystem.points = savedState.researchSystem.points;
-        this.gameState.researchSystem.unlocked = savedState.researchSystem.unlocked;
-        this.gameState.researchSystem.researched = new Set(savedState.researchSystem.researched);
-        this.gameState.researchSystem.unlockedTrees = [...savedState.researchSystem.unlockedTrees];
-        this.gameState.researchSystem.firstResourceThreshold = savedState.researchSystem.firstResourceThreshold;
-        
-        // Restore milestones
-        Object.keys(savedState.researchSystem.milestones).forEach(resource => {
-            this.gameState.researchSystem.milestones[resource] = new Set(savedState.researchSystem.milestones[resource]);
-        });
-        
+        // Restore the Uplink (REBUILD.md §1); legacy saves carry researchSystem
+        // instead — migrate what maps onto protocols, drop the dead ladder.
+        if (savedState.uplink) {
+            this.gameState.uplink = {
+                built: !!savedState.uplink.built,
+                level: savedState.uplink.level || 1,
+                active: savedState.uplink.active || null,
+                progress: { ...(savedState.uplink.progress || {}) },
+                paid: new Set(savedState.uplink.paid || []),
+                decoded: new Set(savedState.uplink.decoded || [])
+            };
+        } else if (savedState.researchSystem) {
+            const legacy = new Set(savedState.researchSystem.researched || []);
+            const decoded = new Set();
+            if (['auto_minerals', 'auto_data', 'auto_artifacts'].some(id => legacy.has(id))) decoded.add('harvest_lattice');
+            if (legacy.has('auto_all')) decoded.add('universal_lattice');
+            if (legacy.has('probethium_synthesis')) decoded.add('exotic_synthesis');
+            this.gameState.uplink = {
+                built: legacy.size > 0,
+                level: 1,
+                active: null,
+                progress: {},
+                paid: new Set(decoded),
+                decoded
+            };
+            console.log('Migrated legacy research save to Uplink protocols:', Array.from(decoded));
+        }
+
         // Restore tutorial state
         if (savedState.tutorial) {
             if (savedState.tutorial.completed) {
@@ -465,41 +446,6 @@ class SaveManager {
             } else {
                 await storageAdapter.removeItem('tutorialProgress');
             }
-        }
-        
-        // CRITICAL: Sync individual research tree nodes with the researched Set
-        console.log('Syncing research tree nodes with researched set...');
-        console.log('Researched nodes:', Array.from(this.gameState.researchSystem.researched));
-        
-        try {
-            this.gameState.researchSystem.researched.forEach(nodeId => {
-                if (!this.gameState.researchSystem.tree) {
-                    console.warn('Research tree not initialized, skipping node sync');
-                    return;
-                }
-                
-                const node = this.gameState.researchSystem.tree[nodeId];
-                if (node) {
-                    node.researched = true;
-                    console.log(`Restored research node: ${nodeId} (${node.name})`);
-                    
-                    // Ensure child nodes are unlocked/available
-                    if (node.children && Array.isArray(node.children)) {
-                        node.children.forEach(childId => {
-                            const childNode = this.gameState.researchSystem.tree[childId];
-                            if (childNode) {
-                                childNode.available = true;
-                            }
-                        });
-                    }
-                } else {
-                    console.warn(`Research node ${nodeId} not found in tree!`);
-                }
-            });
-            console.log('Research tree node sync completed successfully');
-        } catch (error) {
-            console.error('Error during research tree sync:', error);
-            console.error('Research system state:', this.gameState.researchSystem);
         }
         
         // Restore world state
@@ -648,7 +594,7 @@ class SaveManager {
                 time: new Date(data.timestamp).toLocaleTimeString(),
                 probethium: parseFloat(data.probethium).toFixed(10), // Ensure clean parsing
                 sectors: parseInt(data.sectorsDiscovered) || 0,
-                research: parseInt(data.researchPoints) || 0,
+                protocols: parseInt(data.protocols) || 0,
                 version: data.version
             };
         } catch (error) {

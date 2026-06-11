@@ -564,13 +564,10 @@ class RemnantManager {
     }
 
     /**
-     * Check if player has any alien tech research
+     * Deep Remnant trade opens via the Remnant Protocols decode (REBUILD.md §1)
      */
     hasAlienTechResearch() {
-        const research = this.gameState.getResearchSystem();
-        // Check for alien-related research nodes
-        const alienResearch = ['universal_collector', 'rarity_uncommon', 'rarity_rare'];
-        return alienResearch.some(r => research.researched.has(r));
+        return this.gameState.hasProtocol('remnant_protocols');
     }
 
     /**
