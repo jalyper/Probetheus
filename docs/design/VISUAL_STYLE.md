@@ -73,6 +73,26 @@ Motion is the visible signature of an efficient network (pillar 2) — earned by
 - Hazards: asteroid fields in desaturated mist-brown strokes; nebulae as rift-violet haze; danger states use `--danger` lines, thin and steady (no flashing).
 - Selection/lock: gold breathing ring.
 
+## Material flow — the conveyor in space (added 2026-06-11)
+
+The Factorio payoff we're after: *watching ore ride a belt into a processor and come out as something better.* Probetheus does it without belts — sleek, weightless, light-based. This is the visual language for the deposit loop (LOOP_REDESIGN.md); cargo sparks were v1 of this grammar, this section is where it goes.
+
+### The grammar
+
+- **Filaments, not belts.** A worked route renders as a hairline gold filament (existing `--line` strokes). No rollers, no slats — the route IS the conveyor.
+- **Beads, not items.** Cargo in transit renders as small rounded beads riding the filament, evenly spaced, **density proportional to throughput** — a starved route carries one lonely bead; a humming route carries a glittering chain. This is the belt-read: you glance at a line and *see* its load factor.
+- **Beads are type-colored** (the deposit palette): copper `#C97B4A` minerals, blue `#5B8CFF` data, violet `#B06BFF` artifacts, signal-white `#E8E4F0` exotics. A mixed-haul route reads as a striped chain — instantly diagnostic.
+- **The dock consumes.** At the hub, beads queue into the intake ring and are swallowed one at a time, each consumption a small gold pulse + the header counter ticking. When intake saturates, the bead chain visibly *backs up* along the filament — the Factorio belt-jam, in light. (The "N waiting" queue is the current v1 of this.)
+- **Processors transform.** Stations/refineries have one **input port** (beads enter, port glows the input color) and one **output port** (beads exit in the output color). One rotating interior element per processor — a single thin-stroke ring or vane, 2–4s period, speed ∝ uptime. In = raw color, out = refined color: the transformation is literally visible at the machine's edge.
+- **Restraint rules still apply:** beads are 2–3px, glow only on consumption beats, everything eases — a loaded network should read like a jeweled circuit, not a particle storm. Bead pooling caps per route (≈12 visible; beyond that the filament itself brightens instead).
+
+### Build order (procedural canvas, no sprite assets needed)
+
+1. **Flow beads v1** — replace event-based cargo sparks with continuous bead chains on actively-worked routes, density from StatsManager per-route throughput.
+2. **Dock consumption** — bead swallow animation + back-up when intake queues (replaces/augments "N waiting" text).
+3. **Processor ports** — input/output bead handoff at stations + the rotating element, colored by recipe.
+4. **Key art** — Higgsfield concepts via the template below for store/marketing once the in-game version proves the look ("a sleek gold network of light-filaments carrying jeweled cargo beads through the void, a thin-stroke station consuming them").
+
 ## Asset-generation prompt template (Higgsfield)
 
 Every generated asset prepends this style block:

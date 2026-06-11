@@ -34,7 +34,66 @@ window.GAME_CONSTANTS = {
     HUB: {
         // Deliveries a level-1 hub can process per minute (LOOP_REDESIGN.md
         // "Tune") — exceeding this queues probes visibly at the dock
-        INTAKE_PER_MIN_BASE: 8
+        INTAKE_PER_MIN_BASE: 8,
+        MAX_INTAKE_LEVEL: 3
+    }
+};
+
+/**
+ * Material recipes — factory-first (LOOP_REDESIGN.md addendum).
+ * Logistical items are MADE from found materials; upgrade tiers demand
+ * progressively more exotic materials, which only exist in the outer
+ * rings — so the network you have must reach the materials for the
+ * network you want.
+ *
+ * Keys match resource names in GameState ('minerals' | 'data' |
+ * 'artifacts' | 'exoticMinerals').
+ */
+window.RECIPES = {
+    probe: { minerals: 25 },
+    reconHub: { minerals: 100 },
+    miningStation: { minerals: 100, data: 50 },
+    shuttle: { minerals: 50, data: 25 },
+
+    // Intake Bay: deliveries/min = INTAKE_PER_MIN_BASE × level.
+    // Keyed by the level being purchased. Tier 3 demands exotics (ring 2+).
+    intakeBay: {
+        2: { minerals: 150, data: 60 },
+        3: { minerals: 300, data: 120, exoticMinerals: 8 }
+    }
+};
+
+window.RecipeUtils = {
+    /** Returns the list of missing resource amounts (empty = affordable) */
+    missingFor(recipe, resources) {
+        return Object.entries(recipe)
+            .filter(([key, amount]) => (resources[key] || 0) < amount)
+            .map(([key, amount]) => ({ key, need: amount, have: resources[key] || 0 }));
+    },
+
+    canAfford(recipe, resources) {
+        return this.missingFor(recipe, resources).length === 0;
+    },
+
+    /** Deduct a recipe's costs via GameState.updateResources */
+    spend(recipe, gameState, eventBus) {
+        const resources = gameState.getResources();
+        const updated = {};
+        Object.entries(recipe).forEach(([key, amount]) => {
+            updated[key] = (resources[key] || 0) - amount;
+        });
+        gameState.updateResources(updated, eventBus);
+    },
+
+    /** "150 Minerals, 60 Data" — display string for buttons/tooltips */
+    format(recipe) {
+        const names = {
+            minerals: 'Minerals', data: 'Data',
+            artifacts: 'Artifacts', exoticMinerals: 'Exotic'
+        };
+        return Object.entries(recipe)
+            .map(([key, amount]) => `${amount} ${names[key] || key}`)
+            .join(', ');
     }
 };
 

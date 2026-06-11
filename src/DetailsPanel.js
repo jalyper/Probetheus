@@ -191,9 +191,23 @@ class DetailsPanel {
                 </div>
             </div>
 
+            <div style="background: rgba(212,175,55,0.05); border: 1px solid var(--line); border-radius: 4px; padding: 10px; margin-bottom: 12px;">
+                <div style="color: var(--fire); font-size: 12px; margin-bottom: 6px; letter-spacing: 0.08em; text-transform: uppercase;">Intake Bay</div>
+                <div style="color: var(--mist); font-size: 12px; line-height: 1.6; margin-bottom: 8px;">
+                    <span style="color: var(--signal); font-family: var(--font-data);">Lv ${hub.intakeLevel || 1}</span>
+                    · processes <span style="color: var(--signal); font-family: var(--font-data);">${(window.GAME_CONSTANTS.HUB.INTAKE_PER_MIN_BASE) * (hub.intakeLevel || 1)}/min</span>
+                </div>
+                ${(hub.intakeLevel || 1) < window.GAME_CONSTANTS.HUB.MAX_INTAKE_LEVEL ? `
+                <button id="upgradeIntakeBtn" class="control-btn" style="font-size: 12px; padding: 8px 12px; width: 100%;">
+                    Upgrade Intake Bay (${window.RecipeUtils.format(window.RECIPES.intakeBay[(hub.intakeLevel || 1) + 1])})
+                </button>
+                ` : `
+                <div style="color: rgba(139,132,163,0.6); font-size: 11px;">Maximum level</div>
+                `}
+            </div>
+
             <div style="background: rgba(200,150,255,0.05); border: 1px solid rgba(200,150,255,0.2); border-radius: 5px; padding: 10px;">
                 <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 10px;">
-                    <div style="font-size: 16px;">⚡</div>
                     <div style="color: #c9f; font-size: 12px; font-weight: bold;">Hub Operations</div>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -712,6 +726,36 @@ class DetailsPanel {
         if (buildProbeBtn) {
             buildProbeBtn.addEventListener('click', () => {
                 this.eventBus.emit('probe:build', { hub });
+            });
+        }
+
+        // Intake Bay upgrade — the fix for a saturated dock (LOOP_REDESIGN.md)
+        const upgradeIntakeBtn = document.getElementById('upgradeIntakeBtn');
+        if (upgradeIntakeBtn) {
+            upgradeIntakeBtn.addEventListener('click', () => {
+                const nextLevel = (hub.intakeLevel || 1) + 1;
+                const recipe = window.RECIPES.intakeBay[nextLevel];
+                if (!recipe || nextLevel > window.GAME_CONSTANTS.HUB.MAX_INTAKE_LEVEL) return;
+
+                const resources = this.gameState.getResources();
+                if (!window.RecipeUtils.canAfford(recipe, resources)) {
+                    const missing = window.RecipeUtils.missingFor(recipe, resources)
+                        .map(m => `${m.need - m.have} more ${m.key}`).join(', ');
+                    this.eventBus.emit('ui:message', {
+                        text: `Intake Bay needs ${missing}.`,
+                        type: 'error'
+                    });
+                    return;
+                }
+
+                window.RecipeUtils.spend(recipe, this.gameState, this.eventBus);
+                hub.intakeLevel = nextLevel;
+                this.eventBus.emit('hub:intakeUpgraded', { hub, level: nextLevel });
+                this.eventBus.emit('ui:message', {
+                    text: `Intake Bay upgraded — ${window.GAME_CONSTANTS.HUB.INTAKE_PER_MIN_BASE * nextLevel} deliveries/min.`,
+                    type: 'success'
+                });
+                this.showHubDetails(hub); // refresh the panel
             });
         }
         

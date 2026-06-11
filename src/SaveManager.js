@@ -146,6 +146,7 @@ class SaveManager {
                         sector: { ...hub.sector },
                         range: hub.range,
                         maxProbes: hub.maxProbes,
+                        intakeLevel: hub.intakeLevel || 1,
                         selected: false // Don't save selection state
                     })),
                     miningOutposts: [...this.gameState.entities.miningOutposts],
