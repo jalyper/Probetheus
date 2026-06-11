@@ -20,7 +20,7 @@ User directive (2026-06-11): "every part of the last game should be examined thu
 | System | Verdict | Why / what changes |
 |---|---|---|
 | Tutorial (Guided Minute) | RECAST — **done 2026-06-11** | Rewritten: select hub → scout → chart → tap → deliver → release. ONBOARDING.md needs a doc pass to match. |
-| Exploration screen (Excavate/Exterminate/Expedition planets) | **CUT** | Orphaned: signals no longer open planets. It was the old economy's reward wheel. Its one good idea (typed yields) lives in deposit types now. Remove screen + `planet:actionChosen` path. |
+| Exploration screen (Excavate/Exterminate/Expedition planets) | **CUT — done 2026-06-11** | Orphaned: signals no longer open planets. It was the old economy's reward wheel. Its one good idea (typed yields) lives in deposit types now. Removed: screen + reward modal markup/CSS, `explore()`/planet generation/`planet:actionChosen` path in GameController. |
 | Combo system | RECAST | Chains now ring on discovery pings — fine as a prospecting streak. But its cargo-bonus payout is old-economy; recast reward to a brief extraction-rate buff, or demote to SFX-only flourish. |
 | Equipment (collectors, rarity research) | RECAST | Collector-by-rarity gating is meaningless without rarity-loot. Recast: extraction-speed/range/cargo modules crafted from materials (this IS the factory-first layer). Type-specific collectors → type-specialized extractors. |
 | Research tree | RECAST | Collection-rarity branches die with the old economy. Surviving spine: automation ladder (patrol → auto-route → directives), intake/range upgrades, refinery tech. Research points should come from data deposits + ancient tech, slotting into rings. |
@@ -33,7 +33,7 @@ User directive (2026-06-11): "every part of the last game should be examined thu
 | Offline/idle earnings (OfflineManager) | RECAST | Old estimate models signal odds. New model is honest math: charted deposits × rate caps × network throughput at save time. |
 | Asteroid damage / probe wear | KEEP + extend | Becomes the ring difficulty axis (hazard density scales outward). |
 | Throughput dashboard / StatsManager | KEEP | Finally measures something real. Add per-deposit utilization + queue time. |
-| Old signal-rewards/synthesis/progression test suites (~50 pre-existing failures) | CUT | They encode the dead economy; delete rather than fix. |
+| Old signal-rewards/synthesis/progression test suites (~50 pre-existing failures) | CUT — **done 2026-06-11** | Deleted 10 suites encoding the dead economy: signal-rewards, exclusive-signals, signal-visuals, statistical-validation, happy-path-integration, progression-gates, probethium-synthesis, synthesis-system, rarity-display, discovery-reveal. Full remaining suite green. |
 | Sector discovery bonus signals (SectorManager) | CUT | Old-economy loot drops on sector reveal; replace with a guaranteed undiscovered deposit per new sector (often already true). |
 
 Order of attack: (1) Intake Bay upgrade + recipe table (makes the bottleneck fixable and starts factory-first), (2) cut exploration screen + dead tests, (3) equipment/research recast, (4) events + offline.

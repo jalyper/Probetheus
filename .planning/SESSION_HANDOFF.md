@@ -26,7 +26,7 @@ Tests: 34/34 green across `deposit-loop`, `intake-recipes`, `cargo-sparks`, `red
 ## Next session order of attack
 
 1. ~~**Flow beads v1**~~ DONE 2026-06-11 — `FlowBeadSystem.js` replaces CargoSparkSystem: continuous type-colored bead chains per route (density ∝ rolling 90s per-route throughput, 1 bead floor / 12 cap / over-cap filament brighten), striped by cargo mix, sim-time march; shuttle legs keep one-shot pulses; consumption rings at hub on delivery. Material colors centralized in `PALETTE.MATERIALS`. Tests: `tests/flow-beads.spec.js` (11). **Next in this track: step 2 dock consumption** (bead swallow + visible back-up when intake queues), then step 3 processor ports — spec in VISUAL_STYLE.md §"Material flow".
-2. **CUT** the exploration screen (Excavate/Exterminate/Expedition — orphaned) + delete dead old-economy test suites.
+2. ~~**CUT** the exploration screen + dead test suites~~ DONE 2026-06-11 — removed `explore()`/planet path from GameController, exploreScreen+rewardModal markup/CSS; deleted 10 dead-economy suites (signal-rewards, exclusive-signals, signal-visuals, statistical-validation, happy-path-integration, progression-gates, probethium-synthesis, synthesis-system, rarity-display, discovery-reveal). Full suite green (208/208 minus deletions; note: heavy parallel full-suite runs can flake ~10% on worker contention — rerun before trusting a red).
 3. Migrate legacy build costs (probe 25M etc. hardcoded in ProbeManager/DetailsPanel buttons) to read RECIPES.
 4. Equipment/research recast per audit (extractor modules; automation-spine research).
 5. Signal Storm recast (temporary surface deposits) + OfflineManager honest-math rewrite.

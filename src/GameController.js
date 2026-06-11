@@ -106,8 +106,6 @@ class GameController {
         // Canvas elements
         this.canvas = document.getElementById('galaxyCanvas');
         this.ctx = this.canvas.getContext('2d');
-        this.planetCanvas = document.getElementById('planetCanvas');
-        this.planetCtx = this.planetCanvas.getContext('2d');
         this.minimapCanvas = document.getElementById('minimapCanvas');
         this.minimapCtx = this.minimapCanvas.getContext('2d');
         
@@ -217,9 +215,6 @@ class GameController {
             
             this.minimapCanvas.width = 150;
             this.minimapCanvas.height = 100;
-            
-            this.planetCanvas.width = 800;
-            this.planetCanvas.height = 400;
         };
 
         resizeCanvas();
@@ -918,27 +913,6 @@ class GameController {
             }
         });
 
-        // Exploration button handlers
-        document.querySelectorAll('.explore-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const mode = e.currentTarget.dataset.mode;
-                this.explore(mode);
-            });
-        });
-
-        // Return to map button
-        document.getElementById('returnToMap').addEventListener('click', () => {
-            this.showScreen('mapScreen');
-        });
-
-        // Reward modal close button
-        const collectRewardBtn = document.getElementById('collectReward');
-        if (collectRewardBtn) {
-            collectRewardBtn.addEventListener('click', () => {
-                document.getElementById('rewardModal').classList.remove('active');
-            });
-        }
-
         // Research modal buttons
         const openResearchLabBtn = document.getElementById('openResearchLab');
         if (openResearchLabBtn) {
@@ -1231,42 +1205,6 @@ class GameController {
     }
 
     /**
-     * Find nearest active probe to a position
-     */
-    findNearestActiveProbe(x, y) {
-        let nearestProbe = null;
-        let minDistance = Infinity;
-        
-        console.log('Finding nearest active probe to position:', x, y);
-        console.log('Total probes:', this.gameState.entities.probes.length);
-        
-        this.gameState.entities.probes.forEach(probe => {
-            console.log(`Probe ${probe.id}: active=${probe.active}, status=${probe.status}, has waypoints=${probe.waypoints && probe.waypoints.length > 0}`);
-            
-            // Accept any active probe with waypoints (exploring)
-            if (probe.active && probe.waypoints && probe.waypoints.length > 0) {
-                const distance = Math.sqrt(
-                    Math.pow(x - probe.current.x, 2) + 
-                    Math.pow(y - probe.current.y, 2)
-                );
-                console.log(`  Distance: ${distance}`);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    nearestProbe = probe;
-                }
-            }
-        });
-        
-        if (nearestProbe) {
-            console.log(`Found nearest probe: ${nearestProbe.id} at distance ${minDistance}`);
-        } else {
-            console.warn('No active probe found to carry rewards!');
-        }
-        
-        return nearestProbe;
-    }
-
-    /**
      * Select a hub
      */
     selectHub(hub) {
@@ -1318,11 +1256,9 @@ class GameController {
         }
 
         // Discovery pings chart a deposit (DepositSystem handles the reveal) —
-        // no exploration modal; the deposit on the map IS the payoff
-        if (signal.signalType === 'discovery') return;
-
-        // Show exploration modal
-        this.showExplorationModal(signal);
+        // the deposit on the map IS the payoff. The old exploration screen
+        // (Excavate/Exterminate/Expedition) is CUT per LOOP_REDESIGN.md audit:
+        // signals no longer open planets, so collecting is the whole verb.
     }
 
     /**
@@ -1938,203 +1874,6 @@ class GameController {
     }
 
     /**
-     * Show exploration modal for signal
-     */
-    showExplorationModal(signal) {
-        // Generate planet data based on signal
-        const planet = this.generatePlanet(signal);
-        
-        // Show exploration screen
-        this.showExplorationScreen(planet, signal);
-    }
-
-    /**
-     * Generate planet data
-     */
-    generatePlanet(signal) {
-        const planetTypes = [
-            'Molten', 'Frozen', 'Toxic', 'Desert', 'Ocean', 'Forest', 'Crystal', 'Volcanic'
-        ];
-        
-        const type = planetTypes[Math.floor(Math.random() * planetTypes.length)];
-        
-        // Generate name using advanced name generator
-        const nameGen = new NameGenerator();
-        const name = nameGen.generatePlanetName(type);
-        
-        return {
-            name: name,
-            type: type,
-            rarity: signal.rarity,
-            description: `A ${type.toLowerCase()} world with ${signal.rarity} potential for discovery.`
-        };
-    }
-
-    /**
-     * Get color for rarity level
-     */
-    getRarityColor(rarity) {
-        // Rarity ramp lives in the world palette (VISUAL_STYLE.md)
-        return window.PALETTE.RARITY[rarity] || window.PALETTE.SIGNAL;
-    }
-
-    /**
-     * Show exploration screen
-     */
-    showExplorationScreen(planet, signal) {
-        console.log('=== SHOWING EXPLORATION SCREEN ===');
-        console.log('Planet:', planet);
-        console.log('Signal:', signal);
-        
-        // Update planet info - show name and type separately
-        const planetNameEl = document.getElementById('planetName');
-        const planetDescEl = document.getElementById('planetDesc');
-        
-        console.log('Planet name element:', planetNameEl);
-        console.log('Planet desc element:', planetDescEl);
-        
-        if (planetNameEl) {
-            planetNameEl.textContent = `${planet.name} (${planet.type})`;
-        } else {
-            console.error('planetName element not found!');
-        }
-        
-        if (planetDescEl) {
-            // Color-code the rarity text in the description
-            const rarityColor = this.getRarityColor(planet.rarity);
-            const coloredDescription = planet.description.replace(
-                planet.rarity,
-                `<span style="color: ${rarityColor}; font-weight: bold;">${planet.rarity}</span>`
-            );
-            planetDescEl.innerHTML = coloredDescription;
-        } else {
-            console.error('planetDesc element not found!');
-        }
-        
-        // Store planet data for exploration
-        this.currentPlanet = planet;
-        this.currentSignal = signal;
-        
-        // Show exploration screen
-        console.log('Calling showScreen with exploreScreen');
-        this.showScreen('exploreScreen');
-        
-        // Highlight best resource options based on planet type
-        this.highlightPlanetResources(planet.type);
-        
-        // Emit event for tutorial (when exploration screen first appears)
-        this.eventBus.emit('exploration:screenShown');
-        
-        // Draw planet on canvas
-        this.drawPlanet(planet);
-        
-        console.log('=== EXPLORATION SCREEN SETUP COMPLETE ===');
-    }
-
-    /**
-     * Highlight exploration options based on planet type
-     */
-    highlightPlanetResources(planetType) {
-        // Reset all button highlights first
-        const exploreButtons = document.querySelectorAll('.explore-btn');
-        exploreButtons.forEach(btn => {
-            btn.style.border = '1px solid #333';
-            btn.style.boxShadow = 'none';
-            btn.style.background = '#1a1a1a';
-        });
-        
-        // Define which actions are best for each planet type
-        let bestActions = [];
-        switch (planetType) {
-            case 'Molten':
-            case 'Volcanic':
-                bestActions = ['excavate']; // Minerals (+50%)
-                break;
-            case 'Frozen':
-                bestActions = ['exterminate', 'expedition']; // Data & Artifacts (+30%)
-                break;
-            case 'Toxic':
-                bestActions = ['excavate']; // Minerals (+40%), less artifacts
-                break;
-            case 'Desert':
-                bestActions = ['excavate']; // Minerals (+30%)
-                break;
-            case 'Ocean':
-                bestActions = ['exterminate']; // Data (+50%)
-                break;
-            case 'Forest':
-                bestActions = ['exterminate', 'expedition']; // Data & Artifacts (+20%)
-                break;
-            case 'Crystal':
-                bestActions = ['excavate', 'expedition']; // Minerals (+20%), Artifacts (+40%)
-                break;
-        }
-        
-        // Highlight the best actions with a golden glow
-        bestActions.forEach(action => {
-            const button = document.querySelector(`[data-mode="${action}"]`);
-            if (button) {
-                button.style.border = '2px solid #ffd700';
-                button.style.boxShadow = '0 0 15px rgba(255, 215, 0, 0.5)';
-                button.style.background = 'linear-gradient(135deg, #1a1a1a 0%, #2a2011 100%)';
-            }
-        });
-    }
-
-    /**
-     * Draw planet on canvas
-     */
-    drawPlanet(planet) {
-        const canvas = this.planetCanvas;
-        const ctx = this.planetCtx;
-        
-        ctx.fillStyle = '#000';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        const centerX = canvas.width / 2;
-        const centerY = canvas.height / 2;
-        const radius = 120;
-        
-        // Planet colors based on type
-        const planetColors = {
-            'Molten': ['#ff4500', '#ff6347', '#ff8c00'],
-            'Frozen': ['#4169e1', '#87ceeb', '#b0e0e6'],
-            'Toxic': ['#9acd32', '#32cd32', '#00ff00'],
-            'Desert': ['#daa520', '#f4a460', '#d2691e'],
-            'Ocean': ['#0000ff', '#4169e1', '#1e90ff'],
-            'Forest': ['#228b22', '#32cd32', '#90ee90'],
-            'Crystal': ['#da70d6', '#ba55d3', '#9370db'],
-            'Volcanic': ['#dc143c', '#b22222', '#8b0000']
-        };
-        
-        const colors = planetColors[planet.type] || ['#696969', '#778899', '#2f4f4f'];
-        
-        // Draw planet with gradient
-        const gradient = ctx.createRadialGradient(centerX - 40, centerY - 40, 0, centerX, centerY, radius);
-        gradient.addColorStop(0, colors[0]);
-        gradient.addColorStop(0.5, colors[1]);
-        gradient.addColorStop(1, colors[2]);
-        
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Draw some surface features
-        ctx.fillStyle = colors[2] + '80';
-        for (let i = 0; i < 5; i++) {
-            const angle = (Math.PI * 2 * i) / 5;
-            const x = centerX + Math.cos(angle) * (radius * 0.7);
-            const y = centerY + Math.sin(angle) * (radius * 0.7);
-            const size = 10 + Math.random() * 15;
-            
-            ctx.beginPath();
-            ctx.arc(x, y, size, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-
-    /**
      * Show screen
      */
     showScreen(screenId) {
@@ -2171,8 +1910,8 @@ class GameController {
             console.log(`Showing screen: ${screenId}`);
             targetScreen.classList.add('active');
             
-            // Only apply special positioning for exploration screen
-            if (screenId === 'exploreScreen' || screenId === 'researchScreen') {
+            // Only apply special positioning for the research screen
+            if (screenId === 'researchScreen') {
                 // Force to front but keep resource bar visible
                 targetScreen.style.zIndex = '10000';
                 targetScreen.style.position = 'fixed';
@@ -2326,310 +2065,6 @@ class GameController {
         }
 
         modal.classList.add('active');
-    }
-
-    /**
-     * Explore planet with chosen method
-     */
-    explore(mode) {
-        console.log('=== EXPLORE CALLED ===');
-        console.log('Mode:', mode);
-        console.log('Current planet:', this.currentPlanet);
-        console.log('Current signal:', this.currentSignal);
-        
-        if (!this.currentPlanet || !this.currentSignal) {
-            console.error('Missing planet or signal data!');
-            return;
-        }
-
-        // Emit event for tutorial
-        this.eventBus.emit('planet:actionChosen');
-
-        const signal = this.currentSignal;
-        const rarity = signal.rarity;
-
-        // Base rewards by rarity
-        const baseRewards = {
-            common: { minerals: 5, data: 2, artifacts: 1 },
-            uncommon: { minerals: 10, data: 5, artifacts: 2 },
-            rare: { minerals: 20, data: 10, artifacts: 5 },
-            epic: { minerals: 40, data: 20, artifacts: 10 },
-            legendary: { minerals: 100, data: 50, artifacts: 25 }
-        };
-
-        let rewards = baseRewards[rarity] || baseRewards.common;
-        
-        // Apply planet type bonuses
-        const planet = this.currentPlanet;
-        if (planet && planet.type) {
-            switch (planet.type) {
-                case 'Molten':
-                case 'Volcanic':
-                    // Hot worlds are rich in minerals (lava/metal extraction)
-                    rewards = { ...rewards, minerals: Math.floor(rewards.minerals * 1.5) };
-                    break;
-                case 'Frozen':
-                    // Cold worlds preserve data/artifacts better
-                    rewards = { ...rewards, data: Math.floor(rewards.data * 1.3), artifacts: Math.floor(rewards.artifacts * 1.3) };
-                    break;
-                case 'Toxic':
-                    // Toxic worlds have exotic minerals but less artifacts
-                    rewards = { ...rewards, minerals: Math.floor(rewards.minerals * 1.4), artifacts: Math.floor(rewards.artifacts * 0.8) };
-                    break;
-                case 'Desert':
-                    // Desert worlds have mineral deposits but little else
-                    rewards = { ...rewards, minerals: Math.floor(rewards.minerals * 1.3), data: Math.floor(rewards.data * 0.9) };
-                    break;
-                case 'Ocean':
-                    // Ocean worlds have rich biological data
-                    rewards = { ...rewards, data: Math.floor(rewards.data * 1.5) };
-                    break;
-                case 'Forest':
-                    // Forest worlds have balanced biological resources
-                    rewards = { ...rewards, data: Math.floor(rewards.data * 1.2), artifacts: Math.floor(rewards.artifacts * 1.2) };
-                    break;
-                case 'Crystal':
-                    // Crystal worlds have pristine artifacts and minerals
-                    rewards = { ...rewards, minerals: Math.floor(rewards.minerals * 1.2), artifacts: Math.floor(rewards.artifacts * 1.4) };
-                    break;
-            }
-        }
-        
-        // Apply signal type bonuses
-        if (signal.signalType) {
-            switch (signal.signalType) {
-                case 'ore_vein':
-                    // REW-01: 2x mineral bonus (exclusive advantage over standard 1.5x)
-                    rewards = {
-                        ...rewards,
-                        minerals: Math.floor(rewards.minerals * 2.0)
-                    };
-                    break;
-
-                case 'data_cache':
-                    // REW-02: 2x data bonus (exclusive advantage over standard 1.5x)
-                    rewards = {
-                        ...rewards,
-                        data: Math.floor(rewards.data * 2.0)
-                    };
-                    break;
-
-                case 'relic':
-                    // REW-03: 2x artifact bonus (relic signals also have rarity gating in ProbeManager)
-                    rewards = {
-                        ...rewards,
-                        artifacts: Math.floor(rewards.artifacts * 2.0)
-                    };
-                    break;
-
-                case 'exotic_crystal':
-                    // REW-04: 60% enhanced exotic minerals, 40% all three resources at once
-                    if (Math.random() < 0.6) {
-                        // Outcome 1: Enhanced exotic yield (handled below in exotic bonus section)
-                        // Mark for exotic enhancement - no base reward change needed
-                        signal._exoticEnhanced = true;
-                    } else {
-                        // Outcome 2: Mixed reward - boost all three resource types by 1.5x
-                        // The exploration mode will still pick one primary, but we'll add secondary rewards too
-                        signal._mixedReward = true;
-                        rewards = {
-                            minerals: Math.floor(rewards.minerals * 1.5),
-                            data: Math.floor(rewards.data * 1.5),
-                            artifacts: Math.floor(rewards.artifacts * 1.5)
-                        };
-                    }
-                    break;
-
-                case 'mineral':
-                    // 50% bonus to mineral rewards
-                    rewards = {
-                        ...rewards,
-                        minerals: Math.floor(rewards.minerals * 1.5)
-                    };
-                    break;
-                case 'data':
-                    // 50% bonus to data rewards
-                    rewards = {
-                        ...rewards,
-                        data: Math.floor(rewards.data * 1.5)
-                    };
-                    break;
-                case 'artifact':
-                    // 50% bonus to artifact rewards
-                    rewards = {
-                        ...rewards,
-                        artifacts: Math.floor(rewards.artifacts * 1.5)
-                    };
-                    break;
-            }
-        }
-        
-        let primaryReward = '';
-        let rewardAmount = 0;
-
-        // Determine reward based on exploration mode
-        switch (mode) {
-            case 'excavate':
-                primaryReward = 'minerals';
-                rewardAmount = rewards.minerals + Math.floor(Math.random() * rewards.minerals);
-                break;
-            case 'exterminate':
-                primaryReward = 'data';
-                rewardAmount = rewards.data + Math.floor(Math.random() * rewards.data);
-                break;
-            case 'expedition':
-                primaryReward = 'artifacts';
-                rewardAmount = rewards.artifacts + Math.floor(Math.random() * rewards.artifacts);
-                break;
-        }
-
-        // REW-04: Exotic Crystal mixed reward - add secondary resources to cargo
-        let secondaryRewards = null;
-        if (signal._mixedReward) {
-            // Calculate secondary resource amounts (same formula as primary: base + 0-100% random)
-            secondaryRewards = {};
-            if (primaryReward !== 'minerals') {
-                secondaryRewards.minerals = rewards.minerals + Math.floor(Math.random() * rewards.minerals);
-            }
-            if (primaryReward !== 'data') {
-                secondaryRewards.data = rewards.data + Math.floor(Math.random() * rewards.data);
-            }
-            if (primaryReward !== 'artifacts') {
-                secondaryRewards.artifacts = rewards.artifacts + Math.floor(Math.random() * rewards.artifacts);
-            }
-        }
-
-        // Add bonus exotic minerals for rare+ signals
-        let exoticBonus = 0;
-        if (rarity === 'rare') exoticBonus = 1;
-        else if (rarity === 'epic') exoticBonus = 3;
-        else if (rarity === 'legendary') exoticBonus = 10;
-
-        // REW-04: Exotic Crystal enhances exotic mineral yield (60% outcome)
-        if (signal._exoticEnhanced && exoticBonus > 0) {
-            exoticBonus = Math.floor(exoticBonus * 2.0);
-        }
-
-        // Find nearest active probe to store the rewards
-        console.log('Finding nearest probe to signal position:', signal.x, signal.y);
-        const nearestProbe = this.findNearestActiveProbe(signal.x, signal.y);
-        console.log('Nearest probe found:', nearestProbe ? nearestProbe.id : 'NONE');
-        
-        if (nearestProbe) {
-            // Initialize cargo if it doesn't exist
-            if (!nearestProbe.cargo) {
-                console.log('Initializing cargo for probe:', nearestProbe.id);
-                nearestProbe.cargo = {
-                    minerals: 0,
-                    data: 0,
-                    artifacts: 0,
-                    exoticMinerals: 0
-                };
-            }
-            
-            // Check cargo capacity
-            const cargoUsed = this.probeManager.getCargoUsed(nearestProbe);
-            const cargoCapacity = this.probeManager.getCargoCapacity(nearestProbe);
-            let secondaryTotal = 0;
-            if (secondaryRewards) {
-                secondaryTotal = Object.values(secondaryRewards).reduce((sum, v) => sum + v, 0);
-            }
-            const totalReward = rewardAmount + (exoticBonus || 0) + secondaryTotal;
-            
-            if (cargoUsed + totalReward > cargoCapacity) {
-                // CARGO FULL - cannot collect
-                console.warn(`Probe ${nearestProbe.id} cargo full! ${cargoUsed}/${cargoCapacity}, needed ${totalReward} more`);
-                
-                this.eventBus.emit('ui:message', {
-                    text: `Probe ${nearestProbe.id} cargo full! (${cargoUsed}/${cargoCapacity})\nCannot collect ${totalReward} units.\nReturn to hub or equip Cargo Expander.`,
-                    type: 'warning',
-                    duration: 5000
-                });
-                
-                // Don't collect - signal remains on map
-                this.showScreen('mapScreen');
-                return;
-            }
-            
-            console.log('Cargo before adding rewards:', nearestProbe.cargo);
-            
-            // Add rewards to probe's cargo
-            nearestProbe.cargo[primaryReward] += rewardAmount;
-            if (exoticBonus > 0) {
-                nearestProbe.cargo.exoticMinerals += exoticBonus;
-            }
-
-            // REW-04: Add secondary resources for exotic crystal mixed reward
-            if (secondaryRewards) {
-                for (const [resource, amount] of Object.entries(secondaryRewards)) {
-                    nearestProbe.cargo[resource] = (nearestProbe.cargo[resource] || 0) + amount;
-                }
-            }
-            
-            console.log('Cargo after adding rewards:', nearestProbe.cargo);
-            console.log(`Added ${rewardAmount} ${primaryReward} to probe ${nearestProbe.id}`);
-            console.log(`Cargo now: ${cargoUsed + totalReward}/${cargoCapacity}`);
-            
-            // Update Probethium stats
-            this.gameState.updateProbethiumStats('signal_identified');
-            this.gameState.updateProbethiumStats('resource_gathered', { amount: rewardAmount + exoticBonus });
-            
-            console.log(`Probe ${nearestProbe.id} carrying cargo:`, nearestProbe.cargo);
-        } else {
-            console.warn('No active probe found to carry rewards!');
-        }
-
-        // Show reward message (but don't apply to inventory yet)
-        let rewardText = `+${rewardAmount} ${primaryReward.charAt(0).toUpperCase() + primaryReward.slice(1)}`;
-        if (exoticBonus > 0) {
-            rewardText += `, +${exoticBonus} Exotic Minerals`;
-        }
-        // Add secondary rewards to display text (exotic crystal mixed)
-        if (secondaryRewards) {
-            for (const [resource, amount] of Object.entries(secondaryRewards)) {
-                rewardText += `, +${amount} ${resource.charAt(0).toUpperCase() + resource.slice(1)}`;
-            }
-        }
-        rewardText += ' (pending delivery)';
-
-        console.log(`Exploration reward stored: ${rewardText}`);
-
-        // Show reward modal
-        this.showRewardModal(rewardText, mode);
-
-        // Close explore screen and return to map immediately
-        this.showScreen('mapScreen');
-
-        // Clear current planet data
-        this.currentPlanet = null;
-        this.currentSignal = null;
-
-        // Update UI since we're back on the map
-        this.uiManager.updateUI();
-    }
-
-    /**
-     * Show reward modal
-     */
-    showRewardModal(rewardText, mode) {
-        const modal = document.getElementById('rewardModal');
-        const title = document.getElementById('rewardTitle');
-        const details = document.getElementById('rewardDetails');
-
-        const modeNames = {
-            excavate: 'Excavation Complete!',
-            exterminate: 'Hunt Successful!', 
-            expedition: 'Expedition Complete!'
-        };
-
-        title.textContent = modeNames[mode] || 'Exploration Complete!';
-        details.innerHTML = `<div style="font-size: 18px; color: #0f0;">${rewardText}</div>
-                            <div style="font-size: 14px; color: #ff0; margin-top: 10px;">Resources will be delivered when probe returns to hub</div>`;
-
-        modal.classList.add('active');
-
-        // Modal will only close when user clicks the "Collect" button
-        // (handled by the click event listener in setupEventListeners)
     }
 
     /**
@@ -4334,8 +3769,6 @@ class GameController {
                 this.canvas.removeEventListener('wheel', this.tutorialWheel);
                 this.eventBus.off('probe:deployed', this.tutorialProbeDeployment);
                 this.eventBus.off('signal:identified', this.tutorialSignalCollection);
-                this.eventBus.off('exploration:screenShown', this.tutorialExplorationScreen);
-                this.eventBus.off('planet:actionChosen', this.tutorialPlanetAction);
                 this.eventBus.off('hub:clicked', this.tutorialHubClick);
             }, 4000);
         }
