@@ -118,6 +118,15 @@ window.PALETTE = {
     PROBE_BODY: '#E8E4F0',
     PROBE_TRAIL: 'rgba(232, 228, 240, 0.35)',
 
+    // Material flow (VISUAL_STYLE.md "Material flow — the conveyor in space")
+    // One color per cargo type — deposits, flow beads, and processor ports all read from here.
+    MATERIALS: {
+        minerals: '#C97B4A',        // copper
+        data: '#5B8CFF',            // clear blue
+        artifacts: '#B06BFF',       // rift violet
+        exoticMinerals: '#E8E4F0'   // signal-white shimmer — the rare stuff
+    },
+
     // Rarity ramp (VISUAL_STYLE.md "Rarity recalibration")
     RARITY: {
         common: '#8B84A3',

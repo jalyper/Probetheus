@@ -30,7 +30,7 @@ class GameController {
         this.sfxManager = new SfxManager(this.eventBus);
         this.comboSystem = new ComboSystem(this.gameState, this.eventBus);
         this.statsManager = new StatsManager(this.gameState, this.eventBus);
-        this.cargoSparkSystem = new CargoSparkSystem(this.gameState, this.eventBus);
+        this.flowBeadSystem = new FlowBeadSystem(this.gameState, this.eventBus);
         this.depositSystem = new DepositSystem(this.gameState, this.eventBus);
         this.uiManager = new UIManager(this.gameState, this.eventBus, this.probeManager, this.buildingSystem);
         
@@ -2921,8 +2921,8 @@ class GameController {
         // Update synthesis animation
         this.synthesisAnimation.update(deltaTime);
 
-        // Update cargo sparks (sim-time)
-        this.cargoSparkSystem.update(deltaTime);
+        // Update flow beads (sim-time)
+        this.flowBeadSystem.update(deltaTime);
 
         // Update deposits (lazy sector generation + rate-token refill)
         this.depositSystem.update(deltaTime);
@@ -2978,8 +2978,8 @@ class GameController {
         this.renderMiningStations();
         this.renderShuttles();
 
-        // Cargo sparks ride above the network they illuminate
-        this.cargoSparkSystem.render(this.ctx, this.gameState.world.viewOffset);
+        // Flow beads ride above the network they illuminate
+        this.flowBeadSystem.render(this.ctx, this.gameState.world.viewOffset);
 
         // Render Remnant NPCs
         if (this.remnantManager) {

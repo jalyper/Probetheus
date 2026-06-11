@@ -224,12 +224,7 @@ class DepositSystem {
     /** Render discovered deposits (undiscovered ones are invisible — that's the prospecting game) */
     render(ctx, viewOffset) {
         const time = Date.now() * 0.001;
-        const colors = {
-            minerals: '#C97B4A',        // copper
-            data: '#5B8CFF',            // clear blue
-            artifacts: '#B06BFF',       // rift violet
-            exoticMinerals: '#E8E4F0',  // signal-white shimmer — the rare stuff
-        };
+        const colors = window.PALETTE.MATERIALS;
 
         for (const d of this.deposits()) {
             if (!d.discovered) continue;
