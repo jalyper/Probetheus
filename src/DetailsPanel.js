@@ -152,20 +152,20 @@ class DetailsPanel {
         this.icon.innerHTML = `
             <svg width="24" height="24" viewBox="0 0 24 24">
                 <!-- Hub base structure -->
-                <rect x="6" y="6" width="12" height="12" fill="#0f8" stroke="#0f8" stroke-width="1.5" rx="2"/>
+                <rect x="6" y="6" width="12" height="12" fill="rgba(212,175,55,0.08)" stroke="#D4AF37" stroke-width="1" rx="2"/>
                 <!-- Inner grid pattern -->
-                <line x1="9" y1="6" x2="9" y2="18" stroke="#333" stroke-width="1"/>
-                <line x1="12" y1="6" x2="12" y2="18" stroke="#333" stroke-width="1"/>
-                <line x1="15" y1="6" x2="15" y2="18" stroke="#333" stroke-width="1"/>
-                <line x1="6" y1="9" x2="18" y2="9" stroke="#333" stroke-width="1"/>
-                <line x1="6" y1="12" x2="18" y2="12" stroke="#333" stroke-width="1"/>
-                <line x1="6" y1="15" x2="18" y2="15" stroke="#333" stroke-width="1"/>
+                <line x1="9" y1="6" x2="9" y2="18" stroke="rgba(212,175,55,0.28)" stroke-width="1"/>
+                <line x1="12" y1="6" x2="12" y2="18" stroke="rgba(212,175,55,0.28)" stroke-width="1"/>
+                <line x1="15" y1="6" x2="15" y2="18" stroke="rgba(212,175,55,0.28)" stroke-width="1"/>
+                <line x1="6" y1="9" x2="18" y2="9" stroke="rgba(212,175,55,0.28)" stroke-width="1"/>
+                <line x1="6" y1="12" x2="18" y2="12" stroke="rgba(212,175,55,0.28)" stroke-width="1"/>
+                <line x1="6" y1="15" x2="18" y2="15" stroke="rgba(212,175,55,0.28)" stroke-width="1"/>
                 <!-- Central hub core -->
-                <circle cx="12" cy="12" r="3" fill="#0f8" stroke="#fff" stroke-width="1"/>
+                <circle cx="12" cy="12" r="3" fill="#D4AF37" stroke="#E8E4F0" stroke-width="1"/>
             </svg>
         `;
         this.title.textContent = 'Recon Hub';
-        this.title.style.color = '#0f8';
+        this.title.style.color = 'var(--fire)';
         
         const probeCount = hub.probes ? hub.probes.length : 0;
         const maxProbes = hub.maxProbes || 5;
@@ -177,16 +177,16 @@ class DetailsPanel {
         // Get shell information for equipped shell
         const equippedShellId = this.gameState.cosmetics?.equippedShells?.hubs || 'default';
         const shell = window.SHELL_CATALOG?.hubs?.[equippedShellId] || null;
-        const shellColor = shell?.visual?.color || '#0f8';
+        const shellColor = shell?.visual?.color || '#D4AF37';
 
         this.content.innerHTML = `
-            <div style="background: rgba(0,255,128,0.05); border: 1px solid rgba(0,255,128,0.2); border-radius: 5px; padding: 10px; margin-bottom: 12px;">
-                <div style="color: #0f8; font-size: 12px; font-weight: bold; margin-bottom: 6px;">📍 Hub Status</div>
-                <div style="color: #ccc; font-size: 12px; line-height: 1.6;">
+            <div style="background: var(--panel); border: 1px solid var(--line-soft); border-radius: 4px; padding: 10px; margin-bottom: 12px;">
+                <div style="color: var(--mist); font-size: 12px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px;">Hub Status</div>
+                <div style="color: var(--mist); font-size: 12px; line-height: 1.6;">
                     <div>ID: ${hub.id || 'Unknown'}</div>
                     <div>Position: (${Math.round(hub.x)}, ${Math.round(hub.y)})</div>
                     <div>Total Probes: ${probeCount}/${maxProbes}</div>
-                    <div style="color: #0ff; font-weight: bold;">Available: ${availableProbes} | Deployed: ${deployedProbes}</div>
+                    <div style="color: var(--fire); font-weight: 400;">Available: ${availableProbes} | Deployed: ${deployedProbes}</div>
                     <div>Sector: [${hub.sectorX || 0}, ${hub.sectorY || 0}]</div>
                 </div>
             </div>
@@ -206,66 +206,66 @@ class DetailsPanel {
                 `}
             </div>
 
-            <div style="background: rgba(200,150,255,0.05); border: 1px solid rgba(200,150,255,0.2); border-radius: 5px; padding: 10px;">
+            <div style="background: var(--panel); border: 1px solid var(--line-soft); border-radius: 4px; padding: 10px;">
                 <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 10px;">
-                    <div style="color: #c9f; font-size: 12px; font-weight: bold;">Hub Operations</div>
+                    <div style="color: var(--mist); font-size: 12px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase;">Hub Operations</div>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 6px;">
                     <button id="deployFromHub" class="control-btn" style="font-size: 12px; padding: 8px 12px; width: 100%; display: flex; align-items: center; gap: 8px;">
                         <svg width="16" height="16" viewBox="0 0 16 16" style="flex-shrink: 0;">
                             <!-- Probe Body (circular center) -->
-                            <circle cx="8" cy="8" r="3" fill="#0ff" stroke="#0ff" stroke-width="0.5"/>
+                            <circle cx="8" cy="8" r="3" fill="#E8E4F0" stroke="#E8E4F0" stroke-width="0.5"/>
                             <!-- Wings (extending perpendicular) -->
-                            <rect x="7" y="2" width="2" height="6" fill="rgba(0,255,255,0.8)" stroke="#0ff" stroke-width="0.5"/>
-                            <rect x="7" y="12" width="2" height="2" fill="rgba(0,255,255,0.8)" stroke="#0ff" stroke-width="0.5"/>
+                            <rect x="7" y="2" width="2" height="6" fill="rgba(232,228,240,0.7)" stroke="#E8E4F0" stroke-width="0.5"/>
+                            <rect x="7" y="12" width="2" height="2" fill="rgba(232,228,240,0.7)" stroke="#E8E4F0" stroke-width="0.5"/>
                             <!-- Front (triangular nose) -->
-                            <polygon points="11,8 14,6 14,10" fill="#0ff"/>
+                            <polygon points="11,8 14,6 14,10" fill="#E8E4F0"/>
                             <!-- Antennas (angled lines) -->
-                            <line x1="5" y1="7" x2="2" y2="5" stroke="rgba(0,255,255,0.8)" stroke-width="1"/>
-                            <line x1="5" y1="9" x2="2" y2="11" stroke="rgba(0,255,255,0.8)" stroke-width="1"/>
+                            <line x1="5" y1="7" x2="2" y2="5" stroke="rgba(232,228,240,0.7)" stroke-width="1"/>
+                            <line x1="5" y1="9" x2="2" y2="11" stroke="rgba(232,228,240,0.7)" stroke-width="1"/>
                         </svg>
                         <span style="text-decoration: underline;">D</span>eploy Probe
                     </button>
                     <button id="buildProbeForHub" class="control-btn" style="font-size: 12px; padding: 8px 12px; width: 100%; display: flex; align-items: center; gap: 8px;">
                         <svg width="16" height="16" viewBox="0 0 16 16" style="flex-shrink: 0;">
                             <!-- Probe Body (circular center) -->
-                            <circle cx="8" cy="8" r="3" fill="#0ff" stroke="#0ff" stroke-width="0.5"/>
+                            <circle cx="8" cy="8" r="3" fill="#E8E4F0" stroke="#E8E4F0" stroke-width="0.5"/>
                             <!-- Wings (extending perpendicular) -->
-                            <rect x="7" y="2" width="2" height="6" fill="rgba(0,255,255,0.8)" stroke="#0ff" stroke-width="0.5"/>
-                            <rect x="7" y="12" width="2" height="2" fill="rgba(0,255,255,0.8)" stroke="#0ff" stroke-width="0.5"/>
+                            <rect x="7" y="2" width="2" height="6" fill="rgba(232,228,240,0.7)" stroke="#E8E4F0" stroke-width="0.5"/>
+                            <rect x="7" y="12" width="2" height="2" fill="rgba(232,228,240,0.7)" stroke="#E8E4F0" stroke-width="0.5"/>
                             <!-- Front (triangular nose) -->
-                            <polygon points="11,8 14,6 14,10" fill="#0ff"/>
+                            <polygon points="11,8 14,6 14,10" fill="#E8E4F0"/>
                             <!-- Antennas (angled lines) -->
-                            <line x1="5" y1="7" x2="2" y2="5" stroke="rgba(0,255,255,0.8)" stroke-width="1"/>
-                            <line x1="5" y1="9" x2="2" y2="11" stroke="rgba(0,255,255,0.8)" stroke-width="1"/>
+                            <line x1="5" y1="7" x2="2" y2="5" stroke="rgba(232,228,240,0.7)" stroke-width="1"/>
+                            <line x1="5" y1="9" x2="2" y2="11" stroke="rgba(232,228,240,0.7)" stroke-width="1"/>
                         </svg>
                         Build <span style="text-decoration: underline;">P</span>robe (25M)
                     </button>
                     <button id="buildShuttleBtn" class="control-btn" style="font-size: 12px; padding: 8px 12px; width: 100%; display: flex; align-items: center; gap: 8px;">
                         <svg width="16" height="16" viewBox="0 0 16 16" style="flex-shrink: 0;">
                             <!-- Triangle shuttle pointing right -->
-                            <polygon points="12,8 4,4 4,12" fill="#ff0" stroke="#fff" stroke-width="0.8"/>
+                            <polygon points="12,8 4,4 4,12" fill="#D4AF37" stroke="#E8E4F0" stroke-width="0.8"/>
                             <!-- Cargo indicator (small circle) -->
-                            <circle cx="6" cy="8" r="1.5" fill="rgba(255,255,255,0.7)"/>
+                            <circle cx="6" cy="8" r="1.5" fill="rgba(232,228,240,0.7)"/>
                         </svg>
                         <span style="text-decoration: underline;">S</span>huttle (50M, 25D)
                     </button>
                     ${this.gameState.hasProtocol('exotic_synthesis') ? `
-                    <button id="synthesizeBtn" class="control-btn" style="font-size: 12px; padding: 8px 12px; width: 100%; display: flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #9400d3 0%, #ffd700 100%); color: #fff;">
-                        <span style="font-size: 16px; flex-shrink: 0;">⚗️</span>
+                    <button id="synthesizeBtn" class="control-btn" style="font-size: 12px; padding: 8px 12px; width: 100%; display: flex; align-items: center; gap: 8px; border-color: var(--fire);">
+                        <span style="color: var(--fire); flex-shrink: 0;">◇</span>
                         <span>Synthesize Probethium (5 Exotic)</span>
                     </button>
                     ` : ''}
                 </div>
             </div>
 
-            <div style="background: rgba(148,0,211,0.05); border: 1px solid rgba(148,0,211,0.2); border-radius: 5px; padding: 10px; margin-top: 12px;">
-                <div style="color: #9400d3; font-size: 12px; font-weight: bold; margin-bottom: 6px;">🎨 Equipped Shell</div>
+            <div style="background: var(--panel); border: 1px solid var(--line-soft); border-radius: 4px; padding: 10px; margin-top: 12px;">
+                <div style="color: var(--mist); font-size: 12px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px;">Equipped Shell</div>
                 <div id="hubShellIndicator" style="display: flex; align-items: center; gap: 8px; cursor: default;">
-                    <div style="width: 24px; height: 24px; border-radius: 4px; background: ${shellColor}; border: 1px solid rgba(255,255,255,0.2);"></div>
+                    <div style="width: 24px; height: 24px; border-radius: 4px; background: ${shellColor}; border: 1px solid var(--line-soft);"></div>
                     <div>
-                        <div style="color: ${shellColor}; font-size: 11px; font-weight: bold;">${shell?.name || 'Default'}</div>
-                        <div style="color: #888; font-size: 9px; text-transform: uppercase;">${shell?.rarity || 'standard'}</div>
+                        <div style="color: ${shellColor}; font-size: 11px; font-weight: 400;">${shell?.name || 'Default'}</div>
+                        <div style="color: var(--mist); font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em;">${shell?.rarity || 'standard'}</div>
                     </div>
                 </div>
             </div>
@@ -290,27 +290,29 @@ class DetailsPanel {
         this.icon.innerHTML = `
             <svg width="24" height="24" viewBox="0 0 24 24">
                 <!-- Octagonal mining station -->
-                <polygon points="12,3 16.95,5.55 19.5,10.5 16.95,15.45 12,18 7.05,15.45 4.5,10.5 7.05,5.55" fill="#aaa" stroke="#666" stroke-width="1.5"/>
+                <polygon points="12,3 16.95,5.55 19.5,10.5 16.95,15.45 12,18 7.05,15.45 4.5,10.5 7.05,5.55" fill="rgba(212,175,55,0.08)" stroke="#D4AF37" stroke-width="1"/>
                 <!-- Inner cross pattern -->
-                <line x1="7.5" y1="12" x2="16.5" y2="12" stroke="#666" stroke-width="1.2"/>
-                <line x1="12" y1="6" x2="12" y2="18" stroke="#666" stroke-width="1.2"/>
+                <line x1="7.5" y1="12" x2="16.5" y2="12" stroke="rgba(212,175,55,0.28)" stroke-width="1.2"/>
+                <line x1="12" y1="6" x2="12" y2="18" stroke="rgba(212,175,55,0.28)" stroke-width="1.2"/>
                 <!-- Diagonal lines -->
-                <line x1="9" y1="8.5" x2="15" y2="14.5" stroke="#666" stroke-width="1.2"/>
-                <line x1="15" y1="8.5" x2="9" y2="14.5" stroke="#666" stroke-width="1.2"/>
+                <line x1="9" y1="8.5" x2="15" y2="14.5" stroke="rgba(212,175,55,0.28)" stroke-width="1.2"/>
+                <line x1="15" y1="8.5" x2="9" y2="14.5" stroke="rgba(212,175,55,0.28)" stroke-width="1.2"/>
             </svg>
         `;
         this.title.textContent = 'Mining Station';
-        this.title.style.color = '#c9f';
-        
+        this.title.style.color = 'var(--fire)';
+
         const stationTypes = {
-            basic: { name: 'Basic Mining Station', icon: '⛏️' },
-            advanced: { name: 'Advanced Mining Station', icon: '🏭' },
-            quantum: { name: 'Quantum Mining Station', icon: '💠' }
+            basic: { name: 'Basic Mining Station' },
+            advanced: { name: 'Advanced Mining Station' },
+            quantum: { name: 'Quantum Mining Station' }
         };
-        
-        const stationType = stationTypes[station.type] || { name: 'Unknown', icon: '❓' };
+
+        const stationType = stationTypes[station.type] || { name: 'Unknown' };
         const efficiency = Math.round(station.efficiency * 100);
-        const activeStatus = station.active ? '🟢 Active' : '🔴 Inactive';
+        const activeStatus = station.active
+            ? '<span style="color: var(--fire);">Active</span>'
+            : '<span style="color: var(--mist);">Inactive</span>';
 
         // Get mining station type data
         const miningManager = this.gameState.miningManager;
@@ -325,44 +327,53 @@ class DetailsPanel {
             : 0;
         const productionRate = station.active ? (baseOutput * (station.level || 1)).toFixed(2) : '0';
 
-        // Map output resource to display labels with icons
+        // Map output resource to display labels with type colors (PALETTE.MATERIALS)
         const outputResourceLabels = {
-            'probethium': { name: 'Probetheum', icon: '⚛️' },
-            'minerals': { name: 'Minerals', icon: '⛽' },
-            'data': { name: 'Data', icon: '📊' },
-            'artifacts': { name: 'Artifacts', icon: '🏺' },
-            'mixed': { name: 'Mixed Resources (reduced)', icon: '📦' }
+            'probethium': { name: 'Probetheum', color: 'var(--fire-bright)' },
+            'minerals': { name: 'Minerals', color: '#C97B4A' },
+            'data': { name: 'Data', color: '#5B8CFF' },
+            'artifacts': { name: 'Artifacts', color: '#B06BFF' },
+            'mixed': { name: 'Mixed Resources (reduced)', color: 'var(--mist)' }
         };
 
-        const outputLabel = outputResourceLabels[outputResource] || { name: 'Unknown', icon: '❓' };
-        
+        const outputLabel = outputResourceLabels[outputResource] || { name: 'Unknown', color: 'var(--mist)' };
+
+        // Type colors for resource rows (PALETTE.MATERIALS)
+        const materialColors = {
+            minerals: '#C97B4A',
+            data: '#5B8CFF',
+            artifacts: '#B06BFF',
+            exoticMinerals: '#E8E4F0'
+        };
+
         // Resource requirements display
         let requirementsHtml = '';
         if (fullStationType && fullStationType.requirements) {
-            requirementsHtml = '<div style="margin-top: 8px;"><div style="color: #ff9; font-size: 11px; font-weight: bold;">🔧 Resource Requirements:</div>';
+            requirementsHtml = '<div style="margin-top: 8px;"><div style="color: var(--mist); font-size: 11px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase;">Resource Requirements</div>';
             for (const [resource, required] of Object.entries(fullStationType.requirements)) {
                 const currentInventory = station.stationInventory ? (station.stationInventory[resource] || 0) : 0;
                 const hasEnough = currentInventory >= required;
-                
-                const resourceIcon = resource === 'minerals' ? '⛽' : resource === 'data' ? '📊' : resource === 'artifacts' ? '🏺' : '💎';
-                const statusColor = hasEnough ? '#0f0' : '#f44';
+
+                const resourceColor = materialColors[resource] || 'var(--mist)';
+                const statusColor = hasEnough ? 'var(--fire)' : 'var(--danger)';
                 const statusText = hasEnough ? '✓' : '✗';
-                
+
                 requirementsHtml += `
                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 2px 10px;">
-                        <div style="color: #ccc; font-size: 10px;">${resourceIcon} ${resource}:</div>
-                        <div style="color: ${statusColor}; font-size: 10px; font-weight: bold;">${statusText} ${Math.round(currentInventory)}/${required}</div>
+                        <div style="color: ${resourceColor}; font-size: 10px;">${resource}:</div>
+                        <div style="color: ${statusColor}; font-size: 10px; font-weight: 400;">${statusText} ${Math.round(currentInventory)}/${required}</div>
                     </div>`;
             }
             requirementsHtml += '</div>';
         }
-        
-        // Calculate station inventory status  
+
+        // Calculate station inventory status
         let inventoryHtml = '';
         if (station.stationInventory && Object.keys(station.stationInventory).length > 0) {
-            inventoryHtml = '<div style="margin-top: 8px;"><div style="color: #888; font-size: 11px;">📦 Station Inventory:</div>';
+            inventoryHtml = '<div style="margin-top: 8px;"><div style="color: var(--mist); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;">Station Inventory</div>';
             for (const [resource, amount] of Object.entries(station.stationInventory)) {
-                inventoryHtml += `<div style="color: #aaa; font-size: 10px; padding-left: 10px;">• ${resource}: ${Math.round(amount)}</div>`;
+                const invColor = materialColors[resource] || 'var(--mist)';
+                inventoryHtml += `<div style="color: ${invColor}; font-size: 10px; padding-left: 10px;">▸ ${resource}: ${Math.round(amount)}</div>`;
             }
             inventoryHtml += '</div>';
         }
@@ -373,33 +384,27 @@ class DetailsPanel {
         // Get shell information for equipped shell
         const equippedStationShellId = this.gameState.cosmetics?.equippedShells?.miningStations || 'default';
         const stationShell = window.SHELL_CATALOG?.miningStations?.[equippedStationShellId] || null;
-        const stationShellColor = stationShell?.visual?.color || '#c9f';
+        const stationShellColor = stationShell?.visual?.color || '#D4AF37';
 
         this.content.innerHTML = `
-            <div style="background: rgba(200,150,255,0.05); border: 1px solid rgba(200,150,255,0.2); border-radius: 5px; padding: 10px; margin-bottom: 12px;">
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                    <div style="font-size: 24px;">${stationType.icon}</div>
-                    <div>
-                        <div style="color: #c9f; font-size: 14px; font-weight: bold;">${stationType.name}</div>
-                        <div style="color: #888; font-size: 10px;">Level ${station.level || 1}</div>
-                    </div>
+            <div style="background: var(--panel); border: 1px solid var(--line-soft); border-radius: 4px; padding: 10px; margin-bottom: 12px;">
+                <div style="margin-bottom: 8px;">
+                    <div style="color: var(--signal); font-size: 14px; font-weight: 400; letter-spacing: 0.08em;">${stationType.name}</div>
+                    <div style="color: var(--mist); font-size: 10px;">Level ${station.level || 1}</div>
                 </div>
-                
-                <div style="color: #ccc; font-size: 12px; line-height: 1.6;">
+
+                <div style="color: var(--mist); font-size: 12px; line-height: 1.6;">
                     <div>Status: ${activeStatus}</div>
                     <div>Efficiency: ${efficiency}%</div>
                     <div>Position: (${Math.round(station.position.x)}, ${Math.round(station.position.y)})</div>
                     <div>Hub: ${station.hubId}</div>
                 </div>
             </div>
-            
-            <div style="background: rgba(100,200,255,0.05); border: 1px solid rgba(100,200,255,0.2); border-radius: 5px; padding: 10px; margin-bottom: 12px;">
-                <div style="color: #64c8ff; font-size: 12px; font-weight: bold; margin-bottom: 6px;">📊 Production</div>
-                <div style="color: #ccc; font-size: 12px; line-height: 1.6;">
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <span>${outputLabel.icon}</span>
-                        <span>Mining Output: <span style="color: #0f8; font-weight: bold;">${outputLabel.name}</span></span>
-                    </div>
+
+            <div style="background: var(--panel); border: 1px solid var(--line-soft); border-radius: 4px; padding: 10px; margin-bottom: 12px;">
+                <div style="color: var(--mist); font-size: 12px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px;">Production</div>
+                <div style="color: var(--mist); font-size: 12px; line-height: 1.6;">
+                    <div>Mining Output: <span style="color: ${outputLabel.color}; font-weight: 400;">${outputLabel.name}</span></div>
                     <div>Production Rate: ${productionRate}/cycle</div>
                     <div>Total Produced: ${station.totalProduced?.toFixed(6) || '0.000000'}</div>
                     <div>Connected Shuttles: ${connectedShuttles.length}</div>
@@ -407,26 +412,26 @@ class DetailsPanel {
                 ${requirementsHtml}
                 ${inventoryHtml}
             </div>
-            
+
             <div style="display: flex; flex-direction: column; gap: 6px;">
                 <button id="upgradeStation" class="control-btn resource-button" style="font-size: 12px; padding: 8px 12px; width: 100%;" ${station.level >= 3 ? 'disabled' : ''}>
-                    ⬆️ Upgrade Station (${50 * (station.level + 1)}M, ${20 * (station.level + 1)}D)
+                    Upgrade Station (${50 * (station.level + 1)}M, ${20 * (station.level + 1)}D)
                 </button>
             </div>
 
-            <div style="background: rgba(148,0,211,0.05); border: 1px solid rgba(148,0,211,0.2); border-radius: 5px; padding: 10px; margin-top: 12px;">
-                <div style="color: #9400d3; font-size: 12px; font-weight: bold; margin-bottom: 6px;">🎨 Equipped Shell</div>
+            <div style="background: var(--panel); border: 1px solid var(--line-soft); border-radius: 4px; padding: 10px; margin-top: 12px;">
+                <div style="color: var(--mist); font-size: 12px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px;">Equipped Shell</div>
                 <div id="stationShellIndicator" style="display: flex; align-items: center; gap: 8px; cursor: default;">
-                    <div style="width: 24px; height: 24px; border-radius: 4px; background: ${stationShellColor}; border: 1px solid rgba(255,255,255,0.2);"></div>
+                    <div style="width: 24px; height: 24px; border-radius: 4px; background: ${stationShellColor}; border: 1px solid var(--line-soft);"></div>
                     <div>
-                        <div style="color: ${stationShellColor}; font-size: 11px; font-weight: bold;">${stationShell?.name || 'Default'}</div>
-                        <div style="color: #888; font-size: 9px; text-transform: uppercase;">${stationShell?.rarity || 'standard'}</div>
+                        <div style="color: ${stationShellColor}; font-size: 11px; font-weight: 400;">${stationShell?.name || 'Default'}</div>
+                        <div style="color: var(--mist); font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em;">${stationShell?.rarity || 'standard'}</div>
                     </div>
                 </div>
             </div>
 
-            <div style="color: #666; font-size: 10px; margin-top: 8px; line-height: 1.3;">
-                ${!station.active ? '⚠️ Station needs resources to operate' : `✅ Station is producing ${outputLabel.name}`}
+            <div style="color: var(--mist); font-size: 10px; margin-top: 8px; line-height: 1.3;">
+                ${!station.active ? 'Station needs resources to operate' : `Station is producing ${outputLabel.name}`}
             </div>
         `;
         
@@ -452,47 +457,47 @@ class DetailsPanel {
         this.icon.innerHTML = `
             <svg width="24" height="24" viewBox="0 0 24 24">
                 <!-- Probe Body (circular center) -->
-                <circle cx="12" cy="12" r="4.5" fill="#0ff" stroke="#0ff" stroke-width="0.8"/>
+                <circle cx="12" cy="12" r="4.5" fill="#E8E4F0" stroke="#E8E4F0" stroke-width="0.8"/>
                 <!-- Wings (extending perpendicular) -->
-                <rect x="11" y="3" width="2" height="9" fill="rgba(0,255,255,0.8)" stroke="#0ff" stroke-width="0.8"/>
-                <rect x="11" y="18" width="2" height="3" fill="rgba(0,255,255,0.8)" stroke="#0ff" stroke-width="0.8"/>
+                <rect x="11" y="3" width="2" height="9" fill="rgba(232,228,240,0.7)" stroke="#E8E4F0" stroke-width="0.8"/>
+                <rect x="11" y="18" width="2" height="3" fill="rgba(232,228,240,0.7)" stroke="#E8E4F0" stroke-width="0.8"/>
                 <!-- Front (triangular nose) -->
-                <polygon points="16.5,12 21,9 21,15" fill="#0ff"/>
+                <polygon points="16.5,12 21,9 21,15" fill="#E8E4F0"/>
                 <!-- Antennas (angled lines) -->
-                <line x1="7.5" y1="10.5" x2="3" y2="7.5" stroke="rgba(0,255,255,0.8)" stroke-width="1.5"/>
-                <line x1="7.5" y1="13.5" x2="3" y2="16.5" stroke="rgba(0,255,255,0.8)" stroke-width="1.5"/>
+                <line x1="7.5" y1="10.5" x2="3" y2="7.5" stroke="rgba(232,228,240,0.7)" stroke-width="1.5"/>
+                <line x1="7.5" y1="13.5" x2="3" y2="16.5" stroke="rgba(232,228,240,0.7)" stroke-width="1.5"/>
             </svg>
         `;
         this.title.textContent = `Probe ${probe.id}`;
-        this.title.style.color = '#0ff';
-        
+        this.title.style.color = 'var(--fire)';
+
         const status = probe.status || 'Unknown';
         const statusColors = {
-            'ready': '#0f0',
-            'exploring': '#0ff',
-            'returning': '#ff0',
-            'damaged': '#f00'
+            'ready': 'var(--fire)',
+            'exploring': 'var(--signal)',
+            'returning': 'var(--mist)',
+            'damaged': 'var(--danger)'
         };
-        
+
         this.content.innerHTML = `
-            <div style="background: rgba(0,255,255,0.05); border: 1px solid rgba(0,255,255,0.2); border-radius: 5px; padding: 10px; margin-bottom: 12px;">
-                <div style="color: #0ff; font-size: 12px; font-weight: bold; margin-bottom: 6px;">🛸 Probe Status</div>
-                <div style="color: #ccc; font-size: 12px; line-height: 1.6;">
-                    <div>Status: <span style="color: ${statusColors[status] || '#fff'}">${status}</span></div>
+            <div style="background: var(--panel); border: 1px solid var(--line-soft); border-radius: 4px; padding: 10px; margin-bottom: 12px;">
+                <div style="color: var(--mist); font-size: 12px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px;">Probe Status</div>
+                <div style="color: var(--mist); font-size: 12px; line-height: 1.6;">
+                    <div>Status: <span style="color: ${statusColors[status] || 'var(--signal)'}">${status}</span></div>
                     <div>Position: (${Math.round(probe.x)}, ${Math.round(probe.y)})</div>
                     <div>Speed: ${probe.speed || 1}</div>
                     <div>Patrol: ${probe.patrol ? 'Enabled' : 'Disabled'}</div>
                 </div>
             </div>
-            
-            <div style="border-top: 1px solid #333; padding-top: 12px; margin-bottom: 12px;">
-                <label style="color: #888; font-size: 12px; display: flex; align-items: center; cursor: pointer; margin-bottom: 8px;">
+
+            <div style="border-top: 1px solid var(--line-soft); padding-top: 12px; margin-bottom: 12px;">
+                <label style="color: var(--mist); font-size: 12px; display: flex; align-items: center; cursor: pointer; margin-bottom: 8px;">
                     <input type="checkbox" id="patrolModeCheckbox" style="margin-right: 8px; cursor: pointer;" ${probe.patrol ? 'checked' : ''}>
                     <span>Patrol Mode (Loop Route)</span>
                 </label>
-                <label style="color: #888; font-size: 12px; display: flex; align-items: center; cursor: pointer;">
+                <label style="color: var(--mist); font-size: 12px; display: flex; align-items: center; cursor: pointer;">
                     <input type="checkbox" id="cameraLockCheckbox" style="margin-right: 8px; cursor: pointer;">
-                    <span>🔒 Lock Camera to Probe</span>
+                    <span>Lock Camera to Probe</span>
                 </label>
             </div>
             
@@ -514,40 +519,47 @@ class DetailsPanel {
         this.icon.innerHTML = `
             <svg width="24" height="24" viewBox="0 0 24 24">
                 <!-- Triangle shuttle pointing right -->
-                <polygon points="18,12 6,6 6,18" fill="#ff0" stroke="#fff" stroke-width="1.2"/>
+                <polygon points="18,12 6,6 6,18" fill="#D4AF37" stroke="#E8E4F0" stroke-width="1.2"/>
                 <!-- Cargo indicator (small circle) -->
-                <circle cx="9" cy="12" r="2.25" fill="rgba(255,255,255,0.7)"/>
+                <circle cx="9" cy="12" r="2.25" fill="rgba(232,228,240,0.7)"/>
             </svg>
         `;
         this.title.textContent = 'Resource Shuttle';
-        this.title.style.color = '#f90';
-        
+        this.title.style.color = 'var(--fire)';
+
         const statusColors = {
-            'loading': '#0ff',
-            'delivering': '#0f0',
-            'returning': '#ff0'
+            'loading': 'var(--signal)',
+            'delivering': 'var(--fire)',
+            'returning': 'var(--mist)'
         };
-        
+
+        const cargoColors = {
+            minerals: '#C97B4A',
+            data: '#5B8CFF',
+            artifacts: '#B06BFF',
+            exoticMinerals: '#E8E4F0'
+        };
+
         this.content.innerHTML = `
-            <div style="background: rgba(255,150,0,0.05); border: 1px solid rgba(255,150,0,0.2); border-radius: 5px; padding: 10px; margin-bottom: 12px;">
-                <div style="color: #f90; font-size: 12px; font-weight: bold; margin-bottom: 6px;">🚀 Shuttle Status</div>
-                <div style="color: #ccc; font-size: 12px; line-height: 1.6;">
-                    <div>Status: <span style="color: ${statusColors[shuttle.status] || '#fff'}">${shuttle.status}</span></div>
+            <div style="background: var(--panel); border: 1px solid var(--line-soft); border-radius: 4px; padding: 10px; margin-bottom: 12px;">
+                <div style="color: var(--mist); font-size: 12px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px;">Shuttle Status</div>
+                <div style="color: var(--mist); font-size: 12px; line-height: 1.6;">
+                    <div>Status: <span style="color: ${statusColors[shuttle.status] || 'var(--signal)'}">${shuttle.status}</span></div>
                     <div>Position: (${Math.round(shuttle.position.x)}, ${Math.round(shuttle.position.y)})</div>
                     <div>Level: ${shuttle.level || 1}</div>
                     <div>Capacity: ${shuttle.capacity || 50}</div>
                 </div>
             </div>
-            
+
             ${shuttle.cargo && Object.keys(shuttle.cargo).length > 0 ? `
-            <div style="background: rgba(255,255,0,0.05); border: 1px solid rgba(255,255,0,0.2); border-radius: 5px; padding: 10px;">
-                <div style="color: #ff0; font-size: 12px; font-weight: bold; margin-bottom: 6px;">📦 Cargo</div>
-                <div style="color: #ccc; font-size: 11px;">
-                    ${Object.entries(shuttle.cargo).map(([res, amt]) => 
-                        `<div>• ${res}: ${amt}</div>`
+            <div style="background: var(--panel); border: 1px solid var(--line-soft); border-radius: 4px; padding: 10px;">
+                <div style="color: var(--mist); font-size: 12px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px;">Cargo</div>
+                <div style="font-size: 11px;">
+                    ${Object.entries(shuttle.cargo).map(([res, amt]) =>
+                        `<div style="color: ${cargoColors[res] || 'var(--mist)'};">▸ ${res}: ${amt}</div>`
                     ).join('')}
                 </div>
-            </div>` : '<div style="color: #888; font-size: 11px;">No cargo currently loaded</div>'}
+            </div>` : '<div style="color: var(--mist); font-size: 11px;">No cargo currently loaded</div>'}
         `;
     }
     
@@ -838,15 +850,16 @@ class DetailsPanel {
         const maxSlots = probe.maxEquipmentSlots || 2;
         const usedSlots = equipmentArray.length;
 
-        const icons = {
-            'minerals': '⛏️',
-            'mineral_collector': '⛏️',
-            'data': '💾',
-            'data_collector': '💾',
-            'artifacts': '🏺',
-            'artifact_collector': '🏺',
-            'all': '🌟',
-            'universal_collector': '🌟'
+        // Type-colored markers (PALETTE.MATERIALS) — thin glyphs, no emoji
+        const slotColors = {
+            'minerals': '#C97B4A',
+            'mineral_collector': '#C97B4A',
+            'data': '#5B8CFF',
+            'data_collector': '#5B8CFF',
+            'artifacts': '#B06BFF',
+            'artifact_collector': '#B06BFF',
+            'all': '#E8E4F0',
+            'universal_collector': '#E8E4F0'
         };
 
         // Build visual slot boxes (2 available + 1 greyed/locked)
@@ -857,23 +870,22 @@ class DetailsPanel {
             for (let i = 0; i < maxSlots; i++) {
                 const isEquipped = i < usedSlots;
                 const equipment = isEquipped ? equipmentArray[i] : null;
-                const icon = equipment ? (icons[equipment.type] || '❓') : '';
+                const slotColor = equipment ? (slotColors[equipment.type] || 'var(--mist)') : '';
 
                 if (isEquipped) {
-                    // Filled slot with equipment icon
+                    // Filled slot with type-colored marker
                     slotsHtml += `
                         <div style="
                             width: 44px;
                             height: 44px;
-                            border: 2px solid #0f8;
-                            border-radius: 6px;
-                            background: rgba(0,255,128,0.15);
+                            border: 1px solid var(--fire);
+                            border-radius: 4px;
+                            background: rgba(212,175,55,0.05);
                             display: flex;
                             align-items: center;
                             justify-content: center;
-                            box-shadow: 0 0 8px rgba(0,255,128,0.3);
                         " title="${equipment.name || 'Equipment'}">
-                            <span style="font-size: 22px;">${icon}</span>
+                            <span style="font-size: 18px; color: ${slotColor};">◇</span>
                         </div>
                     `;
                 } else {
@@ -882,14 +894,14 @@ class DetailsPanel {
                         <div style="
                             width: 44px;
                             height: 44px;
-                            border: 2px dashed #0f8;
-                            border-radius: 6px;
-                            background: rgba(0,255,128,0.05);
+                            border: 1px dashed var(--line);
+                            border-radius: 4px;
+                            background: var(--panel);
                             display: flex;
                             align-items: center;
                             justify-content: center;
                         " title="Empty slot">
-                            <span style="color: #0f8; font-size: 18px; opacity: 0.5;">+</span>
+                            <span style="color: var(--mist); font-size: 18px; opacity: 0.5;">+</span>
                         </div>
                     `;
                 }
@@ -900,15 +912,15 @@ class DetailsPanel {
                 <div style="
                     width: 44px;
                     height: 44px;
-                    border: 2px dashed #333;
-                    border-radius: 6px;
-                    background: rgba(50,50,50,0.3);
+                    border: 1px dashed rgba(139,132,163,0.3);
+                    border-radius: 4px;
+                    background: var(--panel);
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     opacity: 0.5;
                 " title="Locked - expand via Uplink protocols">
-                    <span style="color: #666; font-size: 14px;">🔒</span>
+                    <span style="color: var(--mist); font-size: 14px;">×</span>
                 </div>
             `;
 
@@ -919,12 +931,12 @@ class DetailsPanel {
         // If no auto-collector research, show locked message but still display slots
         if (!hasAnyAutoCollector) {
             return `
-                <div style="border: 1px solid #444; border-radius: 5px; padding: 10px; margin-top: 12px; background: rgba(100,100,100,0.1);">
-                    <div style="color: #666; font-weight: bold; font-size: 12px; margin-bottom: 8px; text-align: center;">
-                        🔧 EQUIPMENT SLOTS
+                <div style="border: 1px solid var(--line-soft); border-radius: 4px; padding: 10px; margin-top: 12px; background: var(--panel);">
+                    <div style="color: var(--mist); font-weight: 400; letter-spacing: 0.08em; font-size: 12px; margin-bottom: 8px; text-align: center; opacity: 0.7;">
+                        EQUIPMENT SLOTS
                     </div>
                     ${renderSlotBoxes()}
-                    <div style="color: #888; font-size: 11px; text-align: center; padding: 5px;">
+                    <div style="color: var(--mist); font-size: 11px; text-align: center; padding: 5px;">
                         Decode the Harvest Lattice protocol at the Uplink to unlock equipment
                     </div>
                 </div>
@@ -932,9 +944,9 @@ class DetailsPanel {
         }
 
         return `
-            <div style="border: 1px solid #444; border-radius: 5px; padding: 10px; margin-top: 12px; background: rgba(0,255,128,0.02);">
-                <div style="color: #0f8; font-weight: bold; font-size: 12px; margin-bottom: 8px; text-align: center;">
-                    🔧 EQUIPMENT SLOTS
+            <div style="border: 1px solid var(--line-soft); border-radius: 4px; padding: 10px; margin-top: 12px; background: var(--panel);">
+                <div style="color: var(--mist); font-weight: 400; letter-spacing: 0.08em; font-size: 12px; margin-bottom: 8px; text-align: center;">
+                    EQUIPMENT SLOTS
                 </div>
                 ${renderSlotBoxes()}
                 <button id="manageEquipmentBtn" class="control-btn" style="font-size: 10px; padding: 6px 10px; width: 100%;">
@@ -975,11 +987,12 @@ class DetailsPanel {
 
         // Build available equipment list from EQUIPMENT_TYPES
         const equipmentTypes = [];
-        const equipmentIcons = {
-            'mineral_collector': '⛏️',
-            'data_collector': '💾',
-            'artifact_collector': '🏺',
-            'universal_collector': '🌟'
+        // Type colors (PALETTE.MATERIALS) for the thin ◇ markers — no emoji
+        const equipmentColors = {
+            'mineral_collector': '#C97B4A',
+            'data_collector': '#5B8CFF',
+            'artifact_collector': '#B06BFF',
+            'universal_collector': '#E8E4F0'
         };
 
         if (typeof EQUIPMENT_TYPES !== 'undefined') {
@@ -987,7 +1000,7 @@ class DetailsPanel {
                 if (this.gameState.hasProtocol(eq.requiredProtocol)) {
                     equipmentTypes.push({
                         ...eq,
-                        icon: equipmentIcons[eq.id] || '❓'
+                        markerColor: equipmentColors[eq.id] || 'var(--mist)'
                     });
                 }
             });
@@ -1001,7 +1014,7 @@ class DetailsPanel {
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.8);
+            background: rgba(7,6,11,0.8);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -1021,35 +1034,35 @@ class DetailsPanel {
         const slotIndicators = [];
         for (let i = 0; i < maxSlots; i++) {
             if (i < usedSlots) {
-                slotIndicators.push('<span style="color: #0f8;">[X]</span>');
+                slotIndicators.push('<span style="color: var(--fire);">[X]</span>');
             } else {
-                slotIndicators.push('<span style="color: #444;">[ ]</span>');
+                slotIndicators.push('<span style="color: rgba(139,132,163,0.4);">[ ]</span>');
             }
         }
 
         modal.innerHTML = `
-            <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border: 2px solid #0f8; border-radius: 10px; padding: 20px; max-width: 450px; width: 90%;">
+            <div style="background: var(--panel); border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 4px 14px rgba(0,0,0,0.5); padding: 20px; max-width: 450px; width: 90%;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h3 style="color: #0f8; margin: 0;">🔧 Manage Equipment</h3>
-                    <button id="closeEquipmentModal" style="background: none; border: none; color: #888; font-size: 20px; cursor: pointer;">&times;</button>
+                    <h3 style="color: var(--fire); margin: 0; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase;">Manage Equipment</h3>
+                    <button id="closeEquipmentModal" style="background: none; border: none; color: var(--mist); font-size: 20px; cursor: pointer;">&times;</button>
                 </div>
 
-                <div style="color: #888; font-size: 12px; margin-bottom: 15px;">
+                <div style="color: var(--mist); font-size: 12px; margin-bottom: 15px;">
                     Probe ${probe.id} | Slots: ${slotIndicators.join(' ')} (${usedSlots}/${maxSlots}) | Minerals: ${resources.minerals}
                 </div>
 
                 ${usedSlots > 0 ? `
-                    <div style="background: rgba(0,255,128,0.1); border: 1px solid rgba(0,255,128,0.3); border-radius: 5px; padding: 12px; margin-bottom: 15px;">
-                        <div style="color: #0f8; font-weight: bold; margin-bottom: 8px;">Currently Equipped:</div>
+                    <div style="background: var(--panel); border: 1px solid var(--line-soft); border-radius: 4px; padding: 12px; margin-bottom: 15px;">
+                        <div style="color: var(--mist); font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; font-size: 12px; margin-bottom: 8px;">Currently Equipped</div>
                         ${equippedItems.map(eq => {
-                            const icon = equipmentIcons[eq.type] || '❓';
+                            const markerColor = equipmentColors[eq.type] || 'var(--mist)';
                             return `
-                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(0,255,128,0.2);">
-                                    <div style="color: #fff;">
-                                        <span style="font-size: 16px;">${icon}</span>
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--line-soft);">
+                                    <div style="color: var(--signal);">
+                                        <span style="color: ${markerColor};">◇</span>
                                         <span style="margin-left: 8px;">${eq.name || eq.type}</span>
                                     </div>
-                                    <button class="control-btn remove-equipment-btn" data-equipment-type="${eq.type}" style="font-size: 10px; padding: 4px 8px; background: rgba(255,68,68,0.2); border-color: #f44;">
+                                    <button class="control-btn remove-equipment-btn" data-equipment-type="${eq.type}" style="font-size: 10px; padding: 4px 8px; border-color: var(--danger); color: var(--danger);">
                                         Remove
                                     </button>
                                 </div>
@@ -1058,7 +1071,7 @@ class DetailsPanel {
                     </div>
                 ` : ''}
 
-                <div style="color: #0ff; font-weight: bold; margin-bottom: 10px;">Available Equipment:</div>
+                <div style="color: var(--mist); font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; font-size: 12px; margin-bottom: 10px;">Available Equipment</div>
 
                 <div style="max-height: 250px; overflow-y: auto;">
                     ${equipmentTypes.map(eq => {
@@ -1069,20 +1082,20 @@ class DetailsPanel {
 
                         let statusMessage = '';
                         if (alreadyEquipped) {
-                            statusMessage = '<div style="color: #0f8; font-size: 10px; margin-top: 3px;">Already equipped</div>';
+                            statusMessage = '<div style="color: var(--fire); font-size: 10px; margin-top: 3px;">Already equipped</div>';
                         } else if (!canAfford) {
-                            statusMessage = '<div style="color: #f44; font-size: 10px; margin-top: 3px;">Insufficient minerals</div>';
+                            statusMessage = '<div style="color: var(--danger); font-size: 10px; margin-top: 3px;">Insufficient minerals</div>';
                         } else if (!hasSlots) {
-                            statusMessage = '<div style="color: #ff0; font-size: 10px; margin-top: 3px;">No slots available</div>';
+                            statusMessage = '<div style="color: var(--mist); font-size: 10px; margin-top: 3px;">No slots available</div>';
                         }
 
                         return `
-                            <div style="background: rgba(0,255,255,0.05); border: 1px solid ${canEquip ? 'rgba(0,255,255,0.3)' : 'rgba(100,100,100,0.3)'}; border-radius: 5px; padding: 10px; margin-bottom: 8px; opacity: ${canEquip ? 1 : 0.6};">
+                            <div style="background: var(--panel); border: 1px solid ${canEquip ? 'var(--line)' : 'var(--line-soft)'}; border-radius: 4px; padding: 10px; margin-bottom: 8px; opacity: ${canEquip ? 1 : 0.6};">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <div>
-                                        <span style="font-size: 18px;">${eq.icon}</span>
-                                        <span style="color: ${canEquip ? '#0ff' : '#888'}; font-weight: bold; margin-left: 8px;">${eq.name}</span>
-                                        <span style="color: #666; font-size: 10px; margin-left: 5px;">(${eq.slotsRequired} slot)</span>
+                                        <span style="color: ${eq.markerColor};">◇</span>
+                                        <span style="color: ${canEquip ? 'var(--signal)' : 'var(--mist)'}; font-weight: 400; margin-left: 8px;">${eq.name}</span>
+                                        <span style="color: var(--mist); font-size: 10px; margin-left: 5px; opacity: 0.7;">(${eq.slotsRequired} slot)</span>
                                     </div>
                                     <button
                                         class="control-btn equip-btn"
@@ -1093,7 +1106,7 @@ class DetailsPanel {
                                         Equip (${eq.cost}M)
                                     </button>
                                 </div>
-                                <div style="color: #888; font-size: 11px; margin-top: 5px;">${eq.description}</div>
+                                <div style="color: var(--mist); font-size: 11px; margin-top: 5px;">${eq.description}</div>
                                 ${statusMessage}
                             </div>
                         `;
@@ -1101,7 +1114,7 @@ class DetailsPanel {
                 </div>
 
                 ${equipmentTypes.length === 0 ? `
-                    <div style="color: #888; text-align: center; padding: 20px;">
+                    <div style="color: var(--mist); text-align: center; padding: 20px;">
                         No equipment available. Decode collector protocols at the Uplink first.
                     </div>
                 ` : ''}
@@ -1254,51 +1267,51 @@ class DetailsPanel {
         
         // Determine status and warning
         let statusText = '✓ Plenty of space';
-        let statusColor = '#0f0';
+        let statusColor = 'var(--fire)';
         let warningText = '';
         let speedMod = 100;
-        
+
         if (cargoPercent >= 100) {
-            statusText = '🚨 CARGO FULL!';
-            statusColor = '#f00';
+            statusText = 'CARGO FULL';
+            statusColor = 'var(--danger)';
             warningText = 'Return to hub or cannot collect more signals';
             speedMod = 50;
         } else if (cargoPercent >= 90) {
-            statusText = '🔴 Almost full!';
-            statusColor = '#ff4400';
+            statusText = 'Almost full';
+            statusColor = 'var(--danger)';
             warningText = 'May not fit next signal';
             speedMod = 60;
         } else if (cargoPercent >= 75) {
-            statusText = '⚠️ Nearly full!';
-            statusColor = '#ffa500';
+            statusText = 'Nearly full';
+            statusColor = 'var(--signal)';
             warningText = 'Consider returning soon';
             speedMod = 75;
         } else if (cargoPercent >= 50) {
-            statusText = '⚠️ Getting full';
-            statusColor = '#ffaa00';
+            statusText = 'Getting full';
+            statusColor = 'var(--mist)';
             warningText = `Speed reduced to ${speedMod}%`;
             speedMod = 90;
         }
-        
+
         return `
-            <div style="border: 1px solid #444; border-radius: 5px; padding: 10px; margin-top: 12px; background: rgba(0,255,255,0.02);">
-                <div style="color: #0ff; font-weight: bold; margin-bottom: 8px; font-size: 12px;">
-                    📦 CARGO: ${cargoUsed} / ${cargoCapacity}
+            <div style="border: 1px solid var(--line-soft); border-radius: 4px; padding: 10px; margin-top: 12px; background: var(--panel);">
+                <div style="color: var(--mist); font-weight: 400; letter-spacing: 0.08em; margin-bottom: 8px; font-size: 12px;">
+                    CARGO: <span style="color: var(--signal); font-family: var(--font-data);">${cargoUsed} / ${cargoCapacity}</span>
                 </div>
-                <div style="background: #222; height: 20px; border-radius: 3px; overflow: hidden; margin-bottom: 10px; border: 1px solid #444;">
-                    <div style="background: linear-gradient(90deg, #0ff, #0aa); height: 100%; width: ${cargoPercent}%; transition: width 0.3s ease;"></div>
+                <div style="background: rgba(232,228,240,0.06); height: 20px; border-radius: 3px; overflow: hidden; margin-bottom: 10px; border: 1px solid var(--line-soft);">
+                    <div style="background: var(--fire); height: 100%; width: ${cargoPercent}%; transition: width 0.3s ease;"></div>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 11px; color: #aaa; margin-bottom: 10px;">
-                    <div>Minerals: ${probe.cargo.minerals || 0}</div>
-                    <div>Data: ${probe.cargo.data || 0}</div>
-                    <div>Artifacts: ${probe.cargo.artifacts || 0}</div>
-                    <div>Exotic: ${probe.cargo.exoticMinerals || 0}</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 11px; margin-bottom: 10px;">
+                    <div style="color: #C97B4A;">Minerals: ${probe.cargo.minerals || 0}</div>
+                    <div style="color: #5B8CFF;">Data: ${probe.cargo.data || 0}</div>
+                    <div style="color: #B06BFF;">Artifacts: ${probe.cargo.artifacts || 0}</div>
+                    <div style="color: #E8E4F0;">Exotic: ${probe.cargo.exoticMinerals || 0}</div>
                 </div>
                 ${cargoPercent >= 50 ? `
-                    <div style="margin-top: 10px; padding: 8px; background: rgba(255,100,0,0.15); border-radius: 3px; border: 1px solid rgba(255,100,0,0.3);">
-                        <div style="color: ${statusColor}; font-weight: bold; font-size: 11px; margin-bottom: 3px;">${statusText}</div>
-                        ${warningText ? `<div style="color: #aaa; font-size: 10px;">${warningText}</div>` : ''}
-                        ${cargoPercent >= 50 ? `<div style="color: #aaa; font-size: 10px; margin-top: 3px;">Speed: ${speedMod}%</div>` : ''}
+                    <div style="margin-top: 10px; padding: 8px; background: var(--panel); border-radius: 3px; border: 1px solid var(--line-soft);">
+                        <div style="color: ${statusColor}; font-weight: 400; font-size: 11px; margin-bottom: 3px;">${statusText}</div>
+                        ${warningText ? `<div style="color: var(--mist); font-size: 10px;">${warningText}</div>` : ''}
+                        ${cargoPercent >= 50 ? `<div style="color: var(--mist); font-size: 10px; margin-top: 3px;">Speed: ${speedMod}%</div>` : ''}
                     </div>
                 ` : ''}
             </div>
@@ -1315,48 +1328,47 @@ class DetailsPanel {
         
         // Default skin + owned skins
         const allSkins = [
-            { id: 'default', name: 'Default', color: '#00ffff' },
+            { id: 'default', name: 'Default', color: '#E8E4F0' },
             ...ownedSkins
         ];
-        
+
         return `
-            <div style="border: 1px solid #444; border-radius: 5px; padding: 10px; margin-top: 12px; background: rgba(148,0,211,0.02);">
-                <div style="color: #9400d3; font-weight: bold; margin-bottom: 8px; font-size: 12px;">
-                    🎨 PROBE SKIN
+            <div style="border: 1px solid var(--line-soft); border-radius: 4px; padding: 10px; margin-top: 12px; background: var(--panel);">
+                <div style="color: var(--mist); font-weight: 400; letter-spacing: 0.08em; margin-bottom: 8px; font-size: 12px;">
+                    PROBE SKIN
                 </div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                     ${allSkins.map(skin => {
                         const isSelected = (skin.id === currentSkin);
                         const isDefault = skin.id === 'default';
-                        
+
                         return `
-                            <div 
+                            <div
                                 data-skin-id="${skin.id}"
                                 data-probe-id="${probe.id}"
                                 class="skin-selector-box"
                                 style="
                                     width: 40px;
                                     height: 40px;
-                                    border: 2px solid ${isSelected ? '#9400d3' : (isDefault ? '#666' : skin.color)};
-                                    border-radius: 5px;
-                                    background: ${isDefault ? '#222' : skin.color + '22'};
+                                    border: 1px solid ${isSelected ? 'var(--fire)' : (isDefault ? 'var(--line-soft)' : skin.color)};
+                                    border-radius: 4px;
+                                    background: ${isDefault ? 'rgba(232,228,240,0.06)' : skin.color + '22'};
                                     cursor: pointer;
                                     display: flex;
                                     align-items: center;
                                     justify-content: center;
                                     position: relative;
                                     opacity: ${isDefault ? 0.5 : 1};
-                                    box-shadow: ${isSelected ? '0 0 10px ' + (isDefault ? '#9400d3' : skin.color) : 'none'};
                                 "
                                 title="${skin.name}"
                             >
-                                ${isSelected ? '<div style="color: #fff; font-size: 20px;">✓</div>' : ''}
-                                <div style="position: absolute; bottom: 2px; width: 100%; height: 4px; background: ${isDefault ? '#666' : skin.color}; opacity: 0.5;"></div>
+                                ${isSelected ? '<div style="color: var(--signal); font-size: 20px;">✓</div>' : ''}
+                                <div style="position: absolute; bottom: 2px; width: 100%; height: 4px; background: ${isDefault ? 'var(--mist)' : skin.color}; opacity: 0.5;"></div>
                             </div>
                         `;
                     }).join('')}
                 </div>
-                <div style="color: #888; font-size: 10px; margin-top: 8px;">
+                <div style="color: var(--mist); font-size: 10px; margin-top: 8px;">
                     Click a color to equip skin
                 </div>
             </div>

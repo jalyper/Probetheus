@@ -65,23 +65,22 @@ class UIManager {
         // Create the line element
         const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         line.id = 'connectorLineElement';
-        line.setAttribute('stroke', '#0ff');
-        line.setAttribute('stroke-width', '2');
+        line.setAttribute('stroke', '#D4AF37');
+        line.setAttribute('stroke-opacity', '0.28');
+        line.setAttribute('stroke-width', '1');
         line.setAttribute('stroke-dasharray', '5,5');
-        line.style.filter = 'drop-shadow(0 0 4px #0ff)';
 
         // Create animated pulse circle at probe end
         const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         circle.id = 'connectorCircle';
         circle.setAttribute('r', '4');
-        circle.setAttribute('fill', '#0ff');
-        circle.style.filter = 'drop-shadow(0 0 6px #0ff)';
+        circle.setAttribute('fill', '#D4AF37');
 
         // Add animation
         const animate = document.createElementNS('http://www.w3.org/2000/svg', 'animate');
         animate.setAttribute('attributeName', 'r');
         animate.setAttribute('values', '3;6;3');
-        animate.setAttribute('dur', '1.5s');
+        animate.setAttribute('dur', '2.4s');
         animate.setAttribute('repeatCount', 'indefinite');
         circle.appendChild(animate);
 
@@ -358,10 +357,10 @@ class UIManager {
         const usedSlots = equipmentArray.length;
 
         const icons = {
-            'mineral_collector': '⛏️',
-            'data_collector': '💾',
-            'artifact_collector': '🏺',
-            'universal_collector': '🌟'
+            'mineral_collector': { glyph: '◆', color: '#C97B4A' },
+            'data_collector': { glyph: '◆', color: '#5B8CFF' },
+            'artifact_collector': { glyph: '◆', color: '#B06BFF' },
+            'universal_collector': { glyph: '◆', color: 'var(--fire)' }
         };
 
         let slotsHtml = '';
@@ -370,23 +369,22 @@ class UIManager {
         for (let i = 0; i < maxSlots; i++) {
             const isEquipped = i < usedSlots;
             const equipment = isEquipped ? equipmentArray[i] : null;
-            const icon = equipment ? (icons[equipment.type] || '❓') : '';
+            const icon = equipment ? (icons[equipment.type] || { glyph: '?', color: 'var(--mist)' }) : null;
 
             if (isEquipped) {
-                // Filled slot with equipment icon
+                // Filled slot with equipment glyph
                 slotsHtml += `
                     <div style="
                         width: 44px;
                         height: 44px;
-                        border: 2px solid #0f8;
-                        border-radius: 6px;
-                        background: rgba(0,255,128,0.15);
+                        border: 1px solid var(--line);
+                        border-radius: 3px;
+                        background: var(--panel);
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        box-shadow: 0 0 8px rgba(0,255,128,0.3);
                     " title="${equipment.name || 'Equipment'}">
-                        <span style="font-size: 22px;">${icon}</span>
+                        <span style="font-size: 16px; color: ${icon.color};">${icon.glyph}</span>
                     </div>
                 `;
             } else {
@@ -395,14 +393,14 @@ class UIManager {
                     <div style="
                         width: 44px;
                         height: 44px;
-                        border: 2px dashed #0f8;
-                        border-radius: 6px;
-                        background: rgba(0,255,128,0.05);
+                        border: 1px dashed var(--line-soft);
+                        border-radius: 3px;
+                        background: transparent;
                         display: flex;
                         align-items: center;
                         justify-content: center;
                     " title="Empty slot">
-                        <span style="color: #0f8; font-size: 18px; opacity: 0.5;">+</span>
+                        <span style="color: var(--mist); font-size: 18px; opacity: 0.6;">+</span>
                     </div>
                 `;
             }
@@ -413,15 +411,15 @@ class UIManager {
             <div style="
                 width: 44px;
                 height: 44px;
-                border: 2px dashed #333;
-                border-radius: 6px;
-                background: rgba(50,50,50,0.3);
+                border: 1px dashed var(--line-soft);
+                border-radius: 3px;
+                background: transparent;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                opacity: 0.5;
+                opacity: 0.4;
             " title="Locked - expand via Uplink protocols">
-                <span style="color: #666; font-size: 14px;">🔒</span>
+                <span style="color: var(--mist); font-size: 14px;">◇</span>
             </div>
         `;
 
@@ -553,9 +551,9 @@ class UIManager {
 
         if (hasEquipment) {
             // Show equipped items summary
-            equipmentSlot.innerHTML = '<span style="color: #0ff; font-size: 16px;">🤖</span>';
-            equipmentSlot.style.borderColor = '#0ff';
-            equipmentSlot.style.background = 'rgba(0,255,255,0.1)';
+            equipmentSlot.innerHTML = '<span style="color: var(--fire); font-size: 14px;">◆</span>';
+            equipmentSlot.style.borderColor = 'var(--line)';
+            equipmentSlot.style.background = 'var(--panel)';
             equipmentSlot.title = `${equipmentArray.length}/${maxSlots} slots used`;
 
             if (equipmentInfo) {
@@ -570,9 +568,9 @@ class UIManager {
 
                 const equipmentNames = equipmentArray.map(eq => eq.name || eq.type).join(', ');
                 equipmentInfo.innerHTML = `
-                    <div style="color: #0ff; font-weight: bold; margin-bottom: 4px;">${equipmentArray.length} item(s)</div>
-                    <div style="color: #aaa; font-size: 10px; margin-bottom: 4px;">Collecting: ${collectionIcons}</div>
-                    <div style="color: #888; font-size: 9px;">${equipmentNames}</div>
+                    <div style="color: var(--signal); font-weight: 400; letter-spacing: 0.08em; margin-bottom: 4px;">${equipmentArray.length} item(s)</div>
+                    <div style="color: var(--mist); font-size: 10px; margin-bottom: 4px;">Collecting: ${collectionIcons}</div>
+                    <div style="color: var(--mist); font-size: 9px;">${equipmentNames}</div>
                 `;
             }
 
@@ -581,15 +579,15 @@ class UIManager {
                     <button class="control-btn" style="font-size: 11px; padding: 6px 12px;"
                             onclick="window.game.detailsPanel.showEquipmentModal(window.game.gameState.entities.probes.find(p => p.id === '${probe.id}'))"
                             title="Manage probe equipment">
-                        🔧 Manage Equipment
+                        Manage Equipment
                     </button>
                 `;
             }
         } else {
             // Show empty slot
-            equipmentSlot.innerHTML = '<span style="color: #444; font-size: 12px;">Empty</span>';
-            equipmentSlot.style.borderColor = '#444';
-            equipmentSlot.style.background = 'rgba(0,0,0,0.3)';
+            equipmentSlot.innerHTML = '<span style="color: var(--mist); font-size: 12px;">Empty</span>';
+            equipmentSlot.style.borderColor = 'var(--line-soft)';
+            equipmentSlot.style.background = 'transparent';
             equipmentSlot.title = `0/${maxSlots} slots used`;
 
             if (equipmentInfo) {
@@ -671,10 +669,10 @@ class UIManager {
         
         // Set color based on type
         const colors = {
-            'success': '#0f0',
-            'warning': '#ff0', 
-            'error': '#f00',
-            'info': '#0ff'
+            'success': 'var(--fire)',
+            'warning': 'var(--danger)',
+            'error': 'var(--danger)',
+            'info': 'var(--mist)'
         };
         
         alertElement.style.color = colors[type] || colors.info;
@@ -839,62 +837,60 @@ class UIManager {
             probeDiv.className = 'probe-item';
             probeDiv.style.cssText = `
                 padding: 10px 12px;
-                border: 2px solid ${probe === this.gameState.ui.selectedProbe ? '#0ff' : 'rgba(0,255,255,0.3)'};
-                background: ${probe === this.gameState.ui.selectedProbe ? 'rgba(0,255,255,0.15)' : 'rgba(0,255,255,0.05)'};
+                border: 1px solid ${probe === this.gameState.ui.selectedProbe ? 'var(--fire)' : 'var(--line-soft)'};
+                background: ${probe === this.gameState.ui.selectedProbe ? 'rgba(212,175,55,0.08)' : 'var(--panel)'};
                 cursor: pointer;
-                border-radius: 6px;
+                border-radius: 3px;
                 transition: all 0.3s ease;
                 font-size: 12px;
-                color: #fff;
-                box-shadow: ${probe === this.gameState.ui.selectedProbe ? '0 0 15px rgba(0,255,255,0.4)' : '0 0 5px rgba(0,0,0,0.3)'};
+                color: var(--signal);
+                box-shadow: 0 2px 6px rgba(0,0,0,0.3);
                 backdrop-filter: blur(2px);
             `;
-            
+
             // Add hover effects
             probeDiv.addEventListener('mouseenter', () => {
                 if (probe !== this.gameState.ui.selectedProbe) {
-                    probeDiv.style.borderColor = '#0ff';
-                    probeDiv.style.background = 'rgba(0,255,255,0.1)';
-                    probeDiv.style.boxShadow = '0 0 10px rgba(0,255,255,0.3)';
+                    probeDiv.style.borderColor = 'var(--line)';
+                    probeDiv.style.background = 'rgba(212,175,55,0.05)';
                 }
             });
-            
+
             probeDiv.addEventListener('mouseleave', () => {
                 if (probe !== this.gameState.ui.selectedProbe) {
-                    probeDiv.style.borderColor = 'rgba(0,255,255,0.3)';
-                    probeDiv.style.background = 'rgba(0,255,255,0.05)';
-                    probeDiv.style.boxShadow = '0 0 5px rgba(0,0,0,0.3)';
+                    probeDiv.style.borderColor = 'var(--line-soft)';
+                    probeDiv.style.background = 'var(--panel)';
                 }
             });
-            
+
             // Determine status display
             let statusText = 'Ready';
-            let statusColor = '#0ff';
-            
+            let statusColor = 'var(--mist)';
+
             if (probe.waypoints && probe.waypoints.length > 0) {
                 if (probe.currentWaypoint < probe.outboundWaypointsCount - 1) {
                     statusText = 'Exploring';
-                    statusColor = '#0f0';
+                    statusColor = 'var(--fire)';
                 } else {
                     statusText = 'Returning';
-                    statusColor = '#ff0';
+                    statusColor = 'var(--mist)';
                 }
             }
-            
+
             // Check damage status
             const hasDamage = probe.damage > 0;
-            
+
             probeDiv.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                     <div style="display: flex; align-items: center; gap: 6px;">
-                        <span style="font-size: 14px;">🛸</span>
-                        <span style="font-weight: bold;">Probe ${index + 1}</span>
+                        <span style="font-size: 11px; color: var(--mist);">◇</span>
+                        <span style="font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase;">Probe ${index + 1}</span>
                     </div>
-                    <span style="color: ${statusColor}; font-size: 11px; font-weight: bold; padding: 2px 6px; background: rgba(0,0,0,0.3); border-radius: 3px;">${statusText}</span>
+                    <span style="color: ${statusColor}; font-size: 11px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 6px; background: rgba(0,0,0,0.3); border-radius: 3px;">${statusText}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #888;">
-                    ${probe.patrolMode ? '<span style="color: #0f8;">🔄 Patrol Mode</span>' : '<span>Manual Control</span>'}
-                    ${hasDamage ? `<span style="color: #ff0;">⚠️ ${probe.damage}/${probe.maxDamage} Damage</span>` : '<span style="color: #0f8;">✓ Operational</span>'}
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: var(--mist);">
+                    ${probe.patrolMode ? '<span style="color: var(--fire);">Patrol Mode</span>' : '<span>Manual Control</span>'}
+                    ${hasDamage ? `<span style="color: var(--danger);">${probe.damage}/${probe.maxDamage} Damage</span>` : '<span style="color: var(--mist);">Operational</span>'}
                 </div>
             `;
             
@@ -930,9 +926,9 @@ class UIManager {
 
         let hintHTML = '';
         if (this.gameState.ui.deployMode) {
-            hintHTML = '<div style="color: #888; font-size: 10px; margin-top: 8px; text-align: center;">Right-click to cancel deployment</div>';
+            hintHTML = '<div style="color: var(--mist); font-size: 10px; margin-top: 8px; text-align: center;">Right-click to cancel deployment</div>';
         } else if (this.buildingSystem.isBuildingMode()) {
-            hintHTML = '<div style="color: #888; font-size: 10px; margin-top: 8px; text-align: center;">Right-click to cancel building</div>';
+            hintHTML = '<div style="color: var(--mist); font-size: 10px; margin-top: 8px; text-align: center;">Right-click to cancel building</div>';
         }
         
         if (hintHTML) {
@@ -975,20 +971,20 @@ class UIManager {
         
         hubInfo.innerHTML = `
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                <span>Ready Probes:</span>
-                <span style="color: #0ff;">${readyCount}/${selectedHub.maxProbes}</span>
+                <span style="color: var(--mist);">Ready Probes:</span>
+                <span style="color: var(--signal); font-family: var(--font-data);">${readyCount}/${selectedHub.maxProbes}</span>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                <span>Active Probes:</span>
-                <span style="color: #0ff;">${totalCount}</span>
+                <span style="color: var(--mist);">Active Probes:</span>
+                <span style="color: var(--signal); font-family: var(--font-data);">${totalCount}</span>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                <span>Mining Stations:</span>
-                <span style="color: #c9f;">${hubStations}</span>
+                <span style="color: var(--mist);">Mining Stations:</span>
+                <span style="color: var(--signal); font-family: var(--font-data);">${hubStations}</span>
             </div>
             <div style="display: flex; justify-content: space-between;">
-                <span>Shuttles:</span>
-                <span style="color: #c9f;">${hubShuttles}</span>
+                <span style="color: var(--mist);">Shuttles:</span>
+                <span style="color: var(--signal); font-family: var(--font-data);">${hubShuttles}</span>
             </div>
         `;
         
@@ -1022,14 +1018,14 @@ class UIManager {
      * Get collection type icons
      */
     getCollectionTypeIcons(collectionTypes) {
-        const icons = {
-            'minerals': '⛏️',
-            'data': '💾',
-            'artifacts': '🏺',
-            'all': '🌟'
+        const labels = {
+            'minerals': '<span style="color: #C97B4A;">Minerals</span>',
+            'data': '<span style="color: #5B8CFF;">Data</span>',
+            'artifacts': '<span style="color: #B06BFF;">Artifacts</span>',
+            'all': '<span style="color: var(--fire);">All</span>'
         };
-        
-        return collectionTypes.map(type => icons[type] || '❓').join(' ');
+
+        return collectionTypes.map(type => labels[type] || '?').join(', ');
     }
 
     /**
@@ -1097,13 +1093,13 @@ class UIManager {
         const shellSystem = window.game?.shellSystem;
         if (!shellSystem) {
             // ShellSystem not available, show default
-            previewBox.innerHTML = '<span style="color: #0ff; font-size: 24px;">🛸</span>';
+            previewBox.innerHTML = this.renderProbeShellPreview(null);
             nameEl.textContent = 'Default';
             return;
         }
 
         const shell = shellSystem.getProbeShell(probe);
-        const shellColor = shell?.visual?.color || '#0ff';
+        const shellColor = shell?.visual?.color || '#E8E4F0';
 
         // Render shell preview
         previewBox.innerHTML = this.renderProbeShellPreview(shell);
@@ -1120,7 +1116,7 @@ class UIManager {
      * Render a small probe shell preview SVG
      */
     renderProbeShellPreview(shell) {
-        const color = shell?.visual?.color || '#0ff';
+        const color = shell?.visual?.color || '#E8E4F0';
         const glow = shell?.visual?.glow || color;
 
         return `
@@ -1155,7 +1151,7 @@ class UIManager {
         if (result) {
             return `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`;
         }
-        return '0, 255, 255';
+        return '232, 228, 240';
     }
 
     /**
@@ -1184,7 +1180,7 @@ class UIManager {
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.8);
+            background: rgba(7, 6, 11, 0.8);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -1192,59 +1188,57 @@ class UIManager {
         `;
 
         const rarityColors = {
-            common: '#aaa',
-            uncommon: '#0f0',
-            rare: '#00f',
-            epic: '#f0f',
-            legendary: '#ffd700'
+            common: '#8B84A3',
+            uncommon: '#7FD6C2',
+            rare: '#5B8CFF',
+            epic: '#B06BFF',
+            legendary: '#FFD700'
         };
 
         modal.innerHTML = `
-            <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border: 2px solid #9400d3; border-radius: 10px; padding: 20px; max-width: 450px; width: 90%; max-height: 80vh; overflow-y: auto;">
+            <div style="background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 24px; max-width: 450px; width: 90%; max-height: 80vh; overflow-y: auto; backdrop-filter: blur(8px); box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h3 style="color: #9400d3; margin: 0;">🎨 Equip Shell</h3>
-                    <button id="closeShellModal" style="background: none; border: none; color: #888; font-size: 20px; cursor: pointer;">&times;</button>
+                    <h3 style="color: var(--signal); margin: 0; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase;">Equip Shell</h3>
+                    <button id="closeShellModal" style="background: none; border: none; color: var(--mist); font-size: 20px; cursor: pointer;">&times;</button>
                 </div>
 
-                <div style="color: #888; font-size: 12px; margin-bottom: 15px;">
+                <div style="color: var(--mist); font-size: 12px; margin-bottom: 15px;">
                     Probe ${probe.id} | Current: ${ownedShells.find(s => s.id === currentShellId)?.name || 'Default'}
                 </div>
 
-                <div style="color: #9400d3; font-weight: bold; margin-bottom: 10px;">Available Shells:</div>
+                <div style="color: var(--mist); font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; font-size: 11px; margin-bottom: 10px;">Available Shells:</div>
 
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px;">
                     ${ownedShells.map(shell => {
                         const isSelected = shell.id === currentShellId;
-                        const color = shell.visual?.color || '#0ff';
-                        const rarityColor = rarityColors[shell.rarity] || '#aaa';
+                        const color = shell.visual?.color || '#E8E4F0';
+                        const rarityColor = rarityColors[shell.rarity] || '#8B84A3';
 
                         return `
                             <div
                                 class="shell-option"
                                 data-shell-id="${shell.id}"
                                 style="
-                                    background: ${isSelected ? 'rgba(148, 0, 211, 0.2)' : 'rgba(0,0,0,0.3)'};
-                                    border: 2px solid ${isSelected ? '#9400d3' : color};
-                                    border-radius: 8px;
+                                    background: ${isSelected ? 'rgba(212, 175, 55, 0.08)' : 'rgba(0,0,0,0.3)'};
+                                    border: 1px solid ${isSelected ? 'var(--fire)' : 'var(--line-soft)'};
+                                    border-radius: 3px;
                                     padding: 10px;
                                     cursor: pointer;
                                     text-align: center;
                                     transition: all 0.2s;
-                                    ${isSelected ? 'box-shadow: 0 0 10px rgba(148, 0, 211, 0.5);' : ''}
                                 "
                             >
                                 ${this.renderProbeShellPreview(shell)}
-                                <div style="color: ${color}; font-size: 11px; font-weight: bold; margin-top: 5px;">${shell.name}</div>
-                                <div style="color: ${rarityColor}; font-size: 9px; text-transform: uppercase;">${shell.rarity || 'common'}</div>
-                                ${isSelected ? '<div style="color: #0f8; font-size: 9px; margin-top: 3px;">✓ EQUIPPED</div>' : ''}
+                                <div style="color: ${color}; font-size: 11px; font-weight: 400; letter-spacing: 0.04em; margin-top: 5px;">${shell.name}</div>
+                                <div style="color: ${rarityColor}; font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em;">${shell.rarity || 'common'}</div>
+                                ${isSelected ? '<div style="color: var(--fire); font-size: 9px; letter-spacing: 0.08em; margin-top: 3px;">EQUIPPED</div>' : ''}
                             </div>
                         `;
                     }).join('')}
                 </div>
 
                 ${ownedShells.length <= 1 ? `
-                    <div style="color: #888; text-align: center; padding: 20px; margin-top: 15px; background: rgba(0,0,0,0.2); border-radius: 5px;">
-                        <div style="font-size: 24px; margin-bottom: 5px;">🛒</div>
+                    <div style="color: var(--mist); text-align: center; padding: 20px; margin-top: 15px; border: 1px solid var(--line-soft); border-radius: 3px;">
                         <div>Visit a Remnant trader to purchase more shells!</div>
                     </div>
                 ` : ''}
@@ -1324,11 +1318,11 @@ class UIManager {
             display: none;
             pointer-events: none;
             z-index: 10001;
-            background: rgba(20, 20, 40, 0.95);
-            border: 1px solid rgba(0, 255, 255, 0.3);
+            background: var(--panel);
+            border: 1px solid var(--line);
             border-radius: 4px;
             padding: 8px 12px;
-            color: #ccc;
+            color: var(--mist);
             font-size: 11px;
             line-height: 1.6;
         `;
@@ -1345,7 +1339,7 @@ class UIManager {
             height: 0;
             border-left: 6px solid transparent;
             border-right: 6px solid transparent;
-            border-top: 6px solid rgba(20, 20, 40, 0.95);
+            border-top: 6px solid rgba(10, 8, 18, 0.92);
         `;
 
         tooltip.appendChild(arrow);
@@ -1371,7 +1365,7 @@ class UIManager {
         for (const [bonusType, value] of Object.entries(shell.bonuses)) {
             const info = shellSystem.getBonusTypeInfo(bonusType);
             if (info) {
-                lines.push(`${info.icon} ${info.label}: <span style="color: #0f0">+${value}${info.unit}</span>`);
+                lines.push(`${info.label}: <span style="color: var(--fire)">+${value}${info.unit}</span>`);
             }
         }
 
@@ -1409,12 +1403,12 @@ class UIManager {
             this.tooltipArrow.style.bottom = 'auto';
             this.tooltipArrow.style.top = '-6px';
             this.tooltipArrow.style.borderTop = 'none';
-            this.tooltipArrow.style.borderBottom = '6px solid rgba(20, 20, 40, 0.95)';
+            this.tooltipArrow.style.borderBottom = '6px solid rgba(10, 8, 18, 0.92)';
         } else {
             // Arrow points down (default)
             this.tooltipArrow.style.bottom = '-6px';
             this.tooltipArrow.style.top = 'auto';
-            this.tooltipArrow.style.borderTop = '6px solid rgba(20, 20, 40, 0.95)';
+            this.tooltipArrow.style.borderTop = '6px solid rgba(10, 8, 18, 0.92)';
             this.tooltipArrow.style.borderBottom = 'none';
         }
 

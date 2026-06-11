@@ -177,26 +177,29 @@ class TutorialManager {
 
         const toast = document.createElement('div');
         toast.style.cssText = `
-            background: linear-gradient(135deg, rgba(10, 15, 25, 0.97), rgba(5, 10, 20, 0.97));
-            border: 1px solid rgba(0, 255, 255, 0.25);
-            border-radius: 8px;
-            padding: 10px 12px;
-            color: #bdd;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            padding: 11px 13px;
+            color: var(--mist);
             font-size: 12px;
-            line-height: 1.45;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-weight: 300;
+            letter-spacing: 0.02em;
+            line-height: 1.5;
+            font-family: var(--font-ui);
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(6px);
             pointer-events: auto;
             display: flex;
-            gap: 8px;
+            gap: 10px;
             align-items: flex-start;
             opacity: 0;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.3s var(--ease);
         `;
         toast.innerHTML = `
-            <span style="flex-shrink:0;">💡</span>
+            <span style="flex-shrink:0; color: var(--fire);">▸</span>
             <span style="flex:1;">${text}</span>
-            <button style="background:none;border:none;color:#678;cursor:pointer;font-size:14px;line-height:1;padding:0;">×</button>
+            <button style="background:none;border:none;color:var(--mist);cursor:pointer;font-size:14px;line-height:1;padding:0;">×</button>
         `;
         toast.querySelector('button').addEventListener('click', () => toast.remove());
         container.appendChild(toast);
@@ -603,29 +606,24 @@ class TutorialManager {
 
         tutorialContent.innerHTML = `
             <div style="display: flex; align-items: center; gap: 20px; padding: 0;">
-                <!-- Icon -->
-                <div style="flex-shrink: 0; width: 40px; height: 40px; background: rgba(0, 255, 255, 0.1); border: 1px solid rgba(0, 255, 255, 0.3); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
-                    🎯
-                </div>
-
                 <!-- Content -->
                 <div style="flex: 1; min-width: 0;">
-                    <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px;">
-                        <h3 style="color: #0ff; margin: 0; font-size: 16px; font-weight: 600; white-space: nowrap;">
+                    <div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 5px;">
+                        <h3 style="color: var(--fire); margin: 0; font-size: 13px; font-weight: 400; letter-spacing: 0.18em; text-transform: uppercase; white-space: nowrap;">
                             ${title}
                         </h3>
-                        ${this.tutorialActive ? `<span style="color: #666; font-size: 12px;">Step ${this.currentStep + 1}/${this.steps.length}</span>` : ''}
+                        ${this.tutorialActive ? `<span style="color: var(--mist); font-family: var(--font-data); font-size: 10px;">${this.currentStep + 1} / ${this.steps.length}</span>` : ''}
                     </div>
-                    <div style="color: #aaa; font-size: 14px; line-height: 1.4;">
+                    <div style="color: var(--signal); font-size: 13.5px; font-weight: 300; letter-spacing: 0.02em; line-height: 1.5;">
                         ${message}
                     </div>
                 </div>
 
                 <!-- Status indicator -->
-                <div style="flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(0, 255, 255, 0.05); border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 6px;">
+                <div style="flex-shrink: 0; display: flex; align-items: center; gap: 8px;">
                     ${autoClose ?
-                        '<span style="color: #0f0; font-size: 12px;">✓ Complete</span>' :
-                        '<div style="display: flex; align-items: center; gap: 6px;"><div class="tutorial-pulse"></div><span style="color: #0ff; font-size: 12px;">In Progress</span></div>'
+                        '<span style="color: var(--fire); font-size: 11px; letter-spacing: 0.12em;">COMPLETE</span>' :
+                        '<div style="display: flex; align-items: center; gap: 7px;"><div class="tutorial-pulse"></div><span style="color: var(--mist); font-size: 11px; letter-spacing: 0.12em;">IN PROGRESS</span></div>'
                     }
                 </div>
             </div>
@@ -683,35 +681,19 @@ class TutorialManager {
 
         const tutorialContent = document.createElement('div');
         tutorialContent.style.cssText = `
-            background: linear-gradient(135deg, rgba(10, 15, 25, 0.98), rgba(5, 10, 20, 0.98));
-            border: 1px solid rgba(0, 255, 255, 0.2);
-            border-radius: 10px;
-            padding: 16px 20px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            padding: 16px 22px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            font-family: var(--font-ui);
             position: relative;
             overflow: hidden;
             pointer-events: auto;
         `;
 
-        const bgAnimation = document.createElement('div');
-        bgAnimation.style.cssText = `
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 200%;
-            height: 100%;
-            background: linear-gradient(90deg,
-                transparent 0%,
-                rgba(0, 255, 255, 0.03) 50%,
-                transparent 100%);
-            animation: tutorialShimmer 8s ease-in-out infinite;
-            pointer-events: none;
-        `;
-        tutorialContent.appendChild(bgAnimation);
-
-        tutorialContent.innerHTML += '<div style="position: relative; z-index: 1;"></div>';
+        tutorialContent.innerHTML = '<div style="position: relative; z-index: 1;"></div>';
 
         tutorialPanel.appendChild(tutorialContent);
 
@@ -719,39 +701,34 @@ class TutorialManager {
 
         const style = document.createElement('style');
         style.textContent = `
-            @keyframes tutorialShimmer {
-                0%, 100% { transform: translateX(0); }
-                50% { transform: translateX(50%); }
-            }
-
             @keyframes tutorialPulse {
-                0%, 100% { opacity: 0.4; transform: scale(1); }
-                50% { opacity: 1; transform: scale(1.2); }
+                0%, 100% { opacity: 0.35; transform: scale(1); }
+                50% { opacity: 1; transform: scale(1.15); }
             }
 
             @keyframes tutorialHighlightPulse {
                 0%, 100% {
-                    border-color: rgba(255, 255, 0, 0.6);
-                    box-shadow: 0 0 10px rgba(255, 255, 0, 0.4);
+                    border-color: rgba(212, 175, 55, 0.45);
+                    box-shadow: 0 0 8px rgba(212, 175, 55, 0.25);
                 }
                 50% {
-                    border-color: rgba(255, 255, 0, 1);
-                    box-shadow: 0 0 20px rgba(255, 255, 0, 0.8), 0 0 30px rgba(255, 255, 0, 0.4);
+                    border-color: rgba(212, 175, 55, 0.9);
+                    box-shadow: 0 0 14px rgba(212, 175, 55, 0.45);
                 }
             }
 
             .tutorial-pulse {
-                width: 8px;
-                height: 8px;
+                width: 7px;
+                height: 7px;
                 border-radius: 50%;
-                background: #0ff;
-                animation: tutorialPulse 2s ease-in-out infinite;
+                background: var(--fire);
+                animation: tutorialPulse 2.4s ease-in-out infinite;
             }
 
             .tutorial-highlight {
-                border: 3px solid rgba(255, 255, 0, 0.8) !important;
-                animation: tutorialHighlightPulse 2s ease-in-out infinite;
-                transition: border 0.3s ease, box-shadow 0.3s ease;
+                border: 1px solid rgba(212, 175, 55, 0.8) !important;
+                animation: tutorialHighlightPulse 2.4s ease-in-out infinite;
+                transition: border 0.3s var(--ease), box-shadow 0.3s var(--ease);
             }
         `;
         document.head.appendChild(style);

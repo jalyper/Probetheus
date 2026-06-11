@@ -99,7 +99,7 @@ test.describe('Shell Bonus UI - Tooltips', () => {
         expect(result.hasPercent).toBe(true);
     });
 
-    test('BUI-05 / TEST-05: tooltip displays correct bonus label, icon, and percentage', async ({ page }) => {
+    test('BUI-05 / TEST-05: tooltip displays correct bonus label and percentage (no emoji icon)', async ({ page }) => {
         await startGame(page);
 
         const result = await page.evaluate(async () => {
@@ -140,7 +140,7 @@ test.describe('Shell Bonus UI - Tooltips', () => {
                 content,
                 hasLabel: content.includes('Signal Range'),
                 hasPercentage: content.includes('+10%'),
-                hasIcon: signalRangeInfo ? content.includes(signalRangeInfo.icon) : null,
+                hasEmojiIcon: signalRangeInfo && signalRangeInfo.icon ? content.includes(signalRangeInfo.icon) : null,
                 isVisible: tooltip.style.display === 'block'
             };
         });
@@ -149,9 +149,9 @@ test.describe('Shell Bonus UI - Tooltips', () => {
         expect(result.isVisible).toBe(true);
         expect(result.hasLabel).toBe(true);
         expect(result.hasPercentage).toBe(true);
-        // Icon check is optional based on BONUS_TYPES availability
-        if (result.hasIcon !== null) {
-            expect(result.hasIcon).toBe(true);
+        // Void Premium chrome: emoji icons are no longer rendered in the tooltip
+        if (result.hasEmojiIcon !== null) {
+            expect(result.hasEmojiIcon).toBe(false);
         }
     });
 

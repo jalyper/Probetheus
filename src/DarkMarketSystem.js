@@ -8,7 +8,7 @@
 const NPC_INVENTORY = {
     keth_varn: {
         theme: 'Data & Calculation',
-        color: '#00ffff',
+        color: '#B06BFF',
         description: 'Specializes in data processing and research acceleration',
         sharedCount: 2,  // Number of random shared shells to include
         specialReward: {
@@ -22,7 +22,7 @@ const NPC_INVENTORY = {
     },
     whisperer: {
         theme: 'Signals & Detection',
-        color: '#ffffff',
+        color: '#B06BFF',
         description: 'Specializes in signal enhancement and rare discoveries',
         sharedCount: 2,
         specialReward: {
@@ -36,7 +36,7 @@ const NPC_INVENTORY = {
     },
     mira_sol: {
         theme: 'Survival & Durability',
-        color: '#ffaa00',
+        color: '#B06BFF',
         description: 'Specializes in probe protection and endurance',
         sharedCount: 3,
         specialReward: {
@@ -50,7 +50,7 @@ const NPC_INVENTORY = {
     },
     archivist: {
         theme: 'Discovery & Artifacts',
-        color: '#ff4444',
+        color: '#B06BFF',
         description: 'Specializes in artifact discovery and exploration',
         sharedCount: 2,
         specialReward: {
@@ -64,7 +64,7 @@ const NPC_INVENTORY = {
     },
     null: {
         theme: 'Exotic & Void',
-        color: '#1a0a2e',
+        color: '#B06BFF',
         description: 'Specializes in exotic materials and Probethium',
         sharedCount: 1,
         specialReward: {

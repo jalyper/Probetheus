@@ -35,7 +35,8 @@ test.describe('Tutorial System', () => {
 
         const content = await page.textContent('#tutorialPanel');
         expect(content).toContain('Your Hub');
-        expect(content).toContain('Step 1');
+        // Void Premium tutorial panel shows a mono "1 / 6" counter instead of "Step 1"
+        expect(content).toContain('1 / 6');
     });
 
     test('selecting the hub completes step 1', async ({ page }) => {

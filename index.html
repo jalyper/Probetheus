@@ -102,10 +102,10 @@
 
         <!-- Galactic Map Screen -->
         <div id="mapScreen" class="screen active" style="position: relative; display: flex; justify-content: center; align-items: center; background: var(--void);">
-            <canvas id="galaxyCanvas" style="border: 2px solid rgba(212, 175, 55, 0.1); box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);"></canvas>
+            <canvas id="galaxyCanvas" style="border: 1px solid var(--line-soft);"></canvas>
             
             <!-- Testing Panel - Left Sidebar -->
-            <div id="testPanel" style="position: fixed; top: 80px; left: 15px; width: 200px; padding: 15px; background: var(--panel); border: 2px solid var(--mist); border-radius: 8px; box-shadow: 0 0 20px rgba(139,132,163,0.3); backdrop-filter: blur(3px); z-index: 1000;">
+            <div id="testPanel" style="position: fixed; top: 80px; left: 15px; width: 200px; padding: 15px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 4px 14px rgba(0,0,0,0.5); backdrop-filter: blur(3px); z-index: 1000;">
                 <!-- Header -->
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid var(--mist); padding-bottom: 8px;">
                     <div style="display: flex; align-items: center; gap: 8px;">
@@ -181,7 +181,7 @@
             <div id="detailsArea" style="position: fixed; top: 80px; right: 15px; width: 320px; display: flex; flex-direction: column; gap: 15px; z-index: 1000; pointer-events: none;">
                 
                 <!-- Main Details Panel (for selected entities) -->
-                <div id="detailsPanel" style="display: none; padding: 15px; background: var(--panel); border: 2px solid var(--fire); border-radius: 8px; box-shadow: 0 0 20px rgba(212,175,55,0.3); backdrop-filter: blur(3px); pointer-events: auto;">
+                <div id="detailsPanel" style="display: none; padding: 15px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 4px 14px rgba(0,0,0,0.5); backdrop-filter: blur(3px); pointer-events: auto;">
                 <!-- Dynamic Header -->
                 <div id="detailsHeader" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid var(--fire); padding-bottom: 8px;">
                     <div style="display: flex; align-items: center; gap: 8px;">
@@ -202,7 +202,7 @@
             </div>
             
             <!-- Probe Operations Panel - Right Sidebar -->
-            <div id="probePanel" style="display: none; position: fixed; top: 530px; right: 15px; width: 280px; padding: 15px; background: var(--panel); border: 2px solid var(--fire); border-radius: 8px; box-shadow: 0 0 20px rgba(212,175,55,0.3); backdrop-filter: blur(3px);">
+            <div id="probePanel" style="display: none; position: fixed; top: 530px; right: 15px; width: 280px; padding: 15px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 4px 14px rgba(0,0,0,0.5); backdrop-filter: blur(3px);">
                 <!-- Header -->
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid var(--fire); padding-bottom: 8px;">
                     <div style="display: flex; align-items: center; gap: 8px;">
@@ -240,7 +240,7 @@
             </div>
 
         <!-- Probe Detail Panel (floating near probe) -->
-        <div id="probeDetailPanel" style="display: none; position: fixed; top: 780px; right: 15px; z-index: 1000; width: 280px; padding: 15px; background: var(--panel); border: 2px solid var(--fire); border-radius: 8px; box-shadow: 0 0 20px rgba(212,175,55,0.3); backdrop-filter: blur(5px);">
+        <div id="probeDetailPanel" style="display: none; position: fixed; top: 780px; right: 15px; z-index: 1000; width: 280px; padding: 15px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 4px 14px rgba(0,0,0,0.5); backdrop-filter: blur(5px);">
             <div style="color: var(--fire); font-size: 16px; margin-bottom: 12px; text-align: center;">Probe Details</div>
 
             <div id="probeIcon" style="text-align: center; margin-bottom: 15px;">
@@ -351,8 +351,8 @@
         
         <!-- Dark Market Modal -->
         <div id="darkMarketModal" class="modal" style="display: none; background: rgba(0,0,0,0.98);">
-            <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto; border: 3px solid #9400d3; box-shadow: 0 0 50px rgba(148,0,211,0.8); background: linear-gradient(135deg, #0a0015 0%, #15001a 100%); position: relative; padding: 25px;">
-                <button id="closeDarkMarket" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #9400d3; font-size: 28px; cursor: pointer; padding: 5px 10px; z-index: 10; transition: all 0.2s;" onmouseover="this.style.textShadow='0 0 10px #9400d3'" onmouseout="this.style.textShadow='none'">&times;</button>
+            <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto; border: 1px solid rgba(176,107,255,0.45); box-shadow: 0 6px 24px rgba(0,0,0,0.6); background: var(--panel); position: relative; padding: 25px;">
+                <button id="closeDarkMarket" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: var(--mist); font-size: 28px; cursor: pointer; padding: 5px 10px; z-index: 10; transition: color 0.2s;" onmouseover="this.style.color='#B06BFF'" onmouseout="this.style.color='var(--mist)'">&times;</button>
 
                 <!-- NPC header will be dynamically inserted here by JavaScript -->
 
@@ -363,20 +363,19 @@
                     </div>
                 </div>
 
-                <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #9400d333;">
-                    <button id="closeDarkMarketBottom" class="control-btn" style="background: linear-gradient(135deg, #2a0040 0%, #15001a 100%); border-color: #9400d3; color: #9400d3; padding: 10px 30px; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.boxShadow='0 0 15px rgba(148,0,211,0.5)'" onmouseout="this.style.boxShadow='none'">Close Market</button>
+                <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(176,107,255,0.2);">
+                    <button id="closeDarkMarketBottom" class="control-btn" style="border-color: rgba(176,107,255,0.45); color: #B06BFF; padding: 10px 30px; font-size: 14px;">Close Market</button>
                 </div>
             </div>
         </div>
 
         <!-- Settings Modal -->
         <div id="settingsModal" class="modal" style="display: none; background: var(--panel);">
-            <div class="modal-content" style="max-width: 600px; border: 3px solid var(--fire); box-shadow: 0 0 50px rgba(212,175,55,0.5); background: var(--panel); position: relative;">
-                <button id="closeSettings" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: var(--fire); font-size: 24px; cursor: pointer; padding: 5px 10px; z-index: 10;">&times;</button>
-                
+            <div class="modal-content" style="max-width: 600px; border: 1px solid var(--line); box-shadow: 0 6px 24px rgba(0,0,0,0.6); background: var(--panel); position: relative;">
+                <button id="closeSettings" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: var(--mist); font-size: 24px; cursor: pointer; padding: 5px 10px; z-index: 10;">&times;</button>
+
                 <div style="text-align: center; margin-bottom: 30px;">
-                    <div style="font-size: 48px; margin-bottom: 15px;">⚙︎</div>
-                    <h1 style="color: var(--fire); margin: 0 0 10px 0; font-size: 28px; text-shadow: 0 0 20px rgba(212,175,55,0.8);">
+                    <h1 style="color: var(--fire); margin: 0 0 10px 0; font-size: 22px; font-weight: 400; letter-spacing: 0.3em; text-indent: 0.3em;">
                         SETTINGS
                     </h1>
                     <div style="color: var(--mist); font-size: 14px;">Configure your experience</div>

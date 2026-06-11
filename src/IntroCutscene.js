@@ -481,28 +481,28 @@ class IntroCutscene {
             }
             
             const glowGradient = this.ctx.createRadialGradient(-60 + glowOffset, 0, 0, -60 + glowOffset, 0, glowSize);
-            glowGradient.addColorStop(0, `rgba(0, 255, 255, ${0.9 * glowIntensity})`);
-            glowGradient.addColorStop(0.5, `rgba(0, 150, 255, ${0.6 * glowIntensity})`);
-            glowGradient.addColorStop(1, 'rgba(0, 255, 255, 0)');
+            glowGradient.addColorStop(0, `rgba(255, 215, 0, ${0.85 * glowIntensity})`);
+            glowGradient.addColorStop(0.5, `rgba(212, 175, 55, ${0.55 * glowIntensity})`);
+            glowGradient.addColorStop(1, 'rgba(212, 175, 55, 0)');
             this.ctx.fillStyle = glowGradient;
             this.ctx.beginPath();
             this.ctx.arc(-60 + glowOffset, 0, glowSize, 0, Math.PI * 2);
             this.ctx.fill();
             
-            // In ragdoll mode, add erratic thrust trail
+            // In ragdoll mode, add erratic thrust trail (gold — stolen fire)
             if (this.ship.ragdollMode && glowIntensity > 1) {
                 const trailGradient = this.ctx.createLinearGradient(-60, 0, -200, glowOffset);
-                trailGradient.addColorStop(0, `rgba(0, 255, 255, ${0.8 * glowIntensity})`);
-                trailGradient.addColorStop(1, 'rgba(0, 255, 255, 0)');
+                trailGradient.addColorStop(0, `rgba(212, 175, 55, ${0.8 * glowIntensity})`);
+                trailGradient.addColorStop(1, 'rgba(212, 175, 55, 0)');
                 this.ctx.fillStyle = trailGradient;
                 this.ctx.fillRect(-200, -8, 140, 16);
             }
         }
-        
-        // Draw ship body (elongated hexagon)
-        this.ctx.fillStyle = '#2a4a6a';
-        this.ctx.strokeStyle = '#0ff';
-        this.ctx.lineWidth = 2;
+
+        // Draw ship body (elongated hexagon) — Void Premium palette
+        this.ctx.fillStyle = '#1A1030';
+        this.ctx.strokeStyle = '#E8E4F0';
+        this.ctx.lineWidth = 1.5;
         this.ctx.beginPath();
         this.ctx.moveTo(-60, 0);
         this.ctx.lineTo(-40, -20);
@@ -517,8 +517,8 @@ class IntroCutscene {
         // Draw normal engine glow (when not in shooting star mode)
         if (this.ship.thrusterGlow <= 1) {
             const engineGradient = this.ctx.createRadialGradient(-60, 0, 0, -60, 0, 20);
-            engineGradient.addColorStop(0, 'rgba(0, 255, 255, 0.8)');
-            engineGradient.addColorStop(1, 'rgba(0, 255, 255, 0)');
+            engineGradient.addColorStop(0, 'rgba(212, 175, 55, 0.7)');
+            engineGradient.addColorStop(1, 'rgba(212, 175, 55, 0)');
             this.ctx.fillStyle = engineGradient;
             this.ctx.beginPath();
             this.ctx.arc(-60, 0, 20, 0, Math.PI * 2);
@@ -553,23 +553,23 @@ class IntroCutscene {
         this.ctx.scale(scale, scale);
         this.ctx.globalAlpha = opacity;
         
-        // Add glow effect for separated hub
+        // Add glow effect for separated hub (gold — what the player will build)
         if (isGlowing) {
             const glowGradient = this.ctx.createRadialGradient(0, 0, 0, 0, 0, 25);
-            glowGradient.addColorStop(0, 'rgba(0, 255, 128, 0.6)');
-            glowGradient.addColorStop(0.5, 'rgba(0, 255, 128, 0.3)');
-            glowGradient.addColorStop(1, 'rgba(0, 255, 128, 0)');
+            glowGradient.addColorStop(0, 'rgba(212, 175, 55, 0.55)');
+            glowGradient.addColorStop(0.5, 'rgba(212, 175, 55, 0.28)');
+            glowGradient.addColorStop(1, 'rgba(212, 175, 55, 0)');
             this.ctx.fillStyle = glowGradient;
             this.ctx.beginPath();
             this.ctx.arc(0, 0, 25, 0, Math.PI * 2);
             this.ctx.fill();
         }
         
-        // Draw hexagonal hub (matching game's design)
+        // Draw hexagonal hub (matching the game's gold hub strokes)
         const size = 15;
-        this.ctx.fillStyle = '#0a5';
-        this.ctx.strokeStyle = '#0f8';
-        this.ctx.lineWidth = 2;
+        this.ctx.fillStyle = 'rgba(212, 175, 55, 0.12)';
+        this.ctx.strokeStyle = '#D4AF37';
+        this.ctx.lineWidth = 1.5;
         this.ctx.beginPath();
         
         for (let i = 0; i < 6; i++) {
@@ -589,7 +589,7 @@ class IntroCutscene {
         this.ctx.stroke();
         
         // Draw center dot
-        this.ctx.fillStyle = '#0ff';
+        this.ctx.fillStyle = '#FFD700';
         this.ctx.beginPath();
         this.ctx.arc(0, 0, 3, 0, Math.PI * 2);
         this.ctx.fill();
@@ -680,70 +680,67 @@ class IntroCutscene {
             padding-top: 200px;
         `;
         
+        // Title card mirrors the start screen exactly (VISUAL_STYLE.md):
+        // thin letterspaced signal-white, a gold hairline, mist tagline.
+        // No box, no neon — the void is the canvas.
         const title = document.createElement('div');
         title.style.cssText = `
-            font-family: 'Courier New', 'Lucida Console', monospace;
+            font-family: var(--font-display, 'Jost', 'Century Gothic', sans-serif);
             font-size: 56px;
-            font-weight: bold;
-            letter-spacing: 8px;
-            color: #0ff;
-            text-shadow: 
-                0 0 5px rgba(0,255,255,1),
-                0 0 10px rgba(0,255,255,0.8),
-                0 0 20px rgba(0,255,255,0.6),
-                0 0 40px rgba(0,255,255,0.4),
-                2px 2px 0px rgba(0,255,255,0.3);
+            font-weight: 300;
+            letter-spacing: 0.42em;
+            text-indent: 0.42em;
+            color: var(--signal, #E8E4F0);
             opacity: 0;
             transform: translateY(-20px);
-            border: 2px solid rgba(0,255,255,0.3);
-            padding: 20px 30px;
-            background: rgba(0,20,30,0.8);
-            backdrop-filter: blur(2px);
         `;
         title.textContent = 'PROBETHEUS';
-        
+
+        const divider = document.createElement('div');
+        divider.style.cssText = `
+            width: 220px;
+            height: 1px;
+            margin: 22px 0 18px;
+            background: linear-gradient(90deg, transparent, var(--fire, #D4AF37), transparent);
+            opacity: 0;
+        `;
+
         const subtitle = document.createElement('div');
         subtitle.style.cssText = `
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-ui, 'Jost', 'Century Gothic', sans-serif);
             font-size: 14px;
-            font-weight: normal;
-            letter-spacing: 4px;
-            color: #0aa;
-            text-shadow: 0 0 10px rgba(0,170,170,0.8);
-            margin-top: 15px;
+            font-weight: 300;
+            letter-spacing: 0.32em;
+            text-indent: 0.32em;
+            color: var(--mist, #8B84A3);
             opacity: 0;
             transform: translateY(-10px);
             text-transform: uppercase;
         `;
-        subtitle.textContent = 'Probe the Unknown';
-        
+        subtitle.textContent = 'The network is the factory';
+
         titleOverlay.appendChild(title);
+        titleOverlay.appendChild(divider);
         titleOverlay.appendChild(subtitle);
         document.body.appendChild(titleOverlay);
-        
-        // Animate titles in with TRON-style effects
+
+        // Drift in, don't snap (VISUAL_STYLE motion grammar)
         anime({
             targets: title,
             opacity: 1,
             translateY: 0,
-            duration: 800,
-            easing: 'easeOutQuad',
-            complete: () => {
-                // Add subtle pulsing effect
-                anime({
-                    targets: title,
-                    textShadow: [
-                        '0 0 5px rgba(0,255,255,1), 0 0 10px rgba(0,255,255,0.8), 0 0 20px rgba(0,255,255,0.6), 0 0 40px rgba(0,255,255,0.4), 2px 2px 0px rgba(0,255,255,0.3)',
-                        '0 0 8px rgba(0,255,255,1), 0 0 15px rgba(0,255,255,0.9), 0 0 30px rgba(0,255,255,0.7), 0 0 60px rgba(0,255,255,0.5), 2px 2px 0px rgba(0,255,255,0.4)',
-                        '0 0 5px rgba(0,255,255,1), 0 0 10px rgba(0,255,255,0.8), 0 0 20px rgba(0,255,255,0.6), 0 0 40px rgba(0,255,255,0.4), 2px 2px 0px rgba(0,255,255,0.3)'
-                    ],
-                    duration: 2000,
-                    easing: 'easeInOutSine',
-                    loop: true
-                });
-            }
+            duration: 1200,
+            easing: 'easeOutQuad'
         });
-        
+
+        anime({
+            targets: divider,
+            opacity: 1,
+            duration: 900,
+            delay: 900,
+            easing: 'easeOutQuad'
+        });
+
         anime({
             targets: subtitle,
             opacity: 1,
@@ -752,16 +749,11 @@ class IntroCutscene {
             delay: 2000, // Full 2 second delay after main title
             easing: 'easeOutQuad'
         });
-        
-        // Add neon shimmer effect after a beat
-        setTimeout(() => {
-            this.addNeonShimmerEffect(title, subtitle);
-        }, 3000); // Wait 3 seconds then start shimmer
-        
-        // Fade out titles after 6 seconds (longer duration for cool effects)
+
+        // Fade out titles after 6 seconds
         setTimeout(() => {
             anime({
-                targets: [title, subtitle],
+                targets: [title, divider, subtitle],
                 opacity: 0,
                 translateY: -20,
                 duration: 600,
@@ -773,46 +765,8 @@ class IntroCutscene {
             });
         }, 6000);
     }
-    
-    addNeonShimmerEffect(title, subtitle) {
-        // Create a pulsing neon shimmer effect
-        anime({
-            targets: title,
-            textShadow: [
-                '0 0 5px rgba(0,255,255,1), 0 0 10px rgba(0,255,255,0.8), 0 0 20px rgba(0,255,255,0.6), 0 0 40px rgba(0,255,255,0.4), 2px 2px 0px rgba(0,255,255,0.3)',
-                '0 0 10px rgba(0,255,255,1), 0 0 20px rgba(0,255,255,1), 0 0 40px rgba(0,255,255,0.8), 0 0 80px rgba(0,255,255,0.6), 0 0 120px rgba(0,255,255,0.4), 2px 2px 0px rgba(0,255,255,0.5)',
-                '0 0 15px rgba(255,255,255,1), 0 0 30px rgba(0,255,255,1), 0 0 60px rgba(0,255,255,0.9), 0 0 100px rgba(0,255,255,0.7), 0 0 140px rgba(0,255,255,0.5), 2px 2px 0px rgba(255,255,255,0.6)',
-                '0 0 5px rgba(0,255,255,1), 0 0 10px rgba(0,255,255,0.8), 0 0 20px rgba(0,255,255,0.6), 0 0 40px rgba(0,255,255,0.4), 2px 2px 0px rgba(0,255,255,0.3)'
-            ],
-            duration: 2000,
-            easing: 'easeInOutSine',
-            loop: 2 // Shimmer effect cycles twice
-        });
-        
-        // Add subtle shimmer to subtitle
-        anime({
-            targets: subtitle,
-            textShadow: [
-                '0 0 10px rgba(0,170,170,0.8)',
-                '0 0 20px rgba(0,200,200,1), 0 0 40px rgba(0,170,170,0.8)',
-                '0 0 15px rgba(255,255,255,0.9), 0 0 30px rgba(0,200,200,0.9)',
-                '0 0 10px rgba(0,170,170,0.8)'
-            ],
-            duration: 2000,
-            easing: 'easeInOutSine',
-            loop: 2
-        });
-        
-        // Add a subtle scale pulse during shimmer
-        anime({
-            targets: title,
-            scale: [1, 1.02, 1.01, 1],
-            duration: 2000,
-            easing: 'easeInOutSine',
-            loop: 2
-        });
-    }
-    
+
+
     showTutorial() {
         // Trigger the game's tutorial system after cutscene and titles
         if (window.game && window.game.tutorialManager) {
