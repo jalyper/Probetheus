@@ -58,21 +58,27 @@ test.describe('Tutorial System', () => {
         expect(state.currentStep).toBeGreaterThanOrEqual(1);
     });
 
-    test('collect_signals step spawns a guaranteed signal cluster', async ({ page }) => {
+    test('collect_signals step pings the starter deposits (LOOP_REDESIGN)', async ({ page }) => {
         await startGameAndTutorial(page);
 
-        const spawned = await page.evaluate(() => {
-            // Fake a deployed probe so the cluster has a route to target
+        const result = await page.evaluate(() => {
+            // Fake a deployed probe so the fallback path also has a target
             const probe = window.game.gameState.entities.probes[0];
             probe.waypoints = [{ x: 900, y: 500 }, { x: 1100, y: 520 }, { x: 900, y: 500 }];
             probe.outboundWaypointsCount = 2;
 
             const before = window.game.gameState.entities.signals.length;
             window.game.tutorialManager.handleStepActions('collect_signals');
-            return window.game.gameState.entities.signals.length - before;
+            const spawned = window.game.gameState.entities.signals.slice(before);
+            return {
+                count: spawned.length,
+                discoveryPings: spawned.filter(s => s.signalType === 'discovery' && s.depositId).length
+            };
         });
 
-        expect(spawned).toBe(4);
+        // Guided Minute now teaches prospecting: pings over the starter deposits
+        expect(result.count).toBeGreaterThanOrEqual(3);
+        expect(result.discoveryPings).toBe(result.count);
     });
 
     test('just-in-time tips fire once and persist as shown', async ({ page }) => {

@@ -306,10 +306,40 @@ class TutorialManager {
     }
 
     /**
-     * Spawn a guaranteed cluster of common signals near the tutorial probe's
-     * route so the collection lesson can't fizzle (ONBOARDING.md Act 1 step 3)
+     * Guaranteed discovery pings so the prospecting lesson can't fizzle
+     * (ONBOARDING.md Act 1 step 3, recast for LOOP_REDESIGN.md): ping the
+     * starter deposits near home — collecting a ping charts a deposit.
      */
     spawnTutorialSignalCluster() {
+        const depositSystem = window.game?.depositSystem;
+        const hub = this.gameState.entities.reconHubs[0];
+
+        if (depositSystem && hub) {
+            // Make sure home-sector deposits exist even this early in a session
+            depositSystem.update(0);
+            const starters = depositSystem
+                .findUndiscoveredInRange(hub.x, hub.y, 600)
+                .slice(0, 3);
+            starters.forEach(dep => {
+                const alreadyPinged = this.gameState.entities.signals.some(
+                    s => s.depositId === dep.id);
+                if (alreadyPinged) return;
+                this.gameState.entities.signals.push({
+                    x: dep.x + (Math.random() - 0.5) * 30,
+                    y: dep.y + (Math.random() - 0.5) * 30,
+                    radius: 10,
+                    rarity: dep.richness >= 9 ? 'rare' : 'uncommon',
+                    signalType: 'discovery',
+                    depositId: dep.id,
+                    duration: 60000, // generous window — this is a lesson, not a test
+                    createdAt: Date.now(),
+                    age: 0
+                });
+            });
+            if (starters.length > 0) return;
+        }
+
+        // Fallback: plain signals near the tutorial probe's route
         const probe = this.gameState.entities.probes.find(p =>
             p.active && p.waypoints && p.waypoints.length > 1);
         if (!probe) return;
@@ -322,7 +352,7 @@ class TutorialManager {
                 radius: 9 + Math.random() * 3,
                 rarity: 'common',
                 signalType: 'standard',
-                duration: 20000, // generous window — this is a lesson, not a test
+                duration: 20000,
                 createdAt: Date.now(),
                 age: 0
             });

@@ -31,6 +31,7 @@ class GameController {
         this.comboSystem = new ComboSystem(this.gameState, this.eventBus);
         this.statsManager = new StatsManager(this.gameState, this.eventBus);
         this.cargoSparkSystem = new CargoSparkSystem(this.gameState, this.eventBus);
+        this.depositSystem = new DepositSystem(this.gameState, this.eventBus);
         this.uiManager = new UIManager(this.gameState, this.eventBus, this.probeManager, this.buildingSystem);
         
         // Make managers available to gameState for easy access
@@ -1306,15 +1307,20 @@ class GameController {
             manual: true,
             rarity: signal.rarity,
             x: signal.x,
-            y: signal.y
+            y: signal.y,
+            depositId: signal.depositId
         });
-        
+
         // Remove signal from world
         const index = this.gameState.entities.signals.indexOf(signal);
         if (index > -1) {
             this.gameState.entities.signals.splice(index, 1);
         }
-        
+
+        // Discovery pings chart a deposit (DepositSystem handles the reveal) —
+        // no exploration modal; the deposit on the map IS the payoff
+        if (signal.signalType === 'discovery') return;
+
         // Show exploration modal
         this.showExplorationModal(signal);
     }
@@ -2918,6 +2924,9 @@ class GameController {
         // Update cargo sparks (sim-time)
         this.cargoSparkSystem.update(deltaTime);
 
+        // Update deposits (lazy sector generation + rate-token refill)
+        this.depositSystem.update(deltaTime);
+
         // Render
         this.render();
         
@@ -2955,7 +2964,10 @@ class GameController {
 
         // Render stars
         this.renderStars();
-        
+
+        // Deposits sit under the network that works them
+        this.depositSystem.render(this.ctx, this.gameState.world.viewOffset);
+
         // Render entities
         this.renderProbes();
         this.renderHubs();
@@ -3430,6 +3442,24 @@ class GameController {
             
             // Draw capacity indicators with status colors
             this.drawProbeCapacityIndicators(screenX, screenY - 30, hub);
+
+            // Saturated intake: queued probes wait visibly at the dock —
+            // the bottleneck IS the diagnosis (LOOP_REDESIGN.md "Tune")
+            const queued = this.gameState.entities.probes.filter(p =>
+                p.active && p.status === 'queued' && p.hub && p.hub.id === hub.id).length;
+            if (queued > 0) {
+                const breath = 0.35 + 0.25 * Math.sin(Date.now() * 0.003);
+                this.ctx.strokeStyle = `rgba(212, 175, 55, ${breath})`;
+                this.ctx.lineWidth = 1;
+                this.ctx.beginPath();
+                this.ctx.arc(screenX, screenY, 22, 0, Math.PI * 2);
+                this.ctx.stroke();
+
+                this.ctx.font = "10px 'IBM Plex Mono', monospace";
+                this.ctx.fillStyle = window.PALETTE.FIRE;
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(`${queued} waiting`, screenX, screenY + 36);
+            }
         });
     }
 

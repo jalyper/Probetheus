@@ -157,7 +157,10 @@ class ProbeManager {
      */
     updateProbes(data) {
         const { deltaTime } = data;
-        
+
+        // Sim-time clock for extraction cooldowns and hub intake windows
+        this.simNow = (this.simNow || 0) + deltaTime;
+
         this.gameState.entities.probes.forEach(probe => {
             if (!probe.active) return;
 
@@ -171,10 +174,13 @@ class ProbeManager {
                 // Handle probe movement and pulse logic
                 this.updateProbeMovement(probe, deltaTime);
                 this.updateProbePulses(probe, deltaTime);
-                
+
                 // Handle asteroid field damage
                 this.checkAsteroidFieldDamage(probe, deltaTime);
-                
+
+                // Extract from discovered deposits the route passes over
+                this.checkDepositExtraction(probe);
+
                 // Handle auto-collection if any collector equipment is equipped
                 if (probe.equipment && Array.isArray(probe.equipment) && probe.equipment.length > 0) {
                     try {
@@ -188,6 +194,38 @@ class ProbeManager {
                 // Don't let one broken probe freeze all probes
             }
         });
+    }
+
+    /**
+     * Extract from discovered deposits within range of a moving probe.
+     * One extraction per pass (cooldown), capped by the deposit's rate
+     * tokens and the probe's cargo space (LOOP_REDESIGN.md "Tap").
+     */
+    checkDepositExtraction(probe) {
+        const depositSystem = window.game?.depositSystem;
+        if (!depositSystem || probe.status === 'queued' || probe.status === 'ready') return;
+
+        probe.extractTimers = probe.extractTimers || {};
+        const now = this.simNow || 0;
+        const PASS_COOLDOWN = 2500; // ms sim-time - one bite per pass, not per frame
+
+        const nearby = depositSystem.findDiscoveredInRange(
+            probe.current.x, probe.current.y, depositSystem.EXTRACT_RANGE);
+        for (const dep of nearby) {
+            const last = probe.extractTimers[dep.id];
+            if (last !== undefined && now - last < PASS_COOLDOWN) continue;
+            const got = depositSystem.tryExtract(probe, dep, this);
+            if (got > 0) probe.extractTimers[dep.id] = now;
+        }
+    }
+
+    /**
+     * Hub intake: time a hub needs to process one delivery.
+     * Finite intake is the first bottleneck a player meets.
+     */
+    getHubIntakeMs(hub) {
+        const perMin = (window.GAME_CONSTANTS.HUB?.INTAKE_PER_MIN_BASE || 8) * (hub.intakeLevel || 1);
+        return 60000 / perMin;
     }
 
     /**
@@ -280,8 +318,27 @@ class ProbeManager {
             
             // Always deliver cargo when returning to hub, even in patrol mode
             if (!probe.returnedToHub) {
+                // Hub intake gate (LOOP_REDESIGN.md "Tune"): a hub processes a
+                // finite number of deliveries per minute. A saturated dock makes
+                // the probe wait visibly - the first bottleneck a player meets.
+                const hasCargo = probe.cargo && Object.keys(probe.cargo).some(key => probe.cargo[key] > 0);
+                if (hasCargo && probe.hub) {
+                    const hub = probe.hub;
+                    hub.intakeBusyUntil = hub.intakeBusyUntil || 0;
+                    const now = this.simNow || 0;
+                    if (now < hub.intakeBusyUntil) {
+                        if (probe.status !== 'queued') {
+                            probe.status = 'queued';
+                            this.eventBus.emit('hub:intakeQueued', { hub, probe });
+                        }
+                        return; // wait at the dock; retry next frame
+                    }
+                    hub.intakeBusyUntil = Math.max(now, hub.intakeBusyUntil) + this.getHubIntakeMs(hub);
+                    if (probe.status === 'queued') probe.status = 'exploring';
+                }
+
                 probe.returnedToHub = true;
-                
+
                 // Deliver cargo when returning to hub
                 if (probe.cargo && Object.keys(probe.cargo).some(key => probe.cargo[key] > 0)) {
                     const currentResources = this.gameState.getResources();
@@ -487,73 +544,54 @@ class ProbeManager {
                 elapsed: 0
             });
 
-            // PBON-01: dataSignalDiscovery bonus increases signal generation chance
-            const signalDiscoveryBonus = window.game?.shellSystem ? window.game.shellSystem.getEntityBonus('probes', probe, 'dataSignalDiscovery') : 0;
-            const signalChance = 0.3 * (1 + signalDiscoveryBonus / 100);
+            // Prospecting (LOOP_REDESIGN.md): the pulse detects UNDISCOVERED
+            // deposits in range and raises a ping at the deposit's location.
+            // Collecting the ping charts the deposit - permanently. The old
+            // probe-generated loot signals are retired: resources come from
+            // places, so routing can matter.
+            const depositSystem = window.game?.depositSystem;
+            if (depositSystem) {
+                // PBON-02: signalRange bonus widens prospecting reach too
+                const detectRange = pulseMaxRadius;
+                const candidates = depositSystem.findUndiscoveredInRange(
+                    probe.current.x, probe.current.y, detectRange);
 
-            // PROF-02: Apply sector resource profile spawn rate multiplier
-            const currentSector = this.getCurrentSector(probe);
-            const spawnMultiplier = currentSector?.resourceProfile?.spawnRateMultiplier || 1.0;
-            const adjustedSignalChance = signalChance * spawnMultiplier;
+                candidates.forEach(dep => {
+                    const alreadyPinged = this.gameState.entities.signals.some(
+                        s => s.depositId === dep.id);
+                    if (alreadyPinged) return;
 
-            // Generate signals with base 30% chance (modified by shell bonus and sector profile)
-            if (Math.random() < adjustedSignalChance) {
-                try {
-                    const signalX = probe.current.x + (Math.random() - 0.5) * 160;
-                    const signalY = probe.current.y + (Math.random() - 0.5) * 160;
-                    
-                    console.log('Generating signal at:', signalX, signalY);
-                    
-                    // Check current sector for enhanced generation
-                    const currentSector = this.getCurrentSector(probe);
-                    const isInAsteroidField = currentSector && currentSector.type.name === 'Asteroid Field';
-                    
-                    // Check if this should be a dark market signal (access via window.game)
-                    const darkMarketSystem = window.game?.darkMarketSystem;
-                    const isDarkMarket = darkMarketSystem && darkMarketSystem.shouldSpawnDarkMarket();
-                    
-                    // Determine signal type based on sector
-                    const signalType = isDarkMarket ? 'dark_market' : this.determineSignalType(currentSector, probe);
-                    
-                    // Create signal directly since we don't have a signal manager yet
-                    const exclusiveTypes = ['ore_vein', 'data_cache', 'relic', 'exotic_crystal'];
-                    const isExclusive = exclusiveTypes.includes(signalType);
+                    // Ping rarity hints at deposit quality before you commit
+                    const rarity = dep.richness >= 16 ? 'epic'
+                        : dep.richness >= 9 ? 'rare' : 'uncommon';
 
-                    // Determine rarity with REW-03 gating for relic signals
-                    let signalRarity;
-                    if (isDarkMarket) {
-                        signalRarity = 'dark_market';
-                    } else {
-                        signalRarity = this.determineSignalRarity(isInAsteroidField, probe);
-                        // REW-03: Relic signals guarantee rare+ artifacts (no common rarity)
-                        if (signalType === 'relic' && signalRarity === 'common') {
-                            signalRarity = 'uncommon';
-                        }
-                    }
-
-                    const signal = {
-                        x: signalX,
-                        y: signalY,
-                        radius: isDarkMarket ? 12 : isExclusive ? 10 + Math.random() * 3 : 8 + Math.random() * 4,
-                        rarity: signalRarity,
-                        signalType: signalType,
-                        duration: isDarkMarket ? window.GAME_CONSTANTS.SIGNAL.DARK_MARKET_DURATION
-                            : isExclusive ? window.GAME_CONSTANTS.SIGNAL.EXCLUSIVE_DURATION_MIN + Math.random() * window.GAME_CONSTANTS.SIGNAL.EXCLUSIVE_DURATION_RAND  // VIS-05: 5-8 seconds
-                            : window.GAME_CONSTANTS.SIGNAL.STANDARD_DURATION_MIN + Math.random() * window.GAME_CONSTANTS.SIGNAL.STANDARD_DURATION_RAND, // Standard: 1.5-2.5s (arcade tempo)
+                    this.gameState.entities.signals.push({
+                        x: dep.x + (Math.random() - 0.5) * 30,
+                        y: dep.y + (Math.random() - 0.5) * 30,
+                        radius: 9,
+                        rarity,
+                        signalType: 'discovery',
+                        depositId: dep.id,
+                        duration: 6000,
                         createdAt: Date.now(),
-                        age: 0 // sim-time age, advanced by the scaled game loop (supports pause/speed)
-                    };
-                    
-                    this.gameState.entities.signals.push(signal);
-                    
-                    if (isDarkMarket) {
-                        console.log('🌑 DARK MARKET signal spawned!');
-                    } else {
-                        console.log('Signal created successfully. Total signals:', this.gameState.entities.signals.length);
-                    }
-                } catch (error) {
-                    console.error('Error creating signal:', error);
-                }
+                        age: 0
+                    });
+                });
+            }
+
+            // Dark Market stays a rare roaming event ping (not economy)
+            const darkMarketSystem = window.game?.darkMarketSystem;
+            if (darkMarketSystem && darkMarketSystem.shouldSpawnDarkMarket()) {
+                this.gameState.entities.signals.push({
+                    x: probe.current.x + (Math.random() - 0.5) * 160,
+                    y: probe.current.y + (Math.random() - 0.5) * 160,
+                    radius: 12,
+                    rarity: 'dark_market',
+                    signalType: 'dark_market',
+                    duration: window.GAME_CONSTANTS.SIGNAL.DARK_MARKET_DURATION,
+                    createdAt: Date.now(),
+                    age: 0
+                });
             }
         }
 
@@ -795,6 +833,20 @@ class ProbeManager {
         }
         
         signalsInRange.forEach(signal => {
+            // Discovery pings chart deposits - no cargo, just the reveal
+            if (signal.signalType === 'discovery') {
+                const idx = this.gameState.entities.signals.indexOf(signal);
+                if (idx > -1) this.gameState.entities.signals.splice(idx, 1);
+                this.eventBus.emit('signal:collected', {
+                    manual: false,
+                    rarity: signal.rarity,
+                    x: signal.x,
+                    y: signal.y,
+                    depositId: signal.depositId
+                });
+                return;
+            }
+
             // SIG-06: Get base type for exclusive signal compatibility
             // ore_vein->mineral, data_cache->data, relic->artifact, exotic_crystal->mixed
             const signalBaseType = this.getSignalBaseType(signal.signalType);

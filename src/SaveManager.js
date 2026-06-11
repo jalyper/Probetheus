@@ -150,7 +150,11 @@ class SaveManager {
                     })),
                     miningOutposts: [...this.gameState.entities.miningOutposts],
                     miningFacilities: [...this.gameState.entities.miningFacilities],
-                    signals: [] // Don't save temporary signals
+                    signals: [], // Don't save temporary signals
+                    // Deposits regenerate deterministically per sector; only
+                    // which ones the player has charted is save-state
+                    depositsDiscovered: (this.gameState.entities.deposits || [])
+                        .filter(d => d.discovered).map(d => d.id)
                 },
                 cosmetics: this.gameState.cosmetics ? {
                     ownedShells: {
@@ -567,6 +571,12 @@ class SaveManager {
         this.gameState.entities.miningOutposts = [...savedState.entities.miningOutposts];
         this.gameState.entities.miningFacilities = [...savedState.entities.miningFacilities];
         this.gameState.entities.signals = []; // Start fresh with no signals
+
+        // Deposits: clear and regenerate deterministically for the loaded
+        // world, then re-apply charted flags (DepositSystem.update handles it)
+        this.gameState.depositsResetRequested = true;
+        this.gameState.pendingDiscoveredDeposits =
+            savedState.entities.depositsDiscovered || [];
         
         // Restore mining system
         if (savedState.mining) {

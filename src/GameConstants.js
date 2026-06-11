@@ -30,6 +30,11 @@ window.GAME_CONSTANTS = {
         SCALES: [1, 2, 4],
         // Clamp raw frame delta so tab-switches don't teleport probes
         MAX_FRAME_DELTA: 250
+    },
+    HUB: {
+        // Deliveries a level-1 hub can process per minute (LOOP_REDESIGN.md
+        // "Tune") — exceeding this queues probes visibly at the dock
+        INTAKE_PER_MIN_BASE: 8
     }
 };
 
