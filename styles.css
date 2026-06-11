@@ -968,6 +968,88 @@ body {
 .ho-foot .sh-txt .k { font-size: 8.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mist); }
 .ho-foot .sh-txt .v { font-size: 12px; color: var(--signal); letter-spacing: 0.06em; }
 
+/* --- Probe detail floater (handoff §4) --------------------------------------------- */
+
+.fl-head { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; }
+.fl-badge {
+    width: 30px; height: 30px;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(212, 175, 55, 0.06);
+    color: var(--signal);
+    flex: none;
+}
+.fl-head .t { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.fl-head .t .nm { font-size: 12px; letter-spacing: 0.1em; color: var(--signal); }
+.fl-head .t .st { font-family: var(--font-data); font-size: 10px; color: var(--fire); }
+.fl-head .x { margin-left: auto; }
+
+.fl-toggles {
+    border-top: 1px solid var(--line-soft);
+    padding-top: 11px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+.tog {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    cursor: pointer;
+    color: var(--mist);
+    font-size: 11.5px;
+    letter-spacing: 0.04em;
+    transition: color 0.24s var(--ease);
+}
+.tog .tog-ic { display: flex; color: var(--mist); transition: color 0.24s var(--ease); }
+.tog input { position: absolute; opacity: 0; pointer-events: none; }
+.sw {
+    margin-left: auto;
+    width: 32px; height: 17px;
+    border-radius: 9px;
+    border: 1px solid var(--line-soft);
+    background: rgba(139, 132, 163, 0.18);
+    position: relative;
+    transition: 0.28s var(--ease);
+    flex: none;
+}
+.sw::after {
+    content: "";
+    position: absolute;
+    top: 1.5px; left: 2px;
+    width: 11px; height: 11px;
+    border-radius: 50%;
+    background: var(--mist);
+    transition: 0.28s var(--ease);
+}
+.tog input:checked + .sw { background: rgba(212, 175, 55, 0.22); border-color: var(--fire); }
+.tog input:checked + .sw::after { background: var(--fire); transform: translateX(14px); }
+.tog:has(input:checked) { color: var(--signal); }
+.tog:has(input:checked) .tog-ic { color: var(--fire); }
+
+.fl-slots-lbl {
+    font-size: 8.5px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--mist);
+    border-top: 1px solid var(--line-soft);
+    padding-top: 11px;
+    margin-bottom: 9px;
+}
+.fl-slots { display: flex; gap: 8px; margin-bottom: 8px; }
+#equipmentSlotsSection { margin-bottom: 12px; }
+#shellSection { margin-bottom: 12px; }
+.fl-shell-row { display: flex; align-items: center; gap: 10px; }
+.fl-shell-row .shell-chip { width: 40px; height: 40px; overflow: hidden; }
+.fl-shell-name { font-size: 12px; color: var(--signal); letter-spacing: 0.06em; flex: 1; min-width: 0; }
+.fl-build { display: flex; flex-direction: column; }
+.fl-build .tbtn + .tbtn { border-top: 1px solid var(--line-soft); }
+.fl-build .tbtn { font-size: 11.5px; }
+
 /* --- Uplink panel (REBUILD.md §1 + §6 — premium chrome reference) ------------------ */
 
 #uplinkPanel {

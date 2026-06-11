@@ -171,35 +171,37 @@ class TutorialManager {
         if (!container) {
             container = document.createElement('div');
             container.id = 'tipToastContainer';
-            container.style.cssText = 'position: fixed; top: 120px; right: 15px; width: 280px; z-index: 10002; display: flex; flex-direction: column; gap: 8px; pointer-events: none;';
+            container.style.cssText = 'position: fixed; top: 50%; transform: translateY(-50%); right: 18px; width: 248px; z-index: 10002; display: flex; flex-direction: column; gap: 8px; pointer-events: none;';
             document.body.appendChild(container);
         }
 
+        // The toast yields to the Uplink panel — both live on the right edge
+        const uplinkPanel = document.getElementById('uplinkPanel');
+        const uplinkOpen = uplinkPanel && uplinkPanel.style.display === 'block';
+        container.style.right = uplinkOpen ? '380px' : '18px';
+
         const toast = document.createElement('div');
+        toast.className = 'tip-toast';
         toast.style.cssText = `
             background: var(--panel);
-            border: 1px solid var(--line);
-            border-radius: 4px;
-            padding: 11px 13px;
-            color: var(--mist);
-            font-size: 12px;
-            font-weight: 300;
-            letter-spacing: 0.02em;
-            line-height: 1.5;
+            border: 1px solid var(--line-soft);
+            border-left: 1px solid var(--fire);
+            border-radius: 3px;
+            padding: 13px 15px;
             font-family: var(--font-ui);
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 6px 22px rgba(0, 0, 0, 0.4);
             backdrop-filter: blur(6px);
             pointer-events: auto;
-            display: flex;
-            gap: 10px;
-            align-items: flex-start;
             opacity: 0;
             transition: opacity 0.3s var(--ease);
         `;
         toast.innerHTML = `
-            <span style="flex-shrink:0; color: var(--fire);">▸</span>
-            <span style="flex:1;">${text}</span>
-            <button style="background:none;border:none;color:var(--mist);cursor:pointer;font-size:14px;line-height:1;padding:0;">×</button>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                <span style="display: flex; color: var(--fire);">${window.icon('flow', { size: 13 })}</span>
+                <span style="font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--fire);">Tip</span>
+                <button style="background:none;border:none;color:var(--mist);cursor:pointer;font-size:14px;line-height:1;padding:0;margin-left:auto;">×</button>
+            </div>
+            <div style="color: var(--mist); font-size: 11.5px; font-weight: 300; line-height: 1.5;">${text}</div>
         `;
         toast.querySelector('button').addEventListener('click', () => toast.remove());
         container.appendChild(toast);
@@ -604,30 +606,34 @@ class TutorialManager {
             return;
         }
 
-        tutorialContent.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 20px; padding: 0;">
-                <!-- Content -->
-                <div style="flex: 1; min-width: 0;">
-                    <div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 5px;">
-                        <h3 style="color: var(--fire); margin: 0; font-size: 13px; font-weight: 400; letter-spacing: 0.18em; text-transform: uppercase; white-space: nowrap;">
-                            ${title}
-                        </h3>
-                        ${this.tutorialActive ? `<span style="color: var(--mist); font-family: var(--font-data); font-size: 10px;">${this.currentStep + 1} / ${this.steps.length}</span>` : ''}
-                    </div>
-                    <div style="color: var(--signal); font-size: 13.5px; font-weight: 300; letter-spacing: 0.02em; line-height: 1.5;">
-                        ${message}
-                    </div>
-                </div>
+        // Step dots (handoff §5): active step gold, the rest hairline
+        const dots = this.tutorialActive
+            ? `<div style="display: flex; gap: 6px;">${this.steps.map((_, i) =>
+                `<i style="width: 5px; height: 5px; border-radius: 50%; background: ${i === this.currentStep ? 'var(--fire)' : 'var(--line-soft)'};"></i>`
+              ).join('')}</div>`
+            : (autoClose
+                ? '<span style="color: var(--fire); font-size: 10px; letter-spacing: 0.14em;">COMPLETE</span>'
+                : '<div style="display: flex; align-items: center; gap: 7px;"><div class="tutorial-pulse"></div></div>');
 
-                <!-- Status indicator -->
-                <div style="flex-shrink: 0; display: flex; align-items: center; gap: 8px;">
-                    ${autoClose ?
-                        '<span style="color: var(--fire); font-size: 11px; letter-spacing: 0.12em;">COMPLETE</span>' :
-                        '<div style="display: flex; align-items: center; gap: 7px;"><div class="tutorial-pulse"></div><span style="color: var(--mist); font-size: 11px; letter-spacing: 0.12em;">IN PROGRESS</span></div>'
-                    }
-                </div>
+        tutorialContent.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 9px; margin-bottom: 9px;">
+                <span style="display: flex; color: var(--fire);">${window.icon('spark', { size: 14 })}</span>
+                <h3 style="color: var(--fire); margin: 0; font-size: 12px; font-weight: 400; letter-spacing: 0.2em; text-transform: uppercase; white-space: nowrap;">
+                    ${title}
+                </h3>
+                ${this.tutorialActive ? `<span style="margin-left: auto; color: var(--mist); font-family: var(--font-data); font-size: 10px; letter-spacing: 0.1em;">Step ${this.currentStep + 1} / ${this.steps.length}</span>` : ''}
+            </div>
+            <div style="color: var(--signal); font-size: 13px; font-weight: 300; letter-spacing: 0.02em; line-height: 1.6;">
+                ${message}
+            </div>
+            <div style="display: flex; align-items: center; gap: 18px; margin-top: 13px;">
+                ${dots}
+                <button class="linkbtn" data-tutorial-dismiss style="margin-left: auto;">Dismiss</button>
             </div>
         `;
+
+        const dismissBtn = tutorialContent.querySelector('[data-tutorial-dismiss]');
+        if (dismissBtn) dismissBtn.addEventListener('click', () => this.closeTutorial());
 
         tutorialPanel.style.display = 'block';
         tutorialPanel.style.opacity = '0';
@@ -670,11 +676,11 @@ class TutorialManager {
         tutorialPanel.style.cssText = `
             display: none;
             position: fixed;
-            top: 90px;
+            top: 84px;
             left: 50%;
             transform: translateX(-50%);
             width: 90%;
-            max-width: 600px;
+            max-width: 430px;
             z-index: 10001;
             pointer-events: none;
         `;
@@ -684,7 +690,7 @@ class TutorialManager {
             background: var(--panel);
             border: 1px solid var(--line);
             border-radius: 4px;
-            padding: 16px 22px;
+            padding: 16px 20px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(8px);
             font-family: var(--font-ui);

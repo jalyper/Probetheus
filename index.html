@@ -195,63 +195,67 @@
                 
             </div>
 
-        <!-- Probe Detail Panel (floating near probe) -->
-        <div id="probeDetailPanel" style="display: none; position: fixed; top: 780px; right: 15px; z-index: 1000; width: 280px; padding: 15px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 4px 14px rgba(0,0,0,0.5); backdrop-filter: blur(5px);">
-            <div style="color: var(--fire); font-size: 16px; margin-bottom: 12px; text-align: center;">Probe Details</div>
-
-            <div id="probeIcon" style="text-align: center; margin-bottom: 15px;">
-                <div style="width: 60px; height: 60px; margin: 0 auto; border: 2px solid var(--fire); border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(212,175,55,0.1);">
-                    <span style="color: var(--fire); display: flex;" data-icon="probe" data-sz="24"></span>
+        <!-- Probe Detail Floater (handoff §4) — tethered to the selected probe -->
+        <div id="probeDetailPanel" class="panel" style="display: none; position: fixed; top: 780px; right: 15px; z-index: 1000; width: 236px; padding: 15px 16px;">
+            <div class="fl-head">
+                <div class="fl-badge" id="probeIcon">
+                    <span style="display: flex;" data-icon="probe" data-sz="15"></span>
                 </div>
-                <div id="probeStatusText" style="color: var(--fire); font-size: 12px; margin-top: 5px;">Exploring</div>
+                <div class="t">
+                    <span class="nm">Probe</span>
+                    <span class="st" id="probeStatusText">Exploring</span>
+                </div>
+                <button id="closeProbeDetail" class="x" title="Close" data-icon="close" data-sz="14"></button>
             </div>
 
-            <div style="border-top: 1px solid rgba(139,132,163,0.2); padding-top: 12px; margin-bottom: 12px;">
-                <label style="color: var(--mist); font-size: 12px; display: flex; align-items: center; cursor: pointer; margin-bottom: 8px;">
-                    <input type="checkbox" id="patrolModeCheckbox" style="margin-right: 8px; cursor: pointer;">
-                    <span>Patrol Mode (Loop Route)</span>
+            <div class="fl-toggles">
+                <label class="tog">
+                    <span class="tog-ic" data-icon="patrol" data-sz="14"></span>
+                    <span>Patrol Route</span>
+                    <input type="checkbox" id="patrolModeCheckbox">
+                    <span class="sw"></span>
                 </label>
-                <label style="color: var(--mist); font-size: 12px; display: flex; align-items: center; cursor: pointer;">
-                    <input type="checkbox" id="cameraLockCheckbox" style="margin-right: 8px; cursor: pointer;">
-                    <span>Lock Camera to Probe</span>
+                <label class="tog">
+                    <span class="tog-ic" data-icon="camera" data-sz="14"></span>
+                    <span>Camera Follow</span>
+                    <input type="checkbox" id="cameraLockCheckbox">
+                    <span class="sw"></span>
                 </label>
             </div>
 
             <!-- Equipment Slots Section -->
-            <div id="equipmentSlotsSection" style="border-top: 1px solid rgba(139,132,163,0.2); padding-top: 12px; margin-bottom: 12px;">
-                <div style="color: var(--fire); font-weight: bold; font-size: 12px; margin-bottom: 8px; text-align: center;">EQUIPMENT SLOTS</div>
-                <div id="equipmentSlotBoxes" style="display: flex; gap: 8px; justify-content: center; margin-bottom: 10px;">
+            <div id="equipmentSlotsSection">
+                <div class="fl-slots-lbl">Equipment</div>
+                <div id="equipmentSlotBoxes" class="fl-slots">
                     <!-- Slot boxes will be dynamically rendered -->
                 </div>
-                <button id="manageEquipmentBtnOld" class="control-btn" style="width: 100%; font-size: 11px; padding: 8px;">
-                    Manage Equipment
-                </button>
+                <button id="manageEquipmentBtnOld" class="linkbtn">Manage Equipment</button>
             </div>
 
             <!-- Shell Section -->
-            <div id="shellSection" style="border-top: 1px solid rgba(139,132,163,0.2); padding-top: 12px; margin-bottom: 12px;">
-                <div style="color: #9400d3; font-weight: bold; font-size: 12px; margin-bottom: 8px; text-align: center;">EQUIP SHELL</div>
-                <div id="shellPreviewBox" style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
-                    <div id="currentShellPreview" style="width: 50px; height: 50px; border: 2px solid #9400d3; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(148, 0, 211, 0.1);">
+            <div id="shellSection">
+                <div class="fl-slots-lbl">Shell</div>
+                <div class="fl-shell-row">
+                    <div id="currentShellPreview" class="shell-chip">
                         <!-- Current shell preview rendered dynamically -->
                     </div>
-                    <div id="currentShellName" style="color: var(--mist); font-size: 11px; margin-left: 12px;">Default</div>
+                    <div id="currentShellName" class="fl-shell-name">Default</div>
+                    <button id="changeShellBtn" class="linkbtn violet">Change</button>
                 </div>
-                <button id="changeShellBtn" class="control-btn" style="width: 100%; font-size: 11px; padding: 8px; border-color: #9400d3; color: #9400d3;">
-                    Change Shell
-                </button>
             </div>
 
-            <div id="probeBuildingPanel" style="display: none; border-top: 1px solid rgba(139,132,163,0.2); padding-top: 12px; margin-top: 12px;">
-                <div style="color: var(--mist); font-size: 12px; margin-bottom: 8px;">Build along probe path:</div>
-                <div style="display: flex; flex-direction: column; gap: 6px;">
-                    <button id="buildPathHubBtnProbe" class="control-btn" style="font-size: 11px; padding: 6px 10px;">Build Hub (100M)</button>
-                    <button id="buildPathMiningBtnProbe" class="control-btn" style="font-size: 11px; padding: 6px 10px;">Build Mining Station (100M, 50D)</button>
+            <div id="probeBuildingPanel" style="display: none;">
+                <div class="fl-slots-lbl">Build Along Path</div>
+                <div class="fl-build">
+                    <button id="buildPathHubBtnProbe" class="tbtn">
+                        <span class="tog-ic" data-icon="hub" data-sz="15"></span><span>Build Hub · 100 M</span><span class="key">B</span>
+                    </button>
+                    <button id="buildPathMiningBtnProbe" class="tbtn">
+                        <span class="tog-ic" data-icon="mining" data-sz="15"></span><span>Mining Station · 100 M 50 D</span><span class="key">M</span>
+                    </button>
                 </div>
-                <div id="probeBuildingStatus" style="color: var(--mist); font-size: 10px; margin-top: 8px; text-align: center;"></div>
+                <div id="probeBuildingStatus" style="color: var(--mist); font-size: 10px; margin-top: 6px; text-align: center;"></div>
             </div>
-
-            <button id="closeProbeDetail" class="control-btn" style="width: 100%; margin-top: 15px; font-size: 12px; padding: 8px;">Close</button>
         </div>
         </div>
 
