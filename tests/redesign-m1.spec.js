@@ -226,7 +226,7 @@ test.describe('M1 redesign — tempo, economy, juice, stats', () => {
     await expect(page.locator('#throughputValue')).toContainText('/min');
   });
 
-  test('onboarding uses the 5-step Guided Minute (ONBOARDING.md)', async ({ page }) => {
+  test('onboarding teaches the deposit loop (LOOP_REDESIGN.md)', async ({ page }) => {
     await startNewGame(page);
 
     const tutorial = await page.evaluate(() => ({
@@ -235,7 +235,7 @@ test.describe('M1 redesign — tempo, economy, juice, stats', () => {
     }));
 
     expect(tutorial.ids).toEqual([
-      'select_hub', 'deploy_probe', 'collect_signals', 'cargo_return', 'release'
+      'select_hub', 'deploy_probe', 'chart_deposit', 'tap_deposit', 'cargo_return', 'release'
     ]);
     expect(tutorial.researchOpen).toBe(true);
   });

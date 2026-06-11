@@ -13,52 +13,59 @@ class TutorialManager {
         this.tutorialActive = false;
         this.tutorialsDisabled = this.loadTutorialDisabledState();
 
-        // Act 1 — The Guided Minute (docs/design/ONBOARDING.md)
-        // Five steps, one instruction at a time, ≤2 short sentences each.
+        // Act 1 — The Guided Minutes (LOOP_REDESIGN.md: prospect → chart →
+        // tap → deliver). One instruction at a time, ≤2 short sentences each.
         // Everything past the core loop is taught just-in-time via `tips`.
         this.steps = [
             {
                 id: 'select_hub',
                 title: 'Your Hub',
-                message: 'Click your Hub — the green hexagon.',
+                message: 'Click your Hub — the gold hexagon.',
                 checkCondition: () => !!(this.gameState.ui?.selectedHub ||
                     this.gameState.entities.reconHubs.some(h => h.selected)),
                 completed: false
             },
             {
                 id: 'deploy_probe',
-                title: 'Deploy',
-                message: 'Click "Deploy Probe", then click out in the dark. Right-click to launch early.',
+                title: 'Scout',
+                message: 'Click "Deploy Probe", then click out in the dark. Its pulse will sweep for deposits.',
                 checkCondition: () => this.gameState.entities.probes.some(p =>
                     p.active && p.waypoints && p.waypoints.length > 0),
                 completed: false
             },
             {
-                id: 'collect_signals',
-                title: 'Signals',
-                message: 'Signals! Click one before it fades.',
-                checkCondition: () => this.explorationActionChosen === true,
+                id: 'chart_deposit',
+                title: 'Chart',
+                message: 'A ping — your probe found something. Click it to chart the deposit.',
+                checkCondition: () => this.depositCharted === true,
+                completed: false
+            },
+            {
+                id: 'tap_deposit',
+                title: 'Tap',
+                message: 'Deposits produce forever. Route a probe over one — enable Patrol Mode to loop it.',
+                checkCondition: () => this.depositTapped === true,
                 completed: false
             },
             {
                 id: 'cargo_return',
-                title: 'Delivery',
-                message: 'Your probe hauls it home. Cargo pays out on return.',
+                title: 'Deliver',
+                message: 'Gold means value coming home. Cargo pays out at the hub dock.',
                 checkCondition: () => this.cargoDelivered === true,
                 completed: false
             },
             {
                 id: 'release',
                 title: 'The Loop',
-                message: 'That\'s the loop — build, explore, optimize. You\'re on your own.',
+                message: 'Chart, tap, route, tune. Richer veins lie further out — and so does the Probetheus.',
                 checkCondition: () => this.releaseRead === true,
                 completed: false
             }
         ];
 
         // Event tracking flags
-        this.explorationActionChosen = false;
-        this.signalClicked = false;
+        this.depositCharted = false;
+        this.depositTapped = false;
         this.cargoDelivered = false;
         this.releaseRead = false;
 
@@ -69,12 +76,12 @@ class TutorialManager {
         this.eventBus.on('probe:deployed', this.checkStepCompletion.bind(this));
         this.eventBus.on('hub:selected', this.checkStepCompletion.bind(this));
         this.eventBus.on('entity:selected', this.checkStepCompletion.bind(this));
-        this.eventBus.on('signal:clicked', () => {
-            this.signalClicked = true;
+        this.eventBus.on('deposit:discovered', () => {
+            this.depositCharted = true;
             this.checkStepCompletion();
         });
-        this.eventBus.on('planet:actionChosen', () => {
-            this.explorationActionChosen = true;
+        this.eventBus.on('deposit:extracted', () => {
+            this.depositTapped = true;
             this.checkStepCompletion();
         });
         this.eventBus.on('probe:cargoDelivered', () => {
@@ -127,7 +134,9 @@ class TutorialManager {
         on('probe:destroyed', 'tip_probe_lost',
             'Probe lost. Asteroid fields are rich but deadly — research durability or phase tech.');
         on('combo:chain', 'tip_combo',
-            'Combo! Chained collections earn bonus resources. Dense routes pay.');
+            'Combo! Chained discoveries ring up bonuses — sweep dense fields in one pass.');
+        on('hub:intakeQueued', 'tip_intake',
+            'A probe is waiting at the dock — this hub\'s intake is saturated. Spread routes to another hub, or accept the queue.');
         on('synthesis:triggered', 'tip_synthesis',
             'Exotic minerals became Probethium. Spend it with the Remnants — when you find them.');
 
@@ -289,8 +298,8 @@ class TutorialManager {
     handleStepActions(stepId) {
         this.clearAllHighlights();
 
-        if (stepId === 'collect_signals') {
-            // Guaranteed cluster on the new probe's path (ONBOARDING.md Act 1)
+        if (stepId === 'chart_deposit') {
+            // Guaranteed pings over the starter deposits (LOOP_REDESIGN.md)
             this.spawnTutorialSignalCluster();
         }
 

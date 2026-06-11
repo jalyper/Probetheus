@@ -58,7 +58,7 @@ test.describe('Tutorial System', () => {
         expect(state.currentStep).toBeGreaterThanOrEqual(1);
     });
 
-    test('collect_signals step pings the starter deposits (LOOP_REDESIGN)', async ({ page }) => {
+    test('chart_deposit step pings the starter deposits (LOOP_REDESIGN)', async ({ page }) => {
         await startGameAndTutorial(page);
 
         const result = await page.evaluate(() => {
@@ -68,7 +68,7 @@ test.describe('Tutorial System', () => {
             probe.outboundWaypointsCount = 2;
 
             const before = window.game.gameState.entities.signals.length;
-            window.game.tutorialManager.handleStepActions('collect_signals');
+            window.game.tutorialManager.handleStepActions('chart_deposit');
             const spawned = window.game.gameState.entities.signals.slice(before);
             return {
                 count: spawned.length,

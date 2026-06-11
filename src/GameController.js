@@ -865,7 +865,7 @@ class GameController {
             });
             
             // Set initial value
-            trackSelector.value = this.gameState.settings.selectedTrack || 'main-theme';
+            trackSelector.value = this.gameState.settings.selectedTrack || 'fire-and-brimstone';
             
             trackSelector.addEventListener('change', () => {
                 this.musicManager.selectTrack(trackSelector.value);

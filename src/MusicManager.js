@@ -7,12 +7,13 @@ class MusicManager {
         this.gameState = gameState;
         this.eventBus = eventBus;
         
-        // Music track library
+        // Music track library (full LoFi set, 2026-06-11)
         this.tracks = [
-            { id: 'main-theme', name: 'Main Theme', file: 'public/music/main-theme.wav' },
-            { id: '404sight', name: '404 Sight', file: 'public/music/404sight-ingame.wav' },
-            { id: 'title-music', name: 'Title Music', file: 'public/music/title-music.wav' },
-            { id: 'ready-or-not', name: 'Ready Or Not', file: 'public/music/ready-or-not.wav' }
+            { id: 'fire-and-brimstone', name: 'Fire And Brimstone', file: 'public/music/fire-and-brimstone.wav' },
+            { id: 'saintly-or-evil', name: 'Saintly Or Evil', file: 'public/music/saintly-or-evil.wav' },
+            { id: 'dangerous-fortune', name: 'Dangerous Fortune', file: 'public/music/dangerous-fortune.wav' },
+            { id: 'bards-roadsong', name: "Bard's Roadsong", file: 'public/music/bards-roadsong.wav' },
+            { id: 'liliana', name: 'Liliana', file: 'public/music/liliana.wav' }
         ];
         
         // Initialize settings
@@ -21,7 +22,7 @@ class MusicManager {
                 musicEnabled: true,
                 musicVolume: 0.3,
                 musicMode: 'sequential', // 'sequential' or 'single'
-                selectedTrack: 'main-theme',
+                selectedTrack: 'fire-and-brimstone',
                 sfxEnabled: true,
                 sfxVolume: 0.5
             };
@@ -31,8 +32,10 @@ class MusicManager {
         if (!this.gameState.settings.musicMode) {
             this.gameState.settings.musicMode = 'sequential';
         }
-        if (!this.gameState.settings.selectedTrack) {
-            this.gameState.settings.selectedTrack = 'main-theme';
+        if (!this.gameState.settings.selectedTrack ||
+            !this.tracks.some(t => t.id === this.gameState.settings.selectedTrack)) {
+            // Missing or stale (pre-2026-06-11 library) selection
+            this.gameState.settings.selectedTrack = this.tracks[0].id;
         }
         
         // Create audio element
