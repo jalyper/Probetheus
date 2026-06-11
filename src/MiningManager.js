@@ -619,12 +619,24 @@ class MiningManager {
         if (!station.stationInventory) {
             station.stationInventory = {};
         }
-        
+
+        const delivered = Object.keys(shuttle.cargo).length > 0;
         Object.entries(shuttle.cargo).forEach(([resource, amount]) => {
             station.stationInventory[resource] = (station.stationInventory[resource] || 0) + amount;
         });
-        
+
         shuttle.cargo = {};
+
+        // Cargo spark: value just moved hub -> station
+        if (delivered) {
+            const hub = this.gameState.entities.reconHubs.find(h => h.id === shuttle.hubId);
+            if (hub) {
+                this.eventBus.emit('shuttle:cargoDelivered', {
+                    from: { x: hub.x, y: hub.y },
+                    to: { x: station.position.x, y: station.position.y }
+                });
+            }
+        }
     }
 
     /**

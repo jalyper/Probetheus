@@ -6,47 +6,33 @@
     <!-- Base URL for proper file loading in Electron -->
     <base href="./">
     <!-- Content Security Policy for Electron -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';">
     <title>Probetheus</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- Anime.js for cutscene animations -->
-    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+    <!-- Anime.js for cutscene animations (bundled locally — Steam builds must run offline) -->
+    <script src="public/vendor/anime.min.js"></script>
 </head>
 <body>
     <!-- Start Screen -->
-    <div id="startScreen" class="screen active" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: linear-gradient(135deg, #001122 0%, #001633 50%, #000511 100%); text-align: center;">
-        <div style="margin-bottom: 50px;">
-            <h1 style="font-size: 48px; color: #0ff; margin-bottom: 20px; text-shadow: 0 0 20px rgba(0,255,255,0.8);">
-                🚀 Probetheus
-            </h1>
-            <div style="color: #888; font-size: 18px; margin-bottom: 40px;">
-                Explore infinite galaxies • Mine cosmic resources • Unlock alien technologies
+    <div id="startScreen" class="screen active">
+        <canvas id="constellationCanvas"></canvas>
+        <div class="start-content">
+            <h1 class="start-title">Probetheus</h1>
+            <div class="start-rule"></div>
+            <div class="start-tagline">The network is the factory</div>
+            <div id="startScreenButtons" class="start-menu">
+                <button id="newGameBtn" class="start-menu-btn primary">New Game</button>
+                <button id="continueGameBtn" class="start-menu-btn" style="display: none;">Continue</button>
+                <button id="loadGameBtn" class="start-menu-btn">Load Game</button>
             </div>
         </div>
-
-        <div id="startScreenButtons" style="display: flex; flex-direction: column; gap: 15px; min-width: 300px;">
-            <button id="newGameBtn" class="control-btn" style="font-size: 18px; padding: 15px 30px; background: linear-gradient(135deg, #0a5 0%, #063 100%);">
-                🌟 Start New Game
-            </button>
-            
-            <button id="continueGameBtn" class="control-btn" style="font-size: 18px; padding: 15px 30px; display: none;">
-                ⏰ Continue Previous Session
-            </button>
-            
-            <button id="loadGameBtn" class="control-btn" style="font-size: 16px; padding: 12px 25px;">
-                💾 Load Saved Game
-            </button>
-            
-            <div style="color: #666; font-size: 12px; margin-top: 20px; max-width: 400px;">
-                Your progress is automatically saved. Close the browser anytime safely!
-            </div>
-        </div>
+        <div class="start-footnote">progress saves automatically</div>
     </div>
 
     <!-- Cutscene Container -->
-    <div id="cutsceneContainer" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 10000;">
+    <div id="cutsceneContainer" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--void); z-index: 10000;">
         <canvas id="cutsceneCanvas" style="width: 100%; height: 100%;"></canvas>
-        <button id="skipCutscene" style="position: absolute; bottom: 30px; right: 30px; padding: 10px 20px; background: rgba(0,255,255,0.2); border: 1px solid #0ff; color: #0ff; cursor: pointer; font-family: monospace; display: none;">Skip →</button>
+        <button id="skipCutscene" style="position: absolute; bottom: 30px; right: 30px; padding: 10px 20px; background: rgba(212,175,55,0.2); border: 1px solid var(--fire); color: var(--fire); cursor: pointer; font-family: monospace; display: none;">Skip →</button>
     </div>
 
     <div id="gameContainer" style="display: none;">
@@ -62,13 +48,13 @@
             <!-- Settings button -->
             <div class="stat-item" style="margin-right: 20px;">
                 <button id="settingsBtn" class="power-btn" title="Settings" style="font-size: 20px;">
-                    ⚙️
+                    ⚙︎
                 </button>
             </div>
             
             <div class="stat-item">
                 <span class="stat-label">Sector:</span>
-                <span id="sectorInfo" style="color: #ff0;">Balanced [0, 0]</span>
+                <span id="sectorInfo" style="color: var(--fire-bright);">Balanced [0, 0]</span>
             </div>
             <div class="stat-item">
                 <span class="stat-label">Probes:</span>
@@ -88,23 +74,23 @@
             </div>
             <div class="stat-item">
                 <span class="stat-label">Exotic:</span>
-                <span id="exoticMinerals" style="color: #f0f;">0</span>
+                <span id="exoticMinerals" style="color: var(--mist);">0</span>
             </div>
             <div class="stat-item">
                 <span class="stat-label">Outposts:</span>
-                <span id="outpostCount" style="color: #ff0;">0</span>
+                <span id="outpostCount" style="color: var(--fire-bright);">0</span>
             </div>
             <div class="stat-item">
                 <span class="stat-label">Recon Hubs:</span>
-                <span id="hubCount" style="color: #0f8;">1</span>
+                <span id="hubCount" style="color: var(--fire);">1</span>
             </div>
             <div class="stat-item">
                 <span class="stat-label">Probethium:</span>
-                <span id="probethium" style="color: #c9f; font-weight: bold;">0</span>
+                <span id="probethium" style="color: var(--fire-bright); font-weight: bold;">0</span>
             </div>
             <div class="stat-item" id="throughputStat" title="Network throughput — click for dashboard">
-                <span class="stat-label">⚡</span>
-                <span id="throughputValue" style="color: #0ff;">0.0/min ─</span>
+                <span class="stat-label">Flow:</span>
+                <span id="throughputValue" style="color: var(--fire);">0.0/min ─</span>
             </div>
             <div class="stat-item" id="timeControls" title="Game speed">
                 <button class="time-btn" id="timePauseBtn" title="Pause (Space)">⏸</button>
@@ -115,76 +101,76 @@
         </div>
 
         <!-- Galactic Map Screen -->
-        <div id="mapScreen" class="screen active" style="position: relative; display: flex; justify-content: center; align-items: center; background: #000;">
-            <canvas id="galaxyCanvas" style="border: 2px solid rgba(0, 255, 255, 0.1); box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);"></canvas>
+        <div id="mapScreen" class="screen active" style="position: relative; display: flex; justify-content: center; align-items: center; background: var(--void);">
+            <canvas id="galaxyCanvas" style="border: 2px solid rgba(212, 175, 55, 0.1); box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);"></canvas>
             
             <!-- Testing Panel - Left Sidebar -->
-            <div id="testPanel" style="position: fixed; top: 80px; left: 15px; width: 200px; padding: 15px; background: rgba(40,0,20,0.95); border: 2px solid #f0f; border-radius: 8px; box-shadow: 0 0 20px rgba(255,0,255,0.3); backdrop-filter: blur(3px); z-index: 1000;">
+            <div id="testPanel" style="position: fixed; top: 80px; left: 15px; width: 200px; padding: 15px; background: var(--panel); border: 2px solid var(--mist); border-radius: 8px; box-shadow: 0 0 20px rgba(139,132,163,0.3); backdrop-filter: blur(3px); z-index: 1000;">
                 <!-- Header -->
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid #f0f; padding-bottom: 8px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid var(--mist); padding-bottom: 8px;">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <div style="font-size: 16px;">🧪</div>
-                        <div style="color: #f0f; font-size: 14px; font-weight: bold;">Testing</div>
+                        <div style="font-size: 16px;"></div>
+                        <div style="color: var(--mist); font-size: 14px; font-weight: bold;">Testing</div>
                     </div>
-                    <button id="toggleTestPanel" style="background: none; border: none; color: #888; cursor: pointer; font-size: 18px;">×</button>
+                    <button id="toggleTestPanel" style="background: none; border: none; color: var(--mist); cursor: pointer; font-size: 18px;">×</button>
                 </div>
                 
                 <!-- Resource Controls -->
                 <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <div style="color: #f0f; font-size: 12px; font-weight: bold; margin-bottom: 4px;">Add Resources:</div>
+                    <div style="color: var(--mist); font-size: 12px; font-weight: bold; margin-bottom: 4px;">Add Resources:</div>
                     
-                    <button class="test-resource-btn" data-resource="minerals" data-amount="100" style="background: rgba(0,255,255,0.1); border: 1px solid #0ff; color: #0ff; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                    <button class="test-resource-btn" data-resource="minerals" data-amount="100" style="background: rgba(212,175,55,0.1); border: 1px solid var(--fire); color: var(--fire); padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px;">
                         +100 Minerals
                     </button>
                     
-                    <button class="test-resource-btn" data-resource="data" data-amount="100" style="background: rgba(0,255,0,0.1); border: 1px solid #0f0; color: #0f0; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                    <button class="test-resource-btn" data-resource="data" data-amount="100" style="background: rgba(127,214,194,0.1); border: 1px solid #7FD6C2; color: #7FD6C2; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px;">
                         +100 Data
                     </button>
                     
-                    <button class="test-resource-btn" data-resource="artifacts" data-amount="100" style="background: rgba(255,255,0,0.1); border: 1px solid #ff0; color: #ff0; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                    <button class="test-resource-btn" data-resource="artifacts" data-amount="100" style="background: rgba(212,175,55,0.1); border: 1px solid var(--fire-bright); color: var(--fire-bright); padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px;">
                         +100 Artifacts
                     </button>
                     
-                    <button class="test-resource-btn" data-resource="exoticMinerals" data-amount="100" style="background: rgba(255,0,255,0.1); border: 1px solid #f0f; color: #f0f; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                    <button class="test-resource-btn" data-resource="exoticMinerals" data-amount="100" style="background: rgba(139,132,163,0.1); border: 1px solid var(--mist); color: var(--mist); padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px;">
                         +100 Exotic
                     </button>
                     
-                    <button class="test-resource-btn" data-resource="researchPoints" data-amount="10" style="background: rgba(100,200,255,0.1); border: 1px solid #64c8ff; color: #64c8ff; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                    <button class="test-resource-btn" data-resource="researchPoints" data-amount="10" style="background: rgba(91,140,255,0.1); border: 1px solid #5B8CFF; color: #5B8CFF; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px;">
                         +10 Research
                     </button>
                     
-                    <div style="border-top: 1px solid #333; margin: 8px 0;"></div>
+                    <div style="border-top: 1px solid rgba(139,132,163,0.2); margin: 8px 0;"></div>
                     
-                    <button class="test-resource-btn" data-resource="all" data-amount="1000" style="background: rgba(255,255,255,0.1); border: 1px solid #fff; color: #fff; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold;">
+                    <button class="test-resource-btn" data-resource="all" data-amount="1000" style="background: rgba(255,255,255,0.1); border: 1px solid #fff; color: var(--signal); padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold;">
                         +1000 All Resources
                     </button>
                     
-                    <div style="border-top: 1px solid #333; margin: 8px 0;"></div>
+                    <div style="border-top: 1px solid rgba(139,132,163,0.2); margin: 8px 0;"></div>
                     
-                    <div style="color: #f0f; font-size: 12px; font-weight: bold; margin-bottom: 4px;">Probetheum:</div>
+                    <div style="color: var(--mist); font-size: 12px; font-weight: bold; margin-bottom: 4px;">Probetheum:</div>
                     
-                    <button id="testAddProbetheum" style="background: rgba(200,150,255,0.1); border: 1px solid #c9f; color: #c9f; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                    <button id="testAddProbetheum" style="background: rgba(212,175,55,0.1); border: 1px solid var(--fire-bright); color: var(--fire-bright); padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px;">
                         +100 Probethium
                     </button>
                     
-                    <div style="border-top: 1px solid #333; margin: 8px 0;"></div>
+                    <div style="border-top: 1px solid rgba(139,132,163,0.2); margin: 8px 0;"></div>
                     
-                    <div style="color: #f0f; font-size: 12px; font-weight: bold; margin-bottom: 4px;">Dark Market:</div>
+                    <div style="color: var(--mist); font-size: 12px; font-weight: bold; margin-bottom: 4px;">Dark Market:</div>
 
                     <button id="testSpawnDarkMarket" style="background: rgba(148,0,211,0.1); border: 1px solid #9400d3; color: #9400d3; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px;">
-                        🌑 Spawn Dark Market
+                        Spawn Dark Market
                     </button>
 
-                    <div style="border-top: 1px solid #333; margin: 8px 0;"></div>
+                    <div style="border-top: 1px solid rgba(139,132,163,0.2); margin: 8px 0;"></div>
 
-                    <div style="color: #f0f; font-size: 12px; font-weight: bold; margin-bottom: 4px;">Remnant NPC:</div>
+                    <div style="color: var(--mist); font-size: 12px; font-weight: bold; margin-bottom: 4px;">Remnant NPC:</div>
 
-                    <button id="testSpawnRemnant" style="background: rgba(107,45,139,0.1); border: 1px solid #6b2d8b; color: #0ff; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px;">
-                        👁️ Spawn Remnant NPC
+                    <button id="testSpawnRemnant" style="background: rgba(107,45,139,0.1); border: 1px solid #6b2d8b; color: var(--fire); padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                        Spawn Remnant NPC
                     </button>
                 </div>
                 
-                <div style="color: #666; font-size: 9px; margin-top: 12px; text-align: center;">
+                <div style="color: rgba(139,132,163,0.6); font-size: 9px; margin-top: 12px; text-align: center;">
                     Dev Mode Only
                 </div>
             </div>
@@ -199,14 +185,14 @@
             <div id="detailsArea" style="position: fixed; top: 80px; right: 15px; width: 320px; display: flex; flex-direction: column; gap: 15px; z-index: 1000; pointer-events: none;">
                 
                 <!-- Main Details Panel (for selected entities) -->
-                <div id="detailsPanel" style="display: none; padding: 15px; background: rgba(0,20,40,0.95); border: 2px solid #0ff; border-radius: 8px; box-shadow: 0 0 20px rgba(0,255,255,0.3); backdrop-filter: blur(3px); pointer-events: auto;">
+                <div id="detailsPanel" style="display: none; padding: 15px; background: var(--panel); border: 2px solid var(--fire); border-radius: 8px; box-shadow: 0 0 20px rgba(212,175,55,0.3); backdrop-filter: blur(3px); pointer-events: auto;">
                 <!-- Dynamic Header -->
-                <div id="detailsHeader" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid #0ff; padding-bottom: 8px;">
+                <div id="detailsHeader" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid var(--fire); padding-bottom: 8px;">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <div id="detailsIcon" style="font-size: 20px;">📊</div>
-                        <div id="detailsTitle" style="color: #0ff; font-size: 16px; font-weight: bold;">Details</div>
+                        <div id="detailsIcon" style="font-size: 20px;"></div>
+                        <div id="detailsTitle" style="color: var(--fire); font-size: 16px; font-weight: bold;">Details</div>
                     </div>
-                    <button id="closeDetailsBtn" style="background: none; border: none; color: #888; cursor: pointer; font-size: 18px;">×</button>
+                    <button id="closeDetailsBtn" style="background: none; border: none; color: var(--mist); cursor: pointer; font-size: 18px;">×</button>
                 </div>
                 
                 <!-- Dynamic Content Area -->
@@ -220,23 +206,23 @@
             </div>
             
             <!-- Probe Operations Panel - Right Sidebar -->
-            <div id="probePanel" style="display: none; position: fixed; top: 530px; right: 15px; width: 280px; padding: 15px; background: rgba(0,40,40,0.95); border: 2px solid #0ff; border-radius: 8px; box-shadow: 0 0 20px rgba(0,255,255,0.3); backdrop-filter: blur(3px);">
+            <div id="probePanel" style="display: none; position: fixed; top: 530px; right: 15px; width: 280px; padding: 15px; background: var(--panel); border: 2px solid var(--fire); border-radius: 8px; box-shadow: 0 0 20px rgba(212,175,55,0.3); backdrop-filter: blur(3px);">
                 <!-- Header -->
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid #0ff; padding-bottom: 8px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid var(--fire); padding-bottom: 8px;">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <div style="font-size: 20px;">🛸</div>
-                        <div style="color: #0ff; font-size: 16px; font-weight: bold;">Active Probes</div>
+                        <div style="font-size: 20px;">◇</div>
+                        <div style="color: var(--fire); font-size: 16px; font-weight: bold;">Active Probes</div>
                     </div>
-                    <div style="color: #888; font-size: 10px;">Click to track</div>
+                    <div style="color: var(--mist); font-size: 10px;">Click to track</div>
                 </div>
                 
                 <!-- Probe List Section -->
-                <div style="background: rgba(0,255,255,0.05); border: 1px solid rgba(0,255,255,0.2); border-radius: 5px; padding: 10px; margin-bottom: 12px;">
+                <div style="background: rgba(212,175,55,0.05); border: 1px solid rgba(212,175,55,0.2); border-radius: 5px; padding: 10px; margin-bottom: 12px;">
                     <div id="probeList" style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;"></div>
                 </div>
                 
                 <!-- Probe Operations Hints -->
-                <div style="color: #888; font-size: 10px; line-height: 1.3;">
+                <div style="color: var(--mist); font-size: 10px; line-height: 1.3;">
                     • Click probes to track with camera<br>
                     • Patrol mode for continuous exploration<br>
                     • Equipment slots unlock via research
@@ -246,8 +232,8 @@
             <div id="probeControls">
                 <!-- Message area above buttons to prevent displacement -->
                 <div id="gameMessages" style="min-height: 25px; margin-bottom: 10px; text-align: center;">
-                    <div id="probeStatus" style="color: #0ff; font-size: 14px; margin-bottom: 5px;"></div>
-                    <div id="alertMessages" style="color: #ff0; font-size: 14px; font-weight: bold;"></div>
+                    <div id="probeStatus" style="color: var(--fire); font-size: 14px; margin-bottom: 5px;"></div>
+                    <div id="alertMessages" style="color: var(--fire-bright); font-size: 14px; font-weight: bold;"></div>
                 </div>
                 
                 <button id="researchBtn" class="control-btn" style="display: none;">Research Lab</button>
@@ -258,59 +244,59 @@
             </div>
 
         <!-- Probe Detail Panel (floating near probe) -->
-        <div id="probeDetailPanel" style="display: none; position: fixed; top: 780px; right: 15px; z-index: 1000; width: 280px; padding: 15px; background: rgba(0,0,0,0.95); border: 2px solid #0ff; border-radius: 8px; box-shadow: 0 0 20px rgba(0,255,255,0.3); backdrop-filter: blur(5px);">
-            <div style="color: #0ff; font-size: 16px; margin-bottom: 12px; text-align: center;">Probe Details</div>
+        <div id="probeDetailPanel" style="display: none; position: fixed; top: 780px; right: 15px; z-index: 1000; width: 280px; padding: 15px; background: var(--panel); border: 2px solid var(--fire); border-radius: 8px; box-shadow: 0 0 20px rgba(212,175,55,0.3); backdrop-filter: blur(5px);">
+            <div style="color: var(--fire); font-size: 16px; margin-bottom: 12px; text-align: center;">Probe Details</div>
 
             <div id="probeIcon" style="text-align: center; margin-bottom: 15px;">
-                <div style="width: 60px; height: 60px; margin: 0 auto; border: 2px solid #0ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(0,255,255,0.1);">
-                    <span style="color: #0ff; font-size: 24px;">🛸</span>
+                <div style="width: 60px; height: 60px; margin: 0 auto; border: 2px solid var(--fire); border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(212,175,55,0.1);">
+                    <span style="color: var(--fire); font-size: 24px;">◇</span>
                 </div>
-                <div id="probeStatusText" style="color: #0ff; font-size: 12px; margin-top: 5px;">Exploring</div>
+                <div id="probeStatusText" style="color: var(--fire); font-size: 12px; margin-top: 5px;">Exploring</div>
             </div>
 
-            <div style="border-top: 1px solid #333; padding-top: 12px; margin-bottom: 12px;">
-                <label style="color: #888; font-size: 12px; display: flex; align-items: center; cursor: pointer; margin-bottom: 8px;">
+            <div style="border-top: 1px solid rgba(139,132,163,0.2); padding-top: 12px; margin-bottom: 12px;">
+                <label style="color: var(--mist); font-size: 12px; display: flex; align-items: center; cursor: pointer; margin-bottom: 8px;">
                     <input type="checkbox" id="patrolModeCheckbox" style="margin-right: 8px; cursor: pointer;">
                     <span>Patrol Mode (Loop Route)</span>
                 </label>
-                <label style="color: #888; font-size: 12px; display: flex; align-items: center; cursor: pointer;">
+                <label style="color: var(--mist); font-size: 12px; display: flex; align-items: center; cursor: pointer;">
                     <input type="checkbox" id="cameraLockCheckbox" style="margin-right: 8px; cursor: pointer;">
-                    <span>🔒 Lock Camera to Probe</span>
+                    <span>Lock Camera to Probe</span>
                 </label>
             </div>
 
             <!-- Equipment Slots Section -->
-            <div id="equipmentSlotsSection" style="border-top: 1px solid #333; padding-top: 12px; margin-bottom: 12px;">
-                <div style="color: #0f8; font-weight: bold; font-size: 12px; margin-bottom: 8px; text-align: center;">🔧 EQUIPMENT SLOTS</div>
+            <div id="equipmentSlotsSection" style="border-top: 1px solid rgba(139,132,163,0.2); padding-top: 12px; margin-bottom: 12px;">
+                <div style="color: var(--fire); font-weight: bold; font-size: 12px; margin-bottom: 8px; text-align: center;">EQUIPMENT SLOTS</div>
                 <div id="equipmentSlotBoxes" style="display: flex; gap: 8px; justify-content: center; margin-bottom: 10px;">
                     <!-- Slot boxes will be dynamically rendered -->
                 </div>
                 <button id="manageEquipmentBtnOld" class="control-btn" style="width: 100%; font-size: 11px; padding: 8px;">
-                    🔧 Manage Equipment
+                    Manage Equipment
                 </button>
             </div>
 
             <!-- Shell Section -->
-            <div id="shellSection" style="border-top: 1px solid #333; padding-top: 12px; margin-bottom: 12px;">
-                <div style="color: #9400d3; font-weight: bold; font-size: 12px; margin-bottom: 8px; text-align: center;">🎨 EQUIP SHELL</div>
+            <div id="shellSection" style="border-top: 1px solid rgba(139,132,163,0.2); padding-top: 12px; margin-bottom: 12px;">
+                <div style="color: #9400d3; font-weight: bold; font-size: 12px; margin-bottom: 8px; text-align: center;">EQUIP SHELL</div>
                 <div id="shellPreviewBox" style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
                     <div id="currentShellPreview" style="width: 50px; height: 50px; border: 2px solid #9400d3; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(148, 0, 211, 0.1);">
                         <!-- Current shell preview rendered dynamically -->
                     </div>
-                    <div id="currentShellName" style="color: #aaa; font-size: 11px; margin-left: 12px;">Default</div>
+                    <div id="currentShellName" style="color: var(--mist); font-size: 11px; margin-left: 12px;">Default</div>
                 </div>
                 <button id="changeShellBtn" class="control-btn" style="width: 100%; font-size: 11px; padding: 8px; border-color: #9400d3; color: #9400d3;">
-                    🎨 Change Shell
+                    Change Shell
                 </button>
             </div>
 
-            <div id="probeBuildingPanel" style="display: none; border-top: 1px solid #333; padding-top: 12px; margin-top: 12px;">
-                <div style="color: #888; font-size: 12px; margin-bottom: 8px;">Build along probe path:</div>
+            <div id="probeBuildingPanel" style="display: none; border-top: 1px solid rgba(139,132,163,0.2); padding-top: 12px; margin-top: 12px;">
+                <div style="color: var(--mist); font-size: 12px; margin-bottom: 8px;">Build along probe path:</div>
                 <div style="display: flex; flex-direction: column; gap: 6px;">
-                    <button id="buildPathHubBtnProbe" class="control-btn" style="font-size: 11px; padding: 6px 10px;">🏠 Build Hub (100M)</button>
-                    <button id="buildPathMiningBtnProbe" class="control-btn" style="font-size: 11px; padding: 6px 10px;">⛏️ Build Mining Station (100M, 50D)</button>
+                    <button id="buildPathHubBtnProbe" class="control-btn" style="font-size: 11px; padding: 6px 10px;">Build Hub (100M)</button>
+                    <button id="buildPathMiningBtnProbe" class="control-btn" style="font-size: 11px; padding: 6px 10px;">Build Mining Station (100M, 50D)</button>
                 </div>
-                <div id="probeBuildingStatus" style="color: #888; font-size: 10px; margin-top: 8px; text-align: center;"></div>
+                <div id="probeBuildingStatus" style="color: var(--mist); font-size: 10px; margin-top: 8px; text-align: center;"></div>
             </div>
 
             <button id="closeProbeDetail" class="control-btn" style="width: 100%; margin-top: 15px; font-size: 12px; padding: 8px;">Close</button>
@@ -324,22 +310,22 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-shrink: 0; min-height: 60px;">
                     <div style="display: flex; align-items: center; gap: 20px;">
                         <button id="returnToMapFromResearch" class="control-btn">Return to Galaxy</button>
-                        <h2 style="color: #0ff; margin: 0;">Research Laboratory</h2>
+                        <h2 style="color: var(--fire); margin: 0;">Research Laboratory</h2>
                     </div>
-                    <div style="color: #0ff;">
-                        <span style="color: #888;">Research Points:</span>
+                    <div style="color: var(--fire);">
+                        <span style="color: var(--mist);">Research Points:</span>
                         <span id="researchPoints" style="font-size: 18px; font-weight: bold;">0</span>
                     </div>
                 </div>
                 
                 <!-- Research Tree - takes maximum available space -->
-                <div id="researchTree" style="flex: 1; position: relative; width: 100%; background: rgba(0,0,0,0.3); border: 1px solid #333; border-radius: 5px; overflow-y: auto; margin-bottom: 15px;">
+                <div id="researchTree" style="flex: 1; position: relative; width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(139,132,163,0.2); border-radius: 5px; overflow-y: auto; margin-bottom: 15px;">
                     <!-- Research nodes will be dynamically generated here -->
                 </div>
                 
                 <!-- Research Info Panel - compact fixed height at bottom -->
-                <div id="researchInfo" style="padding: 12px; background: rgba(0,0,0,0.5); border: 1px solid #333; border-radius: 5px; height: 140px; flex-shrink: 0; overflow-y: auto;">
-                    <div style="color: #888; font-size: 14px; text-align: center; margin-top: 35px;">
+                <div id="researchInfo" style="padding: 12px; background: rgba(0,0,0,0.5); border: 1px solid rgba(139,132,163,0.2); border-radius: 5px; height: 140px; flex-shrink: 0; overflow-y: auto;">
+                    <div style="color: var(--mist); font-size: 14px; text-align: center; margin-top: 35px;">
                         Click on a research node to view details and unlock new technologies.
                     </div>
                 </div>
@@ -349,22 +335,22 @@
         <!-- Explore Screen -->
         <div id="exploreScreen" class="screen">
             <div style="display: flex; gap: 20px; align-items: flex-start;">
-                <div id="planetLegend" style="background: rgba(0, 0, 0, 0.7); border: 1px solid #333; border-radius: 8px; padding: 15px; min-width: 280px; max-width: 300px;">
-                    <h3 style="color: #00ffff; margin-top: 0; margin-bottom: 12px; font-size: 14px; text-align: center;">Planet Specializations</h3>
+                <div id="planetLegend" style="background: rgba(0, 0, 0, 0.7); border: 1px solid rgba(139,132,163,0.2); border-radius: 8px; padding: 15px; min-width: 280px; max-width: 300px;">
+                    <h3 style="color: var(--fire); margin-top: 0; margin-bottom: 12px; font-size: 14px; text-align: center;">Planet Specializations</h3>
                     <div id="currentPlanetInfo" style="background: rgba(255, 215, 0, 0.1); border: 1px solid #ffd700; border-radius: 4px; padding: 8px; margin-bottom: 12px;">
                         <div id="currentPlanetType" style="color: #ffd700; font-weight: bold; font-size: 12px; margin-bottom: 4px;"></div>
-                        <div id="currentPlanetBonus" style="color: #fff; font-size: 11px; line-height: 1.3;"></div>
+                        <div id="currentPlanetBonus" style="color: var(--signal); font-size: 11px; line-height: 1.3;"></div>
                     </div>
-                    <div style="font-size: 10px; color: #888; line-height: 1.4;">
-                        <div style="margin-bottom: 6px;"><span style="color: #ff6b35;">🔥 Hot worlds:</span> Rich minerals</div>
-                        <div style="margin-bottom: 6px;"><span style="color: #87ceeb;">❄️ Cold worlds:</span> Preserved data/artifacts</div>
-                        <div style="margin-bottom: 6px;"><span style="color: #32cd32;">🌊 Ocean worlds:</span> Biological data</div>
-                        <div style="margin-bottom: 6px;"><span style="color: #90ee90;">🌲 Forest worlds:</span> Balanced resources</div>
-                        <div style="margin-bottom: 6px;"><span style="color: #dda0dd;">💎 Crystal worlds:</span> Pristine artifacts</div>
-                        <div style="margin-bottom: 6px;"><span style="color: #deb887;">🏜️ Desert worlds:</span> Mineral deposits</div>
-                        <div><span style="color: #9370db;">☠️ Toxic worlds:</span> Exotic minerals</div>
+                    <div style="font-size: 10px; color: var(--mist); line-height: 1.4;">
+                        <div style="margin-bottom: 6px;"><span style="color: #ff6b35;">Hot worlds:</span> Rich minerals</div>
+                        <div style="margin-bottom: 6px;"><span style="color: #87ceeb;">Cold worlds:</span> Preserved data/artifacts</div>
+                        <div style="margin-bottom: 6px;"><span style="color: #32cd32;">Ocean worlds:</span> Biological data</div>
+                        <div style="margin-bottom: 6px;"><span style="color: #90ee90;">Forest worlds:</span> Balanced resources</div>
+                        <div style="margin-bottom: 6px;"><span style="color: #dda0dd;">Crystal worlds:</span> Pristine artifacts</div>
+                        <div style="margin-bottom: 6px;"><span style="color: #deb887;">Desert worlds:</span> Mineral deposits</div>
+                        <div><span style="color: #9370db;">Toxic worlds:</span> Exotic minerals</div>
                     </div>
-                    <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid #333; font-size: 9px; color: #666; text-align: center;">
+                    <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(139,132,163,0.2); font-size: 9px; color: rgba(139,132,163,0.6); text-align: center;">
                         Golden glow = optimal choice
                     </div>
                 </div>
@@ -415,45 +401,45 @@
         </div>
 
         <!-- Research Unlock Modal -->
-        <div id="researchUnlockModal" class="modal" style="background: rgba(0,0,0,0.95);">
-            <div class="modal-content" style="max-width: 600px; border: 3px solid #0ff; box-shadow: 0 0 50px rgba(0,255,255,0.8);">
+        <div id="researchUnlockModal" class="modal" style="background: var(--panel);">
+            <div class="modal-content" style="max-width: 600px; border: 3px solid var(--fire); box-shadow: 0 0 50px rgba(212,175,55,0.8);">
                 <div style="text-align: center; margin-bottom: 30px;">
-                    <div style="font-size: 48px; margin-bottom: 15px;">🔬</div>
-                    <h1 style="color: #0ff; margin: 0 0 10px 0; font-size: 28px; text-shadow: 0 0 20px rgba(0,255,255,0.8);">
+                    <div style="font-size: 48px; margin-bottom: 15px;"></div>
+                    <h1 style="color: var(--fire); margin: 0 0 10px 0; font-size: 28px; text-shadow: 0 0 20px rgba(212,175,55,0.8);">
                         RESEARCH LABORATORY
                     </h1>
-                    <h2 style="color: #ff0; margin: 0 0 5px 0; font-size: 20px;">UNLOCKED!</h2>
-                    <div style="color: #888; font-size: 14px;">Advanced technologies now available</div>
+                    <h2 style="color: var(--fire-bright); margin: 0 0 5px 0; font-size: 20px;">UNLOCKED!</h2>
+                    <div style="color: var(--mist); font-size: 14px;">Advanced technologies now available</div>
                 </div>
                 
-                <div style="background: rgba(0,255,255,0.05); border: 1px solid rgba(0,255,255,0.3); border-radius: 10px; padding: 20px; margin-bottom: 25px;">
+                <div style="background: rgba(212,175,55,0.05); border: 1px solid rgba(212,175,55,0.3); border-radius: 10px; padding: 20px; margin-bottom: 25px;">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
-                        <div style="color: #0ff; font-size: 16px; font-weight: bold;">🎯 Research Points Awarded</div>
-                        <div style="color: #0f0; font-size: 20px; font-weight: bold;">+1 RP</div>
+                        <div style="color: var(--fire); font-size: 16px; font-weight: bold;">Research Points Awarded</div>
+                        <div style="color: #7FD6C2; font-size: 20px; font-weight: bold;">+1 RP</div>
                     </div>
-                    <div style="color: #aaa; font-size: 13px; line-height: 1.4;">
+                    <div style="color: var(--mist); font-size: 13px; line-height: 1.4;">
                         Use Research Points to unlock new technologies in the research tree. 
                         Each breakthrough opens new possibilities for exploration and automation.
                     </div>
                 </div>
                 
                 <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px; margin-bottom: 25px;">
-                    <div style="color: #0ff; font-size: 14px; font-weight: bold; margin-bottom: 10px;">📦 Available Research:</div>
+                    <div style="color: var(--fire); font-size: 14px; font-weight: bold; margin-bottom: 10px;">Available Research:</div>
                     <div style="display: flex; align-items: center; gap: 15px;">
-                        <div style="width: 40px; height: 40px; border: 2px solid #0ff; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: rgba(0,255,255,0.1);">
-                            <span style="font-size: 16px;">📦</span>
+                        <div style="width: 40px; height: 40px; border: 2px solid var(--fire); border-radius: 6px; display: flex; align-items: center; justify-content: center; background: rgba(212,175,55,0.1);">
+                            <span style="font-size: 16px;"></span>
                         </div>
                         <div style="flex: 1;">
-                            <div style="color: #fff; font-size: 14px; font-weight: bold;">Collection Specialization</div>
-                            <div style="color: #888; font-size: 12px;">Unlocks advanced resource collection technologies</div>
-                            <div style="color: #0f0; font-size: 11px; margin-top: 3px;">✓ Available Now</div>
+                            <div style="color: var(--signal); font-size: 14px; font-weight: bold;">Collection Specialization</div>
+                            <div style="color: var(--mist); font-size: 12px;">Unlocks advanced resource collection technologies</div>
+                            <div style="color: #7FD6C2; font-size: 11px; margin-top: 3px;">✓ Available Now</div>
                         </div>
                     </div>
                 </div>
                 
                 <div style="display: flex; gap: 15px; justify-content: center;">
-                    <button id="openResearchLab" class="control-btn" style="background: linear-gradient(135deg, #0ff 0%, #08a 100%); border-color: #0ff; font-size: 14px; padding: 12px 24px; text-shadow: 0 0 10px rgba(0,255,255,0.5);">
-                        🔬 Enter Research Lab
+                    <button id="openResearchLab" class="control-btn" style="background: var(--panel); border-color: var(--fire); font-size: 14px; padding: 12px 24px; text-shadow: 0 0 10px rgba(212,175,55,0.5);">
+                        Enter Research Lab
                     </button>
                     <button id="researchLater" class="control-btn" style="font-size: 14px; padding: 12px 24px;">
                         Continue Exploring
@@ -466,17 +452,17 @@
         <div id="mainMenuModal" class="modal">
             <div class="modal-content" style="max-width: 400px;">
                 <div style="text-align: center; margin-bottom: 30px;">
-                    <div class="power-icon" style="font-size: 48px; color: #0ff; margin-bottom: 15px;">⏻</div>
-                    <h2 style="color: #0ff; margin: 0;">Main Menu</h2>
+                    <div class="power-icon" style="font-size: 48px; color: var(--fire); margin-bottom: 15px;">⏻</div>
+                    <h2 style="color: var(--fire); margin: 0;">Main Menu</h2>
                 </div>
                 
                 <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px;">
                     <button id="saveLoadMenuBtn" class="control-btn" style="font-size: 16px; padding: 12px 20px;">
-                        💾 SAVE / LOAD
+                        SAVE / LOAD
                     </button>
                     
                     <button id="quitGameMenuBtn" class="control-btn" style="font-size: 16px; padding: 12px 20px; background: #542; border-color: #643;">
-                        🚪 Quit to Start Screen
+                        Quit to Start Screen
                     </button>
                 </div>
                 
@@ -489,7 +475,7 @@
         <!-- Save/Load Modal -->
         <div id="saveLoadModal" class="modal">
             <div class="modal-content" style="max-width: 500px;">
-                <h2 style="color: #0ff; margin-bottom: 20px; text-align: center;">Save / Load Game</h2>
+                <h2 style="color: var(--fire); margin-bottom: 20px; text-align: center;">Save / Load Game</h2>
                 
                 <div id="saveSlots" style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px;">
                     <!-- Save slots will be populated by JavaScript -->
@@ -510,7 +496,7 @@
 
                 <div id="darkMarketInventory" style="max-width: 100%;">
                     <!-- Inventory items will be populated here dynamically -->
-                    <div style="text-align: center; color: #666; padding: 40px;">
+                    <div style="text-align: center; color: rgba(139,132,163,0.6); padding: 40px;">
                         Loading market inventory...
                     </div>
                 </div>
@@ -522,29 +508,29 @@
         </div>
 
         <!-- Settings Modal -->
-        <div id="settingsModal" class="modal" style="display: none; background: rgba(0,0,0,0.95);">
-            <div class="modal-content" style="max-width: 600px; border: 3px solid #0ff; box-shadow: 0 0 50px rgba(0,255,255,0.5); background: linear-gradient(135deg, #0a0a15 0%, #0a1520 100%); position: relative;">
-                <button id="closeSettings" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #0ff; font-size: 24px; cursor: pointer; padding: 5px 10px; z-index: 10;">&times;</button>
+        <div id="settingsModal" class="modal" style="display: none; background: var(--panel);">
+            <div class="modal-content" style="max-width: 600px; border: 3px solid var(--fire); box-shadow: 0 0 50px rgba(212,175,55,0.5); background: var(--panel); position: relative;">
+                <button id="closeSettings" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: var(--fire); font-size: 24px; cursor: pointer; padding: 5px 10px; z-index: 10;">&times;</button>
                 
                 <div style="text-align: center; margin-bottom: 30px;">
-                    <div style="font-size: 48px; margin-bottom: 15px;">⚙️</div>
-                    <h1 style="color: #0ff; margin: 0 0 10px 0; font-size: 28px; text-shadow: 0 0 20px rgba(0,255,255,0.8);">
+                    <div style="font-size: 48px; margin-bottom: 15px;">⚙︎</div>
+                    <h1 style="color: var(--fire); margin: 0 0 10px 0; font-size: 28px; text-shadow: 0 0 20px rgba(212,175,55,0.8);">
                         SETTINGS
                     </h1>
-                    <div style="color: #888; font-size: 14px;">Configure your experience</div>
+                    <div style="color: var(--mist); font-size: 14px;">Configure your experience</div>
                 </div>
                 
                 <!-- Audio Settings -->
                 <div style="margin-bottom: 30px;">
-                    <h2 style="color: #0ff; font-size: 20px; margin-bottom: 15px; border-bottom: 2px solid #0ff; padding-bottom: 10px;">
-                        🔊 Audio
+                    <h2 style="color: var(--fire); font-size: 20px; margin-bottom: 15px; border-bottom: 2px solid var(--fire); padding-bottom: 10px;">
+                        Audio
                     </h2>
                     
                     <!-- Music Toggle -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(0,255,255,0.05); border-radius: 8px; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(212,175,55,0.05); border-radius: 8px; margin-bottom: 15px;">
                         <div>
-                            <div style="color: #fff; font-size: 16px; margin-bottom: 5px;">Background Music</div>
-                            <div style="color: #888; font-size: 12px;">Toggle the main theme on/off</div>
+                            <div style="color: var(--signal); font-size: 16px; margin-bottom: 5px;">Background Music</div>
+                            <div style="color: var(--mist); font-size: 12px;">Toggle the main theme on/off</div>
                         </div>
                         <label class="toggle-switch">
                             <input type="checkbox" id="musicToggle" checked>
@@ -553,44 +539,44 @@
                     </div>
                     
                     <!-- Music Mode -->
-                    <div style="padding: 15px; background: rgba(0,255,255,0.05); border-radius: 8px; margin-bottom: 15px;">
-                        <div style="color: #fff; font-size: 16px; margin-bottom: 10px;">Playback Mode</div>
-                        <select id="musicMode" style="width: 100%; padding: 10px; background: #1a1a2e; border: 2px solid #0ff; border-radius: 5px; color: #fff; font-size: 14px; cursor: pointer;">
-                            <option value="sequential">🔀 Sequential (All Tracks)</option>
-                            <option value="single">🔂 Single Track Loop</option>
+                    <div style="padding: 15px; background: rgba(212,175,55,0.05); border-radius: 8px; margin-bottom: 15px;">
+                        <div style="color: var(--signal); font-size: 16px; margin-bottom: 10px;">Playback Mode</div>
+                        <select id="musicMode" style="width: 100%; padding: 10px; background: #0A0812; border: 2px solid var(--fire); border-radius: 5px; color: var(--signal); font-size: 14px; cursor: pointer;">
+                            <option value="sequential">Sequential (All Tracks)</option>
+                            <option value="single">Single Track Loop</option>
                         </select>
                     </div>
                     
                     <!-- Track Selection (shown when single mode) -->
-                    <div id="trackSelectionContainer" style="padding: 15px; background: rgba(0,255,255,0.05); border-radius: 8px; margin-bottom: 15px; display: none;">
-                        <div style="color: #fff; font-size: 16px; margin-bottom: 10px;">Select Track</div>
-                        <select id="trackSelector" style="width: 100%; padding: 10px; background: #1a1a2e; border: 2px solid #0ff; border-radius: 5px; color: #fff; font-size: 14px; cursor: pointer;">
+                    <div id="trackSelectionContainer" style="padding: 15px; background: rgba(212,175,55,0.05); border-radius: 8px; margin-bottom: 15px; display: none;">
+                        <div style="color: var(--signal); font-size: 16px; margin-bottom: 10px;">Select Track</div>
+                        <select id="trackSelector" style="width: 100%; padding: 10px; background: #0A0812; border: 2px solid var(--fire); border-radius: 5px; color: var(--signal); font-size: 14px; cursor: pointer;">
                             <!-- Populated dynamically -->
                         </select>
                     </div>
                     
                     <!-- Music Volume -->
-                    <div style="padding: 15px; background: rgba(0,255,255,0.05); border-radius: 8px;">
+                    <div style="padding: 15px; background: rgba(212,175,55,0.05); border-radius: 8px;">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                            <div style="color: #fff; font-size: 16px;">Music Volume</div>
-                            <div id="musicVolumeLabel" style="color: #0ff; font-size: 16px; font-weight: bold;">30%</div>
+                            <div style="color: var(--signal); font-size: 16px;">Music Volume</div>
+                            <div id="musicVolumeLabel" style="color: var(--fire); font-size: 16px; font-weight: bold;">30%</div>
                         </div>
                         <input type="range" id="musicVolume" min="0" max="100" value="30" 
-                            style="width: 100%; height: 6px; background: linear-gradient(90deg, #0ff 0%, #088 100%); border-radius: 3px; outline: none; cursor: pointer;">
+                            style="width: 100%; height: 6px; background: rgba(212,175,55,0.35); border-radius: 3px; outline: none; cursor: pointer;">
                     </div>
                 </div>
                 
                 <!-- Gameplay Settings -->
                 <div style="margin-bottom: 30px;">
-                    <h2 style="color: #0ff; font-size: 20px; margin-bottom: 15px; border-bottom: 2px solid #0ff; padding-bottom: 10px;">
-                        🎮 Gameplay
+                    <h2 style="color: var(--fire); font-size: 20px; margin-bottom: 15px; border-bottom: 2px solid var(--fire); padding-bottom: 10px;">
+                        Gameplay
                     </h2>
 
                     <!-- Tutorial Toggle -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(0,255,255,0.05); border-radius: 8px; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(212,175,55,0.05); border-radius: 8px; margin-bottom: 15px;">
                         <div>
-                            <div style="color: #fff; font-size: 16px; margin-bottom: 5px;">Tutorial Tips</div>
-                            <div style="color: #888; font-size: 12px;">Show tutorial guidance and tips</div>
+                            <div style="color: var(--signal); font-size: 16px; margin-bottom: 5px;">Tutorial Tips</div>
+                            <div style="color: var(--mist); font-size: 12px;">Show tutorial guidance and tips</div>
                         </div>
                         <label class="toggle-switch">
                             <input type="checkbox" id="tutorialToggle" checked>
@@ -600,7 +586,7 @@
                 </div>
 
                 <!-- Close Button -->
-                <button id="closeSettingsBtn" style="width: 100%; padding: 15px; background: #0ff; color: #000; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s;">
+                <button id="closeSettingsBtn" style="width: 100%; padding: 15px; background: var(--fire); color: #000; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s;">
                     Close Settings
                 </button>
             </div>
@@ -610,6 +596,7 @@
     <!-- Modular Game System -->
     <!-- StorageAdapter must load first -->
     <script src="src/GameConstants.js"></script>
+    <script src="src/StartConstellation.js"></script>
     <script src="src/StorageAdapter.js"></script>
     <script>
         // Immediately verify StorageAdapter loaded
@@ -650,6 +637,7 @@
     <script src="src/SfxManager.js"></script>
     <script src="src/ComboSystem.js"></script>
     <script src="src/StatsManager.js"></script>
+    <script src="src/CargoSparkSystem.js"></script>
     <script src="src/GameController.js"></script>
     
     <!-- Verify all modules loaded -->
@@ -699,14 +687,22 @@
 
         async function initializeStartScreen() {
             try {
+                // Living constellation behind the menu (self-pauses when hidden)
+                if (window.StartConstellation) {
+                    window.startConstellation = new StartConstellation(
+                        document.getElementById('constellationCanvas')
+                    );
+                    window.startConstellation.start();
+                }
+
                 // Check if auto-save exists using StorageAdapter
                 const autoSaveExists = await storageAdapter.getItem('csog_save_auto');
                 const continueBtn = document.getElementById('continueGameBtn');
             
                 if (autoSaveExists) {
                     continueBtn.style.display = 'block';
-                    continueBtn.style.background = 'linear-gradient(135deg, #0a5 0%, #063 100%)';
-                    document.getElementById('newGameBtn').style.background = '';
+                    continueBtn.classList.add('primary');
+                    document.getElementById('newGameBtn').classList.remove('primary');
                 }
 
                 // Start screen button handlers

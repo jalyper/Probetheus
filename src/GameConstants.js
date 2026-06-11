@@ -32,3 +32,34 @@ window.GAME_CONSTANTS = {
         MAX_FRAME_DELTA: 250
     }
 };
+
+/**
+ * Void Premium canvas palette — contract: docs/design/VISUAL_STYLE.md.
+ * Gold marks only what the player has earned and built; everything else
+ * recedes into violet near-black. Canvas code must draw from these tokens,
+ * never raw literals.
+ */
+window.PALETTE = {
+    VOID: '#07060B',
+    RIFT: '#1A1030',
+    FIRE: '#D4AF37',
+    FIRE_BRIGHT: '#FFD700',
+    SIGNAL: '#E8E4F0',
+    MIST: '#8B84A3',
+    LINE: 'rgba(212, 175, 55, 0.28)',
+    LINE_SOFT: 'rgba(212, 175, 55, 0.14)',
+    DANGER: '#E0524D',
+
+    // Probe rendering
+    PROBE_BODY: '#E8E4F0',
+    PROBE_TRAIL: 'rgba(232, 228, 240, 0.35)',
+
+    // Rarity ramp (VISUAL_STYLE.md "Rarity recalibration")
+    RARITY: {
+        common: '#8B84A3',
+        uncommon: '#7FD6C2',
+        rare: '#5B8CFF',
+        epic: '#B06BFF',
+        legendary: '#FFD700'
+    }
+};

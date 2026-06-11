@@ -50,7 +50,7 @@ Type rules: no bold display weights, ever — emphasis comes from gold, spacing,
 
 ## Motion language
 
-Motion is the product (pillar 2). The grammar:
+Motion is the visible signature of an efficient network (pillar 2) — earned by building well, never staged for its own sake. The grammar:
 
 - **Drift, don't snap.** Ambient elements (constellation, nebula, stars) move at minutes-per-cycle speeds. Easing: `cubic-bezier(0.4, 0, 0.2, 1)` everywhere; UI transitions 240–400ms.
 - **Sparks travel.** The signature motif: a small gold point moving along a hairline route — start menu constellation, in-game cargo deliveries, shuttle runs. Whenever value moves through the network, a spark shows it.

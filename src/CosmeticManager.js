@@ -30,20 +30,20 @@ class CosmeticManager {
         return {
             'default': {
                 name: 'Standard Explorer',
-                description: 'The classic probe design with cyan energy signatures',
+                description: 'The standard probe design with a soft violet-white signal trail',
                 price: 0,
                 unlocked: true,
                 design: {
-                    bodyColor: '#00ffff',
+                    bodyColor: '#E8E4F0',
                     bodyRadius: 4,
-                    wingColor: '#00ffff',
+                    wingColor: '#E8E4F0',
                     wingLength: 8,
                     wingWidth: 2,
                     wingGap: 2,
-                    frontColor: '#00ffff',
+                    frontColor: '#E8E4F0',
                     frontSize: 4,
                     frontHeight: 2.5,
-                    antennaColor: '#00ffff',
+                    antennaColor: '#E8E4F0',
                     antennaLength: 6,
                     antennaWidth: 1,
                     antennaAngle: 15,
@@ -51,9 +51,9 @@ class CosmeticManager {
                     trailEnabled: true,
                     trail: {
                         length: 15,
-                        color: '#00ffff',
-                        width: 3,
-                        opacity: 0.9
+                        color: '#E8E4F0',
+                        width: 2,
+                        opacity: 0.45
                     }
                 }
             },

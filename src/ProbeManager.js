@@ -119,9 +119,9 @@ class ProbeManager {
                         trailEnabled: true,
                         trail: {
                             length: 15,
-                            color: '#00ffff',
-                            width: 3,
-                            opacity: 0.9
+                            color: window.PALETTE?.PROBE_BODY || '#E8E4F0',
+                            width: 2,
+                            opacity: 0.45
                         }
                     }
             };

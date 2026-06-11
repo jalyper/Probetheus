@@ -30,6 +30,7 @@ class GameController {
         this.sfxManager = new SfxManager(this.eventBus);
         this.comboSystem = new ComboSystem(this.gameState, this.eventBus);
         this.statsManager = new StatsManager(this.gameState, this.eventBus);
+        this.cargoSparkSystem = new CargoSparkSystem(this.gameState, this.eventBus);
         this.uiManager = new UIManager(this.gameState, this.eventBus, this.probeManager, this.buildingSystem);
         
         // Make managers available to gameState for easy access
@@ -411,9 +412,9 @@ class GameController {
                                 trailEnabled: true,
                                 trail: {
                                     length: 15,
-                                    color: '#00ffff',
-                                    width: 3,
-                                    opacity: 0.9
+                                    color: window.PALETTE?.PROBE_BODY || '#E8E4F0',
+                                    width: 2,
+                                    opacity: 0.45
                                 }
                             }
                     };
@@ -1967,14 +1968,8 @@ class GameController {
      * Get color for rarity level
      */
     getRarityColor(rarity) {
-        const rarityColors = {
-            common: '#aaaaaa',
-            uncommon: '#00ff00',
-            rare: '#0088ff',
-            epic: '#ff00ff',
-            legendary: '#ffd700'
-        };
-        return rarityColors[rarity] || '#ffffff';
+        // Rarity ramp lives in the world palette (VISUAL_STYLE.md)
+        return window.PALETTE.RARITY[rarity] || window.PALETTE.SIGNAL;
     }
 
     /**
@@ -2920,6 +2915,9 @@ class GameController {
         // Update synthesis animation
         this.synthesisAnimation.update(deltaTime);
 
+        // Update cargo sparks (sim-time)
+        this.cargoSparkSystem.update(deltaTime);
+
         // Render
         this.render();
         
@@ -2943,8 +2941,8 @@ class GameController {
      * Render the game
      */
     render() {
-        // Clear canvas
-        this.ctx.fillStyle = '#000';
+        // Clear canvas — violet near-black ground, never pure black
+        this.ctx.fillStyle = window.PALETTE.VOID;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
         // Save context and apply zoom
@@ -2967,6 +2965,9 @@ class GameController {
         this.renderBuildings();
         this.renderMiningStations();
         this.renderShuttles();
+
+        // Cargo sparks ride above the network they illuminate
+        this.cargoSparkSystem.render(this.ctx, this.gameState.world.viewOffset);
 
         // Render Remnant NPCs
         if (this.remnantManager) {
@@ -3000,7 +3001,7 @@ class GameController {
      * Render stars
      */
     renderStars() {
-        this.ctx.fillStyle = '#666';
+        this.ctx.fillStyle = 'rgba(139, 132, 163, 0.4)';
         this.gameState.entities.stars.forEach(star => {
             const x = star.x - this.gameState.world.viewOffset.x;
             const y = star.y - this.gameState.world.viewOffset.y;
@@ -3039,12 +3040,13 @@ class GameController {
             // Only show as returning (orange) when on the final return segment
             const isOnReturnSegment = probe.outboundWaypointsCount && 
                                     probe.currentWaypoint >= probe.waypoints.length - 2;
-            let probeColor = '#0ff'; // Default cyan for exploring
-            
+            // Signal-white body; gold when carrying value home (gold = what you earned)
+            let probeColor = window.PALETTE.PROBE_BODY;
+
             if (probe === this.gameState.ui.selectedProbe) {
-                probeColor = isOnReturnSegment ? '#ffa500' : '#ff0'; // Orange for on return segment, Yellow for exploring
+                probeColor = window.PALETTE.FIRE_BRIGHT;
             } else if (isOnReturnSegment) {
-                probeColor = '#ff8c00'; // Dark orange for returning unselected
+                probeColor = window.PALETTE.FIRE;
             }
             
             // Draw trail effect if enabled
@@ -3083,8 +3085,8 @@ class GameController {
                 const pulseX = pulse.x - this.gameState.world.viewOffset.x;
                 const pulseY = pulse.y - this.gameState.world.viewOffset.y;
                 
-                this.ctx.strokeStyle = `rgba(0, 255, 255, ${1 - pulse.elapsed / pulse.duration})`;
-                this.ctx.lineWidth = 2;
+                this.ctx.strokeStyle = `rgba(212, 175, 55, ${(1 - pulse.elapsed / pulse.duration) * 0.6})`;
+                this.ctx.lineWidth = 1;
                 this.ctx.beginPath();
                 this.ctx.arc(pulseX, pulseY, pulse.radius, 0, Math.PI * 2);
                 this.ctx.stroke();
@@ -3230,9 +3232,9 @@ class GameController {
         
         const trailConfig = probe.cosmetic.trail || {};
         const maxTrailLength = trailConfig.length || 15;
-        const trailColor = trailConfig.color || probe.cosmetic.bodyColor || '#0ff';
+        const trailColor = trailConfig.color || probe.cosmetic.bodyColor || window.PALETTE.PROBE_BODY;
         const trailWidth = trailConfig.width || 2;
-        const trailOpacity = trailConfig.opacity || 0.8;
+        const trailOpacity = trailConfig.opacity || 0.45;
         
         // Add current position to trail (only if moved enough distance)
         const minTrailDistance = 3; // Minimum distance between trail points
@@ -3281,7 +3283,7 @@ class GameController {
                     const b = parseInt(trailColor.slice(5, 7), 16);
                     rgba = `rgba(${r},${g},${b},${alpha})`;
                 } else {
-                    rgba = `rgba(0,255,255,${alpha})`; // Default cyan
+                    rgba = `rgba(232,228,240,${alpha})`; // Default violet-white
                 }
                 
                 this.ctx.strokeStyle = rgba;
@@ -3309,9 +3311,9 @@ class GameController {
         this.ctx.lineWidth = 2;
         this.ctx.setLineDash([5, 5]);
         
-        // Determine colors based on selection
-        const selectedColors = { exploration: '#ff0', return: '#ffa500' }; // Yellow exploration, Orange return
-        const unselectedColors = { exploration: 'rgba(0, 255, 255, 0.6)', return: 'rgba(255, 165, 0, 0.6)' }; // Cyan exploration, Orange return
+        // Hairline gold routes; the return leg (value coming home) reads brighter
+        const selectedColors = { exploration: 'rgba(255, 215, 0, 0.85)', return: 'rgba(255, 215, 0, 0.85)' };
+        const unselectedColors = { exploration: 'rgba(212, 175, 55, 0.28)', return: 'rgba(212, 175, 55, 0.45)' };
         const colors = probe === this.gameState.ui.selectedProbe ? selectedColors : unselectedColors;
         
         // Draw each segment individually with appropriate coloring
@@ -3353,12 +3355,12 @@ class GameController {
                 const waypointX = waypoint.x - this.gameState.world.viewOffset.x;
                 const waypointY = waypoint.y - this.gameState.world.viewOffset.y;
                 
-                this.ctx.fillStyle = 'rgba(255, 255, 0, 0.7)';
+                this.ctx.fillStyle = 'rgba(212, 175, 55, 0.7)';
                 this.ctx.beginPath();
                 this.ctx.arc(waypointX, waypointY, 4, 0, Math.PI * 2);
                 this.ctx.fill();
-                
-                this.ctx.strokeStyle = '#ff0';
+
+                this.ctx.strokeStyle = window.PALETTE.FIRE;
                 this.ctx.lineWidth = 1;
                 this.ctx.stroke();
             });
@@ -3375,8 +3377,8 @@ class GameController {
             
             // Draw range circle if selected
             if (hub.selected) {
-                this.ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
-                this.ctx.lineWidth = 2;
+                this.ctx.strokeStyle = 'rgba(212, 175, 55, 0.25)';
+                this.ctx.lineWidth = 1;
                 this.ctx.setLineDash([10, 10]);
                 this.ctx.beginPath();
                 this.ctx.arc(screenX, screenY, hub.range, 0, Math.PI * 2);
@@ -3384,10 +3386,10 @@ class GameController {
                 this.ctx.setLineDash([]);
             }
             
-            // Draw hub icon - hexagonal base (matching original design)
-            this.ctx.strokeStyle = hub.selected ? '#ffff00' : '#00ff80';
-            this.ctx.fillStyle = hub.selected ? '#404000' : '#004020';
-            this.ctx.lineWidth = hub.selected ? 4 : 3;
+            // Hub icon — thin gold hexagon stroke over near-void fill (the network is gold)
+            this.ctx.strokeStyle = hub.selected ? window.PALETTE.FIRE_BRIGHT : window.PALETTE.FIRE;
+            this.ctx.fillStyle = hub.selected ? 'rgba(212, 175, 55, 0.12)' : 'rgba(7, 6, 11, 0.7)';
+            this.ctx.lineWidth = hub.selected ? 2 : 1;
             
             // Draw hexagon
             const size = 12;
@@ -3406,11 +3408,11 @@ class GameController {
             this.ctx.fill();
             this.ctx.stroke();
             
-            // Add pulsing animation for selected hub
+            // Selected hub breathes gold on a slow cycle (never strobes)
             if (hub.selected) {
-                const pulseSize = size + Math.sin(Date.now() * 0.005) * 3;
-                this.ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
-                this.ctx.lineWidth = 2;
+                const pulseSize = size + Math.sin(Date.now() * 0.002) * 3;
+                this.ctx.strokeStyle = 'rgba(212, 175, 55, 0.5)';
+                this.ctx.lineWidth = 1;
                 this.ctx.beginPath();
                 for (let i = 0; i < 6; i++) {
                     const angle = (i * Math.PI) / 3;
@@ -3453,16 +3455,16 @@ class GameController {
             const y = centerY;
             
             if (i < readyProbes.length) {
-                // Ready/idle probes - blue color
-                this.ctx.fillStyle = '#00ffff';
+                // Ready/idle probes - signal white
+                this.ctx.fillStyle = window.PALETTE.SIGNAL;
                 this.ctx.globalAlpha = 1.0;
             } else if (i < activeProbes.length) {
-                // Working probes - green color
-                this.ctx.fillStyle = '#00ff80';
+                // Working probes - gold (out earning)
+                this.ctx.fillStyle = window.PALETTE.FIRE;
                 this.ctx.globalAlpha = 1.0;
             } else {
-                // Empty slots - faded green
-                this.ctx.fillStyle = '#00ff80';
+                // Empty slots - faded mist
+                this.ctx.fillStyle = window.PALETTE.MIST;
                 this.ctx.globalAlpha = 0.3;
             }
             
@@ -3498,88 +3500,41 @@ class GameController {
             const pulseSpeed = signal.rarity === 'legendary' ? 2 : 1; // Legendary pulses faster
             const pulse = Math.sin(age * 0.005 * pulseSpeed) * 0.3 + 1; // Scale between 0.7 and 1.3
             
-            // Draw signal with appropriate color and pulsing
-            // Get base color for rarity
-            const rarityColors = {
-                common: '#fff',
-                uncommon: '#0f0', 
-                rare: '#06f',
-                epic: '#f0f',
-                legendary: '#ffd700'
-            };
-            
-            // Apply signal type theming
-            let color = rarityColors[signal.rarity] || '#fff';
-            
-            // Override color for themed signals
+            // Signals draw from the rarity ramp (VISUAL_STYLE.md); signal type is
+            // conveyed by shape/particle effects, not competing hue ramps
+            let color = window.PALETTE.RARITY[signal.rarity] || window.PALETTE.SIGNAL;
+
+            // Special signal identities (kept within the palette family)
             if (signal.signalType) {
                 switch (signal.signalType) {
-                    case 'mineral':
-                        // Orange/amber theme for minerals
-                        const mineralColors = {
-                            common: '#ff8c00',
-                            uncommon: '#ffa500', 
-                            rare: '#ff6b00',
-                            epic: '#ff4500',
-                            legendary: '#ff2500'
-                        };
-                        color = mineralColors[signal.rarity] || '#ff8c00';
-                        break;
-                        
-                    case 'data':
-                        // Green/cyan theme for data
-                        const dataColors = {
-                            common: '#00ff88',
-                            uncommon: '#00ffaa', 
-                            rare: '#00ffcc',
-                            epic: '#00ffff',
-                            legendary: '#88ffff'
-                        };
-                        color = dataColors[signal.rarity] || '#00ff88';
-                        break;
-                        
-                    case 'artifact':
-                        // Purple/magenta theme for artifacts
-                        const artifactColors = {
-                            common: '#aa88ff',
-                            uncommon: '#bb99ff', 
-                            rare: '#ccaaff',
-                            epic: '#ddbbff',
-                            legendary: '#eeccff'
-                        };
-                        color = artifactColors[signal.rarity] || '#aa88ff';
-                        break;
-                        
                     case 'dark_market':
-                        // Dark purple with enhanced pulsing effect for dark market
-                        color = '#9400d3'; // Dark violet
-                        // Override pulse for dark market to be more dramatic
+                        // Deep violet with a stronger breathing pulse
+                        color = '#9400d3';
                         const darkMarketPulse = Math.sin(age * 0.008) * 0.5 + 1; // Scale between 0.5 and 1.5
                         signal.radius = 12 * darkMarketPulse; // Apply to radius
                         break;
 
                     case 'ore_vein':
-                        color = '#ff6600'; // Orange (hue ~24)
+                        color = '#C97B4A'; // Copper — desaturated mist-brown family
                         break;
 
                     case 'data_cache':
-                        color = '#00ddff'; // Cyan (hue ~190)
+                        color = '#5B8CFF'; // Clear blue (rare family)
                         break;
 
                     case 'relic':
-                        color = '#ffd700'; // Gold (hue ~51)
+                        color = '#B06BFF'; // Rift violet — ancient, of the void
                         break;
 
                     case 'exotic_crystal': {
-                        // Rainbow/prismatic - cycle hue based on signal age
+                        // Prismatic shimmer, softened to live in the void
                         const crystalHue = (age * 0.1) % 360;
-                        color = `hsl(${crystalHue}, 100%, 70%)`;
+                        color = `hsl(${crystalHue}, 55%, 75%)`;
                         break;
                     }
 
-                    case 'mixed':
                     default:
-                        // Keep standard rarity colors for mixed signals
+                        // Rarity ramp for standard signals
                         break;
                 }
             }
@@ -3646,7 +3601,7 @@ class GameController {
             if (signal.isDiscoveryBonus) {
                 // Draw sparkle effect
                 this.ctx.globalAlpha = 0.8 * fadeAlpha;
-                this.ctx.fillStyle = '#ffffff';
+                this.ctx.fillStyle = window.PALETTE.SIGNAL;
                 
                 // Create 6 sparkle points around the signal
                 for (let i = 0; i < 6; i++) {
@@ -3662,7 +3617,7 @@ class GameController {
                 
                 // Draw discovery bonus indicator ring
                 this.ctx.globalAlpha = 0.4 * fadeAlpha;
-                this.ctx.strokeStyle = '#ffffff';
+                this.ctx.strokeStyle = window.PALETTE.SIGNAL;
                 this.ctx.lineWidth = 1;
                 this.ctx.setLineDash([4, 4]);
                 this.ctx.beginPath();
@@ -3709,8 +3664,8 @@ class GameController {
                     const y1 = screenY + Math.sin(angle) * innerDist;
                     const x2 = screenX + Math.cos(angle) * outerDist;
                     const y2 = screenY + Math.sin(angle) * outerDist;
-                    this.ctx.strokeStyle = `rgba(255, 102, 0, ${0.6 * fadeAlpha})`;
-                    this.ctx.lineWidth = 1.5;
+                    this.ctx.strokeStyle = `rgba(201, 123, 74, ${0.6 * fadeAlpha})`;
+                    this.ctx.lineWidth = 1;
                     this.ctx.beginPath();
                     this.ctx.moveTo(x1, y1);
                     this.ctx.lineTo(x2, y2);
@@ -3722,8 +3677,8 @@ class GameController {
                 // Rotating hexagon outline
                 const hexRadius = radius * 2.5;
                 const rotationAngle = age * 0.003;
-                this.ctx.strokeStyle = `rgba(0, 221, 255, ${0.5 * fadeAlpha})`;
-                this.ctx.lineWidth = 1.5;
+                this.ctx.strokeStyle = `rgba(91, 140, 255, ${0.5 * fadeAlpha})`;
+                this.ctx.lineWidth = 1;
                 this.ctx.beginPath();
                 for (let i = 0; i < 6; i++) {
                     const angle = rotationAngle + (i * Math.PI / 3);
@@ -3746,7 +3701,7 @@ class GameController {
                     const dustX = screenX + Math.cos(angle) * orbitRadius;
                     const dustY = screenY + Math.sin(angle) * orbitRadius;
                     const dustSize = 1.5 + Math.sin(age * 0.004 + i) * 0.5;
-                    this.ctx.fillStyle = `rgba(255, 215, 0, ${0.7 * fadeAlpha})`;
+                    this.ctx.fillStyle = `rgba(176, 107, 255, ${0.7 * fadeAlpha})`;
                     this.ctx.beginPath();
                     this.ctx.arc(dustX, dustY, dustSize, 0, Math.PI * 2);
                     this.ctx.fill();
@@ -3764,7 +3719,7 @@ class GameController {
                     const cy = screenY + Math.sin(angle) * dist;
                     const facetHue = (hue + i * 90) % 360;
                     const size = 3;
-                    this.ctx.fillStyle = `hsla(${facetHue}, 100%, 70%, ${0.6 * fadeAlpha})`;
+                    this.ctx.fillStyle = `hsla(${facetHue}, 55%, 75%, ${0.6 * fadeAlpha})`;
                     this.ctx.beginPath();
                     this.ctx.moveTo(cx, cy - size);
                     this.ctx.lineTo(cx + size * 0.6, cy);
@@ -3790,11 +3745,17 @@ class GameController {
             const y = structure.y - this.gameState.world.viewOffset.y;
             
             if (structure.type === 'outpost') {
-                this.ctx.fillStyle = '#ff0';
+                this.ctx.fillStyle = 'rgba(7, 6, 11, 0.7)';
                 this.ctx.fillRect(x - 8, y - 8, 16, 16);
+                this.ctx.strokeStyle = window.PALETTE.FIRE;
+                this.ctx.lineWidth = 1;
+                this.ctx.strokeRect(x - 8, y - 8, 16, 16);
             } else if (structure.type === 'miningFacility') {
-                this.ctx.fillStyle = '#f80';
+                this.ctx.fillStyle = 'rgba(7, 6, 11, 0.7)';
                 this.ctx.fillRect(x - 12, y - 12, 24, 24);
+                this.ctx.strokeStyle = window.PALETTE.FIRE;
+                this.ctx.lineWidth = 1;
+                this.ctx.strokeRect(x - 12, y - 12, 24, 24);
             }
         });
     }
@@ -3828,10 +3789,9 @@ class GameController {
             const rotation = time * rotationSpeed;
             const pulsePhase = Math.sin(time * 2) * 0.5 + 0.5; // 0 to 1, every 0.5 seconds
             
-            // TRON-like color scheme
-            const baseColor = station.active ? '#003333' : '#002222'; // Dark teal/cyan
-            const activeGlow = station.active ? '#00ffff' : '#004444'; // Cyan glow when active
-            const strokeColor = station.active ? '#00cccc' : '#00aaaa'; // Cyan strokes
+            // Built structures wear the gold (Void Premium)
+            const baseColor = station.active ? 'rgba(26, 16, 48, 0.55)' : 'rgba(10, 8, 18, 0.7)';
+            const strokeColor = station.active ? window.PALETTE.FIRE : 'rgba(212, 175, 55, 0.4)';
             
             this.ctx.save();
             this.ctx.translate(screenX, screenY);
@@ -3843,14 +3803,14 @@ class GameController {
                 
                 // Determine glow color based on resource status
                 const progress = this.miningManager.getStationResourceProgress(station, stationType);
-                let glowColor = '#00ffff'; // Default cyan
-                
+                let glowColor = window.PALETTE.FIRE;
+
                 if (progress < 0.3) {
-                    glowColor = '#ff4400'; // Red when low on resources
+                    glowColor = window.PALETTE.DANGER; // Starved — soft red, steady
                 } else if (progress < 0.7) {
-                    glowColor = '#ff8800'; // Orange when medium resources
+                    glowColor = '#C97B4A'; // Running thin — copper
                 } else {
-                    glowColor = '#00ffff'; // Cyan when good resources
+                    glowColor = window.PALETTE.FIRE; // Fed — gold
                 }
                 
                 this.ctx.shadowColor = glowColor;
@@ -3929,9 +3889,9 @@ class GameController {
                 const coreSize = 4 + pulsePhase * 3;
                 const coreGlow = 0.8 + pulsePhase * 0.2;
                 
-                this.ctx.fillStyle = '#00ffff';
+                this.ctx.fillStyle = window.PALETTE.FIRE_BRIGHT;
                 this.ctx.globalAlpha = coreGlow;
-                this.ctx.shadowColor = '#00ffff';
+                this.ctx.shadowColor = window.PALETTE.FIRE_BRIGHT;
                 this.ctx.shadowBlur = 10;
                 
                 this.ctx.beginPath();
@@ -3942,7 +3902,7 @@ class GameController {
                 this.ctx.globalAlpha = 1;
             } else {
                 // Inactive core
-                this.ctx.fillStyle = '#333';
+                this.ctx.fillStyle = '#3A3450';
                 this.ctx.beginPath();
                 this.ctx.arc(0, 0, 3, 0, Math.PI * 2);
                 this.ctx.fill();
@@ -3954,8 +3914,8 @@ class GameController {
             
             // Draw level indicator
             if (station.level > 1) {
-                this.ctx.font = '10px Arial';
-                this.ctx.fillStyle = '#ff0';
+                this.ctx.font = "10px 'IBM Plex Mono', monospace";
+                this.ctx.fillStyle = window.PALETTE.FIRE;
                 this.ctx.fillText(`Lv${station.level}`, screenX, screenY + size + 10);
             }
             
@@ -3970,23 +3930,21 @@ class GameController {
                 const time = Date.now() * 0.005;
                 
                 // Background bar
-                this.ctx.fillStyle = 'rgba(60, 60, 60, 0.8)';
+                this.ctx.fillStyle = 'rgba(139, 132, 163, 0.2)';
                 this.ctx.fillRect(screenX - 20, screenY + size + 15, barWidth, barHeight);
-                
+
                 // Calculate fill width based on progress
                 const fillWidth = barWidth * progress;
                 let barColor;
-                
-                if (progress >= 0.95) { // Green when 95% or more filled (accounts for continuous consumption)
-                    barColor = '#00ff00';
+
+                if (progress >= 0.95) { // Full enough (accounts for continuous consumption)
+                    barColor = window.PALETTE.FIRE_BRIGHT;
                 } else if (progress > 0) {
-                    // Yellow to orange gradient as it fills up
-                    const intensity = Math.min(1, progress + 0.3);
-                    barColor = `rgb(${Math.floor(255 * intensity)}, ${Math.floor(255 * intensity * 0.8)}, 0)`;
+                    // Gold brightens as the buffer fills
+                    barColor = `rgba(212, 175, 55, ${0.4 + 0.6 * progress})`;
                 } else {
-                    // Blinking red when empty
-                    const blinkAlpha = 0.3 + 0.7 * Math.abs(Math.sin(time));
-                    barColor = `rgba(255, 68, 0, ${blinkAlpha})`;
+                    // Empty — steady soft red, no flashing (VISUAL_STYLE don'ts)
+                    barColor = 'rgba(224, 82, 77, 0.8)';
                 }
                 
                 if (fillWidth > 0) {
@@ -4018,12 +3976,12 @@ class GameController {
             
             // Draw shuttle body with status-based colors
             const size = 8 + shuttle.level;
-            let shuttleColor = '#ff0'; // Default yellow for returning
-            if (shuttle.status === 'delivering') shuttleColor = '#0f0'; // Green when delivering
-            else if (shuttle.status === 'waiting') shuttleColor = '#888'; // Gray when waiting
-            
+            let shuttleColor = window.PALETTE.SIGNAL; // Returning empty
+            if (shuttle.status === 'delivering') shuttleColor = window.PALETTE.FIRE; // Carrying value
+            else if (shuttle.status === 'waiting') shuttleColor = window.PALETTE.MIST; // Idle
+
             this.ctx.fillStyle = shuttleColor;
-            this.ctx.strokeStyle = '#fff';
+            this.ctx.strokeStyle = 'rgba(232, 228, 240, 0.6)';
             this.ctx.lineWidth = 1;
             
             // Triangle shape pointing in direction of movement
@@ -4050,7 +4008,7 @@ class GameController {
                 const cargoAmount = Object.values(shuttle.cargo || {}).reduce((sum, val) => sum + val, 0);
                 if (cargoAmount > 0) {
                     const cargoPercent = cargoAmount / shuttle.capacity;
-                    this.ctx.fillStyle = `rgba(255, 255, 255, ${0.5 + cargoPercent * 0.5})`;
+                    this.ctx.fillStyle = `rgba(255, 215, 0, ${0.5 + cargoPercent * 0.5})`;
                     this.ctx.beginPath();
                     this.ctx.arc(0, 0, 3, 0, Math.PI * 2);
                     this.ctx.fill();
@@ -4059,9 +4017,9 @@ class GameController {
                 this.ctx.restore();
             }
             
-            // Draw shuttle trail
-            this.ctx.strokeStyle = `rgba(200, 150, 255, 0.3)`;
-            this.ctx.lineWidth = 2;
+            // Shuttle run line — hairline gold route
+            this.ctx.strokeStyle = window.PALETTE.LINE;
+            this.ctx.lineWidth = 1;
             this.ctx.setLineDash([2, 4]);
             this.ctx.beginPath();
             this.ctx.moveTo(screenX, screenY);
@@ -4102,10 +4060,10 @@ class GameController {
         const screenX = preview.x - this.gameState.world.viewOffset.x;
         const screenY = preview.y - this.gameState.world.viewOffset.y;
         
-        this.ctx.strokeStyle = '#0ff';
-        this.ctx.lineWidth = 2;
+        this.ctx.strokeStyle = 'rgba(212, 175, 55, 0.7)';
+        this.ctx.lineWidth = 1;
         this.ctx.setLineDash([5, 5]);
-        
+
         if (preview.type === 'outpost') {
             this.ctx.strokeRect(screenX - 8, screenY - 8, 16, 16);
         } else if (preview.type === 'miningFacility') {
@@ -4131,8 +4089,8 @@ class GameController {
         const screenY = hub.y - this.gameState.world.viewOffset.y;
         
         // Draw range circle
-        this.ctx.strokeStyle = 'rgba(0, 255, 255, 0.5)';
-        this.ctx.lineWidth = 2;
+        this.ctx.strokeStyle = 'rgba(212, 175, 55, 0.4)';
+        this.ctx.lineWidth = 1;
         this.ctx.beginPath();
         this.ctx.arc(screenX, screenY, hub.range, 0, Math.PI * 2);
         this.ctx.stroke();
@@ -4160,10 +4118,10 @@ class GameController {
         const rectWidth = Math.abs(endX - startX);
         const rectHeight = Math.abs(endY - startY);
         
-        // Draw selection rectangle with security camera style
-        this.ctx.strokeStyle = 'rgba(255, 255, 0, 0.8)';
-        this.ctx.fillStyle = 'rgba(255, 255, 0, 0.1)';
-        this.ctx.lineWidth = 2;
+        // Draw selection rectangle — gold hairline frame
+        this.ctx.strokeStyle = 'rgba(212, 175, 55, 0.8)';
+        this.ctx.fillStyle = 'rgba(212, 175, 55, 0.06)';
+        this.ctx.lineWidth = 1;
         this.ctx.setLineDash([10, 5]);
         
         // Fill the rectangle
@@ -4177,8 +4135,8 @@ class GameController {
         // Draw corner indicators for security camera feel
         const cornerSize = 20;
         this.ctx.setLineDash([]);
-        this.ctx.strokeStyle = 'rgba(255, 255, 0, 1.0)';
-        this.ctx.lineWidth = 3;
+        this.ctx.strokeStyle = 'rgba(212, 175, 55, 1.0)';
+        this.ctx.lineWidth = 1.5;
         
         // Top-left corner
         this.ctx.beginPath();
@@ -4232,10 +4190,10 @@ class GameController {
             });
         }
         
-        this.ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)';
-        this.ctx.lineWidth = 2;
+        this.ctx.strokeStyle = 'rgba(212, 175, 55, 0.8)';
+        this.ctx.lineWidth = 1;
         this.ctx.setLineDash([10, 5]);
-        
+
         // Draw lines from hub to deployment points
         const hubScreenX = hub.x - this.gameState.world.viewOffset.x;
         const hubScreenY = hub.y - this.gameState.world.viewOffset.y;
@@ -4292,13 +4250,13 @@ class GameController {
                 const pointScreenX = point.x - this.gameState.world.viewOffset.x;
                 const pointScreenY = point.y - this.gameState.world.viewOffset.y;
                 
-                this.ctx.fillStyle = 'rgba(0, 255, 255, 0.7)';
+                this.ctx.fillStyle = 'rgba(212, 175, 55, 0.7)';
                 this.ctx.beginPath();
                 this.ctx.arc(pointScreenX, pointScreenY, 6, 0, Math.PI * 2);
                 this.ctx.fill();
-                
-                this.ctx.strokeStyle = 'rgba(0, 255, 255, 1)';
-                this.ctx.lineWidth = 2;
+
+                this.ctx.strokeStyle = window.PALETTE.FIRE;
+                this.ctx.lineWidth = 1;
                 this.ctx.stroke();
             });
         }
@@ -4527,9 +4485,9 @@ class GameController {
                     const sectorScreenX = sectorX * world.standardSectorWidth - world.viewOffset.x;
                     const sectorScreenY = sectorY * world.standardSectorHeight - world.viewOffset.y;
                     
-                    // Draw sector boundary
+                    // Draw sector boundary — hairline, biome-tinted
                     this.ctx.strokeStyle = sector.type.borderColor;
-                    this.ctx.lineWidth = 3;
+                    this.ctx.lineWidth = 1;
                     this.ctx.setLineDash([15, 8]);
                     
                     this.ctx.beginPath();
@@ -4545,8 +4503,8 @@ class GameController {
                     const viewSectorY = Math.floor(centerY / world.standardSectorHeight);
                     
                     if (sectorX === viewSectorX && sectorY === viewSectorY) {
-                        this.ctx.fillStyle = '#fff';
-                        this.ctx.font = 'bold 24px monospace';
+                        this.ctx.fillStyle = 'rgba(232, 228, 240, 0.8)';
+                        this.ctx.font = "300 22px 'Jost', 'Century Gothic', sans-serif";
                         this.ctx.textAlign = 'center';
                         this.ctx.textBaseline = 'middle';
                         this.ctx.fillText(sector.name, 
@@ -4564,11 +4522,11 @@ class GameController {
                         if (sectorScreenX + world.standardSectorWidth > -50 && sectorScreenX < this.canvas.width + 50 &&
                             sectorScreenY + world.standardSectorHeight > -50 && sectorScreenY < this.canvas.height + 50) {
                             
-                            this.ctx.fillStyle = 'rgba(100, 100, 100, 0.2)';
+                            this.ctx.fillStyle = 'rgba(26, 16, 48, 0.25)';
                             this.ctx.fillRect(sectorScreenX, sectorScreenY, world.standardSectorWidth, world.standardSectorHeight);
-                            
-                            this.ctx.strokeStyle = '#333';
-                            this.ctx.lineWidth = 2;
+
+                            this.ctx.strokeStyle = 'rgba(139, 132, 163, 0.2)';
+                            this.ctx.lineWidth = 1;
                             this.ctx.setLineDash([10, 5]);
                             this.ctx.beginPath();
                             this.ctx.rect(sectorScreenX, sectorScreenY, world.standardSectorWidth, world.standardSectorHeight);

@@ -682,9 +682,18 @@ body {
    a spark occasionally traveling home. The game's core verb, as ambience. */
 
 #startScreen {
+    height: 100vh;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    overflow: hidden;
     background:
         radial-gradient(ellipse 90% 70% at 50% 110%, rgba(26, 16, 48, 0.85) 0%, rgba(26, 16, 48, 0) 60%),
         var(--void);
+}
+
+.start-content {
+    position: relative; /* stacks above the constellation canvas */
 }
 
 #constellationCanvas {

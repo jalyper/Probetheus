@@ -169,10 +169,10 @@ class SectorManager {
         
         // Generate sector type
         const sectorTypes = [
-            { 
-                name: 'Standard', 
-                color: 'rgba(100, 100, 255, 0.3)', 
-                borderColor: '#66f',
+            {
+                name: 'Standard',
+                color: 'rgba(139, 132, 163, 0.08)',
+                borderColor: 'rgba(139, 132, 163, 0.35)',
                 mineralBonus: 1.0, 
                 dataBonus: 1.0, 
                 artifactBonus: 1.0,
@@ -180,8 +180,8 @@ class SectorManager {
             },
             {
                 name: 'Resource-Rich',
-                color: 'rgba(255, 200, 100, 0.3)',
-                borderColor: '#fc8',
+                color: 'rgba(201, 123, 74, 0.07)',
+                borderColor: 'rgba(201, 123, 74, 0.45)',
                 mineralBonus: 2.0,
                 dataBonus: 1.5,
                 artifactBonus: 1.2,
@@ -190,8 +190,8 @@ class SectorManager {
             },
             {
                 name: 'Data Haven',
-                color: 'rgba(100, 255, 100, 0.3)',
-                borderColor: '#6f6',
+                color: 'rgba(91, 140, 255, 0.06)',
+                borderColor: 'rgba(91, 140, 255, 0.45)',
                 mineralBonus: 0.8,
                 dataBonus: 3.0,
                 artifactBonus: 1.5,
@@ -200,8 +200,8 @@ class SectorManager {
             },
             {
                 name: 'Ancient',
-                color: 'rgba(255, 100, 255, 0.3)',
-                borderColor: '#f6f',
+                color: 'rgba(176, 107, 255, 0.06)',
+                borderColor: 'rgba(176, 107, 255, 0.45)',
                 mineralBonus: 1.2,
                 dataBonus: 1.8,
                 artifactBonus: 4.0,
@@ -210,8 +210,8 @@ class SectorManager {
             },
             {
                 name: 'Asteroid Field',
-                color: 'rgba(255, 100, 100, 0.3)',
-                borderColor: '#f66',
+                color: 'rgba(224, 82, 77, 0.06)',
+                borderColor: 'rgba(224, 82, 77, 0.5)',
                 mineralBonus: 3.0,
                 dataBonus: 3.0,
                 artifactBonus: 3.0,
@@ -675,7 +675,7 @@ class SectorManager {
         
         ctx.clearRect(0, 0, width, height);
         
-        ctx.fillStyle = '#111';
+        ctx.fillStyle = window.PALETTE ? window.PALETTE.VOID : '#07060B';
         ctx.fillRect(0, 0, width, height);
         
         const scale = 50;
@@ -699,16 +699,16 @@ class SectorManager {
                 const y = centerY + dy * scale;
                 
                 // Draw grid lines
-                ctx.strokeStyle = '#333';
+                ctx.strokeStyle = 'rgba(139, 132, 163, 0.2)';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
                 ctx.rect(x - scale/2, y - scale/2, scale, scale);
                 ctx.stroke();
-                
-                // Highlight current sector
+
+                // Highlight current sector — gold hairline
                 if (dx === 0 && dy === 0) {
-                    ctx.strokeStyle = '#0ff';
-                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = window.PALETTE ? window.PALETTE.FIRE : '#D4AF37';
+                    ctx.lineWidth = 1;
                     ctx.beginPath();
                     ctx.rect(x - scale/2, y - scale/2, scale, scale);
                     ctx.stroke();
@@ -728,8 +728,8 @@ class SectorManager {
                         
                         // Draw sector name
                         ctx.save();
-                        ctx.font = '8px monospace';
-                        ctx.fillStyle = '#fff';
+                        ctx.font = "8px 'IBM Plex Mono', monospace";
+                        ctx.fillStyle = 'rgba(232, 228, 240, 0.85)';
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
                         
@@ -740,24 +740,24 @@ class SectorManager {
                         }
                         ctx.restore();
                         
-                        // Draw outpost indicators
+                        // Draw outpost indicators — built = gold
                         if (sector.outposts && sector.outposts.length > 0) {
-                            ctx.fillStyle = '#ff0';
+                            ctx.fillStyle = window.PALETTE ? window.PALETTE.FIRE : '#D4AF37';
                             ctx.beginPath();
-                            ctx.arc(x, y + 15, 3, 0, Math.PI * 2);
+                            ctx.arc(x, y + 15, 2, 0, Math.PI * 2);
                             ctx.fill();
                         }
-                        
-                        // Draw hub indicators
+
+                        // Draw hub indicators — built = gold, brighter
                         if (sector.hubs && sector.hubs.length > 0) {
-                            ctx.fillStyle = '#0ff';
+                            ctx.fillStyle = window.PALETTE ? window.PALETTE.FIRE_BRIGHT : '#FFD700';
                             ctx.beginPath();
-                            ctx.arc(x, y - 15, 3, 0, Math.PI * 2);
+                            ctx.arc(x, y - 15, 2, 0, Math.PI * 2);
                             ctx.fill();
                         }
                     } else {
                         // Unexplored but initialized
-                        ctx.fillStyle = 'rgba(50, 50, 50, 0.5)';
+                        ctx.fillStyle = 'rgba(26, 16, 48, 0.5)';
                         ctx.fillRect(x - scale/2 + 1, y - scale/2 + 1, scale - 2, scale - 2);
                     }
                 }
