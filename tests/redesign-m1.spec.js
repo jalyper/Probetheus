@@ -41,7 +41,7 @@ test.describe('M1 redesign — tempo, economy, juice, stats', () => {
     }));
 
     expect(loaded.constants).toBe(true);
-    expect(loaded.baseSpeed).toBe(0.00025);
+    expect(loaded.baseSpeed).toBe(0.125); // px/ms — distance-based movement
     expect(loaded.synthesis).toBe(1);
     expect(loaded.sfx).toBe(true);
     expect(loaded.combo).toBe(true);
@@ -56,8 +56,62 @@ test.describe('M1 redesign — tempo, economy, juice, stats', () => {
       return { speed: probe.speed, returnSpeed: probe.returnSpeed };
     });
 
-    expect(speeds.speed).toBeCloseTo(0.00025, 6);
-    expect(speeds.returnSpeed).toBeCloseTo(0.000375, 6);
+    expect(speeds.speed).toBeCloseTo(0.125, 6);
+    expect(speeds.returnSpeed).toBeCloseTo(0.1875, 6);
+  });
+
+  test('travel time scales with route distance — geometry is income', async ({ page }) => {
+    await startNewGame(page);
+
+    const result = await page.evaluate(() => {
+      const game = window.game;
+      game.timeScale = 0; // drive the sim by hand
+      const pm = game.probeManager;
+      const hub = game.gameState.entities.reconHubs[0];
+
+      // Two probes, identical except route length: 200px vs 800px legs
+      const mk = (id, legPx) => ({
+        id, hub, active: true, status: 'exploring',
+        current: { x: hub.x, y: hub.y },
+        waypoints: [
+          { x: hub.x, y: hub.y },
+          { x: hub.x + legPx, y: hub.y },
+          { x: hub.x, y: hub.y }
+        ],
+        currentWaypoint: 0, segmentProgress: 0,
+        speed: window.GAME_CONSTANTS.PROBE.BASE_SPEED,
+        returnSpeed: window.GAME_CONSTANTS.PROBE.BASE_SPEED * window.GAME_CONSTANTS.PROBE.RETURN_SPEED_MULT,
+        outboundWaypointsCount: 2,
+        pulses: [], radarPulses: [], pulseTimer: 0,
+        patrolMode: false, returnedToHub: false,
+        cargo: { minerals: 0, data: 0, artifacts: 0, exoticMinerals: 0 },
+        equipment: [], maxEquipmentSlots: 2, damage: 0
+      });
+
+      const short = mk('dist_short', 200);
+      const long = mk('dist_long', 800);
+
+      // One simulated second each
+      for (let i = 0; i < 10; i++) {
+        pm.updateProbeMovement(short, 100);
+        pm.updateProbeMovement(long, 100);
+      }
+
+      const dist = (p) => Math.hypot(p.current.x - hub.x, p.current.y - hub.y);
+      return {
+        shortProgress: short.segmentProgress + short.currentWaypoint,
+        longProgress: long.segmentProgress + long.currentWaypoint,
+        shortPx: dist(short),
+        longPx: dist(long)
+      };
+    });
+
+    // Same px/ms speed: both covered ~125px of ground...
+    expect(result.shortPx).toBeGreaterThan(100);
+    expect(result.longPx).toBeGreaterThan(100);
+    expect(Math.abs(result.shortPx - result.longPx)).toBeLessThan(30);
+    // ...so the short route is proportionally further through its journey
+    expect(result.shortProgress).toBeGreaterThan(result.longProgress * 2);
   });
 
   test('time controls: scale buttons and pause work', async ({ page }) => {

@@ -5,8 +5,13 @@
  */
 window.GAME_CONSTANTS = {
     PROBE: {
-        // Arcade tempo: 2.5x the original 0.0001 (CORE_LOOP.md "Tempo changes")
-        BASE_SPEED: 0.00025,
+        // Distance-based tempo: px per sim-ms (125 px/s at 1×). A typical
+        // ~500px starter leg crosses in ~4s — the old arcade feel — but
+        // travel time now scales with real route length, so shorter loops
+        // genuinely pay faster (CORE_LOOP tempo; PROBE_NETWORKS round-trip
+        // math; prerequisite for Solar Drift). Replaces the per-segment
+        // clock (0.00025 progress/ms) that made distance cosmetic.
+        BASE_SPEED: 0.125,
         // Return is faster than outbound, but no longer 3x
         RETURN_SPEED_MULT: 1.5,
         BUILD_COST: 25

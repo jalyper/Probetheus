@@ -229,6 +229,26 @@ class ProbeManager {
     }
 
     /**
+     * This probe's place in the hub's FIFO dock queue (-1 = not queued).
+     * Prunes stale ids (destroyed / no-longer-queued probes) off the front
+     * so the head is always a live claimant. The queue is rebuilt naturally
+     * after load — it is deliberately not serialized.
+     */
+    intakeQueuePosition(hub, probe) {
+        hub.intakeQueue = hub.intakeQueue || [];
+        while (hub.intakeQueue.length > 0) {
+            const headId = hub.intakeQueue[0];
+            const head = this.gameState.entities.probes.find(p => p.id === headId);
+            if (!head || head.status !== 'queued' || (head.hub?.id ?? head.hubId) !== hub.id) {
+                hub.intakeQueue.shift();
+            } else {
+                break;
+            }
+        }
+        return hub.intakeQueue.indexOf(probe.id);
+    }
+
+    /**
      * Setup probe for deployment
      */
     setupProbeForDeployment(probe, allWaypoints, outboundWaypoints, outboundSpeed, returnSpeed) {
@@ -326,13 +346,25 @@ class ProbeManager {
                     const hub = probe.hub;
                     hub.intakeBusyUntil = hub.intakeBusyUntil || 0;
                     const now = this.simNow || 0;
-                    if (now < hub.intakeBusyUntil) {
+
+                    // FIFO dock: the next intake window goes to whoever has
+                    // waited longest, not whoever iterates first this frame —
+                    // a looping short-route probe can't starve the queue.
+                    const pos = this.intakeQueuePosition(hub, probe);
+                    const mustWait = now < hub.intakeBusyUntil ||
+                        (hub.intakeQueue.length > 0 && pos !== 0);
+
+                    if (mustWait) {
                         if (probe.status !== 'queued') {
                             probe.status = 'queued';
+                            probe.queuedAt = now;
+                            if (pos === -1) hub.intakeQueue.push(probe.id);
                             this.eventBus.emit('hub:intakeQueued', { hub, probe });
                         }
                         return; // wait at the dock; retry next frame
                     }
+
+                    if (pos === 0) hub.intakeQueue.shift(); // head of the line steps up
                     hub.intakeBusyUntil = Math.max(now, hub.intakeBusyUntil) + this.getHubIntakeMs(hub);
                     if (probe.status === 'queued') probe.status = 'exploring';
                 }
@@ -459,7 +491,22 @@ class ProbeManager {
         
         // Safety check for reasonable deltaTime (max 1 second)
         const safeDeltaTime = Math.min(deltaTime, 1000);
-        probe.segmentProgress += currentSpeed * safeDeltaTime;
+
+        // Distance-based movement: speed is px/ms, so progress through the
+        // current segment scales with its real length. Route geometry IS
+        // round-trip time — the Deliver lesson ("cargo per trip ÷ round-trip
+        // time") is mechanically true, and hub placement matters.
+        const segStart = probe.waypoints[probe.currentWaypoint];
+        const segEnd = probe.waypoints[probe.currentWaypoint + 1];
+        const segmentLength = (segStart && segEnd)
+            ? Math.hypot(segEnd.x - segStart.x, segEnd.y - segStart.y)
+            : 0;
+
+        if (segmentLength > 0.0001) {
+            probe.segmentProgress += (currentSpeed * safeDeltaTime) / segmentLength;
+        } else {
+            probe.segmentProgress = 1.0; // zero-length or missing leg — pass through
+        }
 
         if (probe.segmentProgress >= 1.0) {
             // Move to next waypoint

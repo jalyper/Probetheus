@@ -73,6 +73,61 @@ test.describe('QoL fixes', () => {
     expect(result.join(' ')).not.toContain('undefined');
   });
 
+  test('saturated dock processes probes FIFO, not iteration order', async ({ page }) => {
+    await startNewGame(page);
+    const result = await page.evaluate(async () => {
+      const game = window.game;
+      game.timeScale = 0; // freeze the live loop; we advance sim-time manually
+      const pm = game.probeManager;
+      const hub = game.gameState.entities.reconHubs[0];
+
+      // Park the starting probes so only the test probes contend for the dock
+      game.gameState.entities.probes.forEach(p => { p.active = false; });
+
+      const mk = (id) => ({
+        id, hub, hubId: hub.id, active: true, status: 'exploring',
+        current: { x: hub.x, y: hub.y },
+        waypoints: [{ x: hub.x + 50, y: hub.y }, { x: hub.x, y: hub.y }],
+        currentWaypoint: 1, segmentProgress: 1, // arrived at the dock
+        speed: window.GAME_CONSTANTS.PROBE.BASE_SPEED,
+        returnSpeed: window.GAME_CONSTANTS.PROBE.BASE_SPEED * 1.5,
+        outboundWaypointsCount: 1,
+        pulses: [], radarPulses: [], pulseTimer: 0,
+        patrolMode: false, returnedToHub: false, recoveryMode: false,
+        cargo: { minerals: 5, data: 0, artifacts: 0, exoticMinerals: 0 },
+        equipment: [], maxEquipmentSlots: 2, damage: 0
+      });
+
+      // Dock is busy; A, B, C arrive and queue in that order...
+      pm.simNow = pm.simNow || 0;
+      hub.intakeBusyUntil = pm.simNow + 60000;
+      hub.intakeQueue = [];
+      const A = mk('fifo_A'), B = mk('fifo_B'), C = mk('fifo_C');
+      // ...but sit in the entity array in REVERSE order — the old
+      // busy-timestamp gate would have served C first, forever
+      game.gameState.entities.probes.push(C, B, A);
+
+      pm.updateProbeMovement(A, 16);
+      pm.updateProbeMovement(B, 16);
+      pm.updateProbeMovement(C, 16);
+      const queuedOrder = [...hub.intakeQueue];
+
+      const delivered = [];
+      game.eventBus.on('probe:cargoDelivered', (d) => delivered.push(d.probe.id));
+
+      // Free the dock and run the sim (updateProbes iterates C, B, A)
+      hub.intakeBusyUntil = pm.simNow;
+      for (let i = 0; i < 400 && delivered.length < 3; i++) {
+        game.eventBus.emit('game:update', { deltaTime: 250 });
+      }
+
+      return { queuedOrder, delivered };
+    });
+
+    expect(result.queuedOrder).toEqual(['fifo_A', 'fifo_B', 'fifo_C']);
+    expect(result.delivered).toEqual(['fifo_A', 'fifo_B', 'fifo_C']);
+  });
+
   test('throughput panel opens from the Flow chip and closes via its close button', async ({ page }) => {
     await startNewGame(page);
     await page.locator('#throughputStat').click();

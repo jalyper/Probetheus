@@ -18,8 +18,8 @@ Nothing structural changes here. What changes is **tempo and feedback density** 
 ## Tempo changes
 
 ### Probe speed
-- Outbound speed: `0.0001` → **`0.00025`** (2.5x). Return stays `0.0003` so "coming home is faster" is preserved but no longer 3x.
-- Rationale: at the old speed a mid-length route was a coffee break and the map sat still. Target: a typical route completes in **20–40 seconds**, so a network of 4–6 probes always has something gently in motion — the aquarium effect, not plate-spinning.
+- **Distance-based since 2026-06-11:** `BASE_SPEED` is now **0.125 px/ms** (125 px/s at 1×), return 1.5×. The old values (`0.0001` → `0.00025`) were *progress-fraction per ms* — every leg took a fixed ~4s regardless of length, which made route geometry cosmetic and the "shorter loops earn more" lesson false. Travel time now scales with real pixel distance (a ~500px leg ≈ 4s keeps the same feel), which is also the prerequisite for Solar Drift.
+- Rationale: at the original speed a mid-length route was a coffee break and the map sat still. Target: a typical route completes in **20–40 seconds**, so a network of 4–6 probes always has something gently in motion — the aquarium effect, not plate-spinning.
 - Offline/idle earnings calculations stay tuned to the *old* effective rates — the speed-up is a play-feel change, not an economy buff. Adjust `OfflineManager` hourly estimates accordingly.
 
 ### Signal lifetimes
