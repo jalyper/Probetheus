@@ -10,6 +10,8 @@ class TutorialManager {
 
         // Tutorial state tracking
         this.currentStep = 0;
+        this.viewStep = null;      // slide the player is reading (null = the live step)
+        this.closeTimeout = null;  // pending fade-out, cancelled if a card re-opens
         this.tutorialActive = false;
         this.tutorialsDisabled = this.loadTutorialDisabledState();
 
@@ -238,6 +240,7 @@ class TutorialManager {
 
         console.log('Starting tutorial from beginning');
         this.currentStep = 0;
+        this.viewStep = null;
         this.tutorialActive = true;
         this.steps.forEach(step => step.completed = false);
         this.showCurrentStep();
@@ -258,13 +261,16 @@ class TutorialManager {
             console.log(`Tutorial step ${this.currentStep} completed: ${currentStepData.id}`);
             currentStepData.completed = true;
 
-            const completedStepIndex = this.currentStep;
-
-            setTimeout(() => {
-                if (this.currentStep === completedStepIndex) {
-                    this.nextStep();
-                }
-            }, 1500);
+            // No timed advance — the player turns the page (Next ›). If they
+            // dismissed the card, surface the next lesson directly so the
+            // tutorial can't stall silently.
+            const panel = document.getElementById('tutorialPanel');
+            const hidden = !panel || panel.style.display === 'none';
+            if (hidden) {
+                this.nextStep();
+            } else if (this.viewStep === null) {
+                this.renderStepCard(); // light up Next on the live slide
+            }
         }
     }
 
@@ -289,7 +295,7 @@ class TutorialManager {
 
         this.handleStepActions(stepData.id);
 
-        this.showTutorialMessage(stepData.title, stepData.message);
+        this.renderStepCard();
     }
 
     /**
@@ -303,15 +309,8 @@ class TutorialManager {
             this.spawnTutorialSignalCluster();
         }
 
-        if (stepId === 'release') {
-            // Auto-dismiss the send-off, then surface the time-controls tip
-            setTimeout(() => {
-                this.releaseRead = true;
-                this.checkStepCompletion();
-                this.showTip('tip_time_controls',
-                    'Press 1 / 2 / 3 for game speed, Space to pause.');
-            }, 5000);
-        }
+        // The 'release' send-off has no timer anymore — its Finish button
+        // ends the tutorial when the player is ready (renderStepCard).
     }
 
     /**
@@ -484,20 +483,17 @@ class TutorialManager {
     }
 
     /**
-     * Move to next step
+     * Move to next step — player-driven (Next ›), no transition timers
      */
     nextStep() {
-        this.closeTutorial();
-
         this.clearAllHighlights();
+        this.viewStep = null;
 
         this.currentStep++;
         if (this.currentStep >= this.steps.length) {
             this.completeTutorial();
         } else {
-            setTimeout(() => {
-                this.showCurrentStep();
-            }, 500);
+            this.showCurrentStep();
         }
     }
 
@@ -516,6 +512,10 @@ class TutorialManager {
         }
 
         this.closeTutorial();
+
+        // The time-controls tip rides the send-off now that 'release' has no timer
+        this.showTip('tip_time_controls',
+            'Press 1 / 2 / 3 for game speed, Space to pause.');
 
         setTimeout(() => {
             this.showTutorialMessage(
@@ -568,6 +568,119 @@ class TutorialManager {
             localStorage.setItem('csog_tutorial_disabled', this.tutorialsDisabled.toString());
         } catch (e) {
             console.warn('Could not save tutorial state:', e);
+        }
+    }
+
+    /**
+     * Render the tutorial card for the slide being viewed (handoff §5 card +
+     * manual navigation). ‹ Back re-reads earlier slides; Next › is enabled
+     * once the live step's objective is done (the lesson still gates on doing
+     * the thing); the last slide finishes with a click, never a timer.
+     */
+    renderStepCard() {
+        const tutorialPanel = document.getElementById('tutorialPanel');
+        const tutorialContent = tutorialPanel?.querySelector('div');
+        if (!tutorialPanel || !tutorialContent) {
+            console.error('Tutorial panel not found!');
+            return;
+        }
+
+        const view = this.viewStep === null ? this.currentStep : this.viewStep;
+        const stepData = this.steps[view];
+        if (!stepData) return;
+
+        const atLive = view === this.currentStep;
+        const isLast = view === this.steps.length - 1;
+        const canBack = view > 0;
+        // Browsing behind the live step can always walk forward; the live
+        // slide unlocks Next when done — except the send-off, which is
+        // always finishable
+        const canForward = !atLive || stepData.completed || isLast;
+        const nextLabel = isLast && atLive ? 'Finish ›' : 'Next ›';
+
+        // Step dots: viewed slide gold, completed steps ember, the rest hairline
+        const dots = `<div style="display: flex; gap: 6px;">${this.steps.map((s, i) =>
+            `<i style="width: 5px; height: 5px; border-radius: 50%; background: ${
+                i === view ? 'var(--fire)' : (s.completed ? 'rgba(212, 175, 55, 0.45)' : 'var(--line-soft)')
+            };"></i>`).join('')}</div>`;
+
+        const navBtn = (attr, label, enabled, gold) => `
+            <button class="linkbtn" ${attr} ${enabled ? '' : 'disabled'}
+                style="${enabled ? (gold ? 'color: var(--fire);' : '') : 'opacity: 0.35; cursor: default;'}">${label}</button>`;
+
+        tutorialContent.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 9px; margin-bottom: 9px;">
+                <span style="display: flex; color: var(--fire);">${window.icon('spark', { size: 14 })}</span>
+                <h3 style="color: var(--fire); margin: 0; font-size: 12px; font-weight: 400; letter-spacing: 0.2em; text-transform: uppercase; white-space: nowrap;">
+                    ${stepData.title}
+                </h3>
+                <span style="margin-left: auto; color: var(--mist); font-family: var(--font-data); font-size: 10px; letter-spacing: 0.1em;">${view + 1} / ${this.steps.length}</span>
+            </div>
+            <div style="color: var(--signal); font-size: 13px; font-weight: 300; letter-spacing: 0.02em; line-height: 1.6;">
+                ${stepData.message}
+            </div>
+            <div style="display: flex; align-items: center; gap: 14px; margin-top: 13px;">
+                ${navBtn('data-tutorial-back', '‹ Back', canBack, false)}
+                ${dots}
+                ${navBtn('data-tutorial-next', nextLabel, canForward, canForward)}
+                <button class="linkbtn" data-tutorial-dismiss style="margin-left: auto;">Dismiss</button>
+            </div>
+        `;
+
+        const backBtn = tutorialContent.querySelector('[data-tutorial-back]');
+        if (backBtn && canBack) backBtn.addEventListener('click', () => {
+            this.viewStep = view - 1;
+            this.renderStepCard();
+        });
+
+        const nextBtn = tutorialContent.querySelector('[data-tutorial-next]');
+        if (nextBtn && canForward) nextBtn.addEventListener('click', () => {
+            if (!atLive) {
+                // Walking forward through already-read slides
+                const forward = view + 1;
+                this.viewStep = forward >= this.currentStep ? null : forward;
+                this.renderStepCard();
+            } else if (isLast) {
+                // The send-off: Finish ends the tutorial on the player's click
+                this.releaseRead = true;
+                stepData.completed = true;
+                this.nextStep();
+            } else {
+                this.nextStep();
+            }
+        });
+
+        const dismissBtn = tutorialContent.querySelector('[data-tutorial-dismiss]');
+        if (dismissBtn) dismissBtn.addEventListener('click', () => {
+            if (atLive && isLast) {
+                // Dismissing the send-off counts as finishing — nothing is left to do
+                this.releaseRead = true;
+                stepData.completed = true;
+                this.completeTutorial();
+            } else {
+                this.closeTutorial();
+            }
+        });
+
+        // Cancel any pending fade-out and reveal (animate only from hidden,
+        // so page turns don't replay the slide-in)
+        if (this.closeTimeout) {
+            clearTimeout(this.closeTimeout);
+            this.closeTimeout = null;
+        }
+        const wasHidden = tutorialPanel.style.display === 'none' || tutorialPanel.style.opacity === '0';
+        tutorialPanel.style.display = 'block';
+        if (wasHidden) {
+            tutorialPanel.style.opacity = '0';
+            tutorialPanel.style.transform = 'translateX(-50%) translateY(-20px)';
+            setTimeout(() => {
+                tutorialPanel.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                tutorialPanel.style.opacity = '1';
+                tutorialPanel.style.transform = 'translateX(-50%) translateY(0)';
+            }, 10);
+        } else {
+            tutorialPanel.style.opacity = '1';
+            tutorialPanel.style.transform = 'translateX(-50%) translateY(0)';
         }
     }
 
@@ -638,8 +751,10 @@ class TutorialManager {
             tutorialPanel.style.opacity = '0';
             tutorialPanel.style.transform = 'translateX(-50%) translateY(-20px)';
 
-            setTimeout(() => {
+            if (this.closeTimeout) clearTimeout(this.closeTimeout);
+            this.closeTimeout = setTimeout(() => {
                 tutorialPanel.style.display = 'none';
+                this.closeTimeout = null;
             }, 400);
         }
     }
