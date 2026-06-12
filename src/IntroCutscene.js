@@ -738,7 +738,7 @@ class IntroCutscene {
             transform: translateY(-10px);
             text-transform: uppercase;
         `;
-        subtitle.textContent = 'The network is the factory';
+        subtitle.textContent = 'Probe the Unknown';
 
         titleOverlay.appendChild(title);
         titleOverlay.appendChild(divider);
