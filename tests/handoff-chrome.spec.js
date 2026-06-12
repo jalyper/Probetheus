@@ -64,9 +64,10 @@ test.describe('Icon kit', () => {
 
 test.describe('HUD header band', () => {
 
-  test('shows the six readouts, probethium score, flow trend, and time controls', async ({ page }) => {
+  test('shows the seven readouts, probethium score, flow trend, and time controls', async ({ page }) => {
     await startNewGame(page);
-    await expect(page.locator('#header .readouts .rd')).toHaveCount(6);
+    // five materials (incl. alloy, REBUILD.md §2) + probes + hubs
+    await expect(page.locator('#header .readouts .rd')).toHaveCount(7);
     await expect(page.locator('#header .rd.flow')).toBeVisible();
     await expect(page.locator('#header .score #probethium')).toBeVisible();
     await expect(page.locator('#header .sector .lbl')).toHaveText(/sector/i);
@@ -94,24 +95,25 @@ test.describe('Hub Operations panel (merged)', () => {
     await expect(page.locator('#detailsPanel .ho-cell')).toHaveCount(4);
     await expect(page.locator('#detailsPanel .ho-block .lvl')).toHaveText(/level \d/i);
     await expect(page.locator('#detailsPanel #upgradeIntakeBtn')).toBeVisible();
-    // text-first operation rows with key chips
-    await expect(page.locator('#detailsPanel .ho-actions .tbtn')).toHaveCount(3);
+    // text-first operation rows with key chips (Deploy + Build Probe;
+    // freighters are commissioned from the Foundry panel now)
+    await expect(page.locator('#detailsPanel .ho-actions .tbtn')).toHaveCount(2);
     await expect(page.locator('#deployFromHub .key')).toHaveText('D');
     // equipped shell footer
     await expect(page.locator('#detailsPanel .ho-foot .shell-chip')).toBeVisible();
   });
 
-  test('the stat grid counts hub-owned stations and shuttles', async ({ page }) => {
+  test('the stat grid counts hub-owned foundries and freighters', async ({ page }) => {
     await startNewGame(page);
     await page.evaluate(() => {
       const hub = window.game.gameState.entities.reconHubs[0];
-      window.game.gameState.mining.stations.push({ id: 'st_test', hubId: hub.id });
-      window.game.gameState.mining.shuttles.push({ id: 'sh_test', hubId: hub.id });
+      window.game.gameState.foundry.foundries.push({ id: 'fd_test', hubId: hub.id });
+      window.game.gameState.foundry.freighters.push({ id: 'fr_test', hubId: hub.id });
     });
     await selectHomeHub(page);
     const cells = await page.locator('#detailsPanel .ho-cell .v').allInnerTexts();
-    expect(cells[2]).toBe('1'); // mining stations
-    expect(cells[3]).toBe('1'); // shuttles
+    expect(cells[2]).toBe('1'); // foundries
+    expect(cells[3]).toBe('1'); // freighters
   });
 
   test('the old probe operations panel is merged away', async ({ page }) => {

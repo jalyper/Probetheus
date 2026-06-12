@@ -266,10 +266,11 @@ test.describe('Shell Bonus Integration', () => {
         expect(afterLoad.bonusValue).toBe(beforeSave.bonusValue);
     });
 
-    test('TEST-08 variant: hub and station shell bonuses survive save/load', async ({ page }) => {
+    test('TEST-08 variant: hub and foundry shell bonuses survive save/load', async ({ page }) => {
         await startGame(page);
 
-        // Set up hub and station shells with bonuses
+        // Set up hub and foundry shells with bonuses. The foundry cosmetics
+        // category keeps the legacy 'miningStations' key (save compatibility).
         const beforeSave = await page.evaluate(async () => {
             const gs = window.game.gameState;
             const ss = window.game.shellSystem;
@@ -279,12 +280,12 @@ test.describe('Shell Bonus Integration', () => {
             const hubShell = Object.values(hubCatalog).find(s => s.bonuses && s.bonuses.researchSpeed > 0);
             if (!hubShell) return { error: 'no hub shell with researchSpeed' };
 
-            // Find station shell with bonuses
-            const stationCatalog = window.SHELL_CATALOG.miningStations;
-            const stationShell = Object.values(stationCatalog).find(s => s.bonuses && Object.keys(s.bonuses).length > 0);
-            if (!stationShell) return { error: 'no station shell with bonuses' };
+            // Find foundry shell with bonuses (legacy 'miningStations' key)
+            const foundryCatalog = window.SHELL_CATALOG.miningStations;
+            const stationShell = Object.values(foundryCatalog).find(s => s.bonuses && Object.keys(s.bonuses).length > 0);
+            if (!stationShell) return { error: 'no foundry shell with bonuses' };
 
-            // Get station's first bonus type
+            // Get the foundry shell's first bonus type
             const stationBonusType = Object.keys(stationShell.bonuses)[0];
 
             // Ensure cosmetics structure exists

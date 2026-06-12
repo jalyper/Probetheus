@@ -14,7 +14,7 @@ class GameController {
         // Initialize managers
         this.probeManager = new ProbeManager(this.gameState, this.eventBus);
         this.buildingSystem = new BuildingSystem(this.gameState, this.eventBus);
-        this.miningManager = new MiningManager(this.gameState, this.eventBus);
+        this.foundrySystem = new FoundrySystem(this.gameState, this.eventBus);
         this.uplinkSystem = new UplinkSystem(this.gameState, this.eventBus);
         this.sectorManager = new SectorManager(this.gameState, this.eventBus);
         this.saveManager = new SaveManager(this.gameState, this.eventBus);
@@ -642,23 +642,6 @@ class GameController {
             }
             
             
-            // Cancel shuttle placement mode
-            if (this.gameState.ui.shuttlePlacementMode) {
-                this.gameState.ui.shuttlePlacementMode = false;
-                this.canvas.style.cursor = 'grab';
-                document.getElementById('probeStatus').textContent = '';
-                console.log('Cancelled shuttle placement mode');
-            }
-            
-            // Cancel shuttle connection mode
-            if (this.gameState.ui.shuttleConnectionMode) {
-                this.gameState.ui.shuttleConnectionMode = false;
-                this.gameState.ui.selectedStation = null;
-                this.canvas.style.cursor = 'grab';
-                document.getElementById('probeStatus').textContent = '';
-                console.log('Cancelled shuttle connection mode');
-            }
-            
             // Cancel deployment mode
             if (this.gameState.ui.deployMode) {
                 this.gameState.ui.deployMode = false;
@@ -670,49 +653,9 @@ class GameController {
 
         // Deploy and build probe buttons removed - now handled in hub panel
 
-        // Mining station button (check if it exists)
-        const buildMiningBtn = document.getElementById('buildMiningBtn');
-        if (buildMiningBtn) {
-            buildMiningBtn.addEventListener('click', () => {
-                // Use BuildingSystem for mining facility placement
-                this.buildingSystem.enterBuildingMode({
-                    structureType: 'miningFacility',
-                    probe: null // No specific probe needed for mining facilities
-                });
-                this.canvas.style.cursor = 'crosshair';
-                document.getElementById('probeStatus').textContent = 'Click along exploration routes to place mining station...';
-                console.log('Entered mining facility building mode via BuildingSystem');
-            });
-        }
-
-        // Shuttle button (check if it exists)
-        const buildShuttleBtn = document.getElementById('buildShuttleBtn');
-        if (buildShuttleBtn) {
-            buildShuttleBtn.addEventListener('click', () => {
-            if (!this.gameState.ui.selectedHub) {
-                this.eventBus.emit('ui:message', { 
-                    text: 'Select a hub first!', 
-                    type: 'error' 
-                });
-                return;
-            }
-            
-            if (!this.gameState.mining || this.gameState.mining.stations.length === 0) {
-                this.eventBus.emit('ui:message', { 
-                    text: 'No mining stations available!', 
-                    type: 'error' 
-                });
-                return;
-            }
-            
-            // Enter shuttle placement mode - user clicks on a station to connect
-            this.gameState.ui.shuttlePlacementMode = true;
-            this.canvas.style.cursor = 'crosshair';
-            document.getElementById('probeStatus').textContent = 'Click on a mining station to connect shuttle...';
-            });
-        }
-
         // Build hub button removed - now handled by probe building system
+        // Foundry placement enters via the probe floater (UIManager); freighters
+        // are commissioned from the Foundry details panel (DetailsPanel).
 
         // Testing panel handlers
         document.querySelectorAll('.test-resource-btn').forEach(btn => {
@@ -746,12 +689,8 @@ class GameController {
             console.log('✓ Probethium test button found');
             testProbethium.addEventListener('click', () => {
                 // Add 100 Probethium for testing
-                this.gameState.mining.totalProbetheum += 100.0;
                 this.gameState.probethium.current += 100.0;
                 this.gameState.probethium.totalAccumulated += 100.0;
-
-                // Update top bar display
-                this.miningManager.updateProbetheum();
 
                 // Update trade menu balance if open
                 const tradeBalance = document.getElementById('tradeMenuProbethium');
@@ -974,20 +913,6 @@ class GameController {
             return;
         }
 
-        // Handle shuttle placement mode (hub -> station) - PRIORITY OVER entity selection
-        if (this.gameState.ui.shuttlePlacementMode) {
-            console.log('Handling shuttle placement click');
-            this.placeShuttle(worldX, worldY);
-            return;
-        }
-        
-        // Handle shuttle connection mode (station -> hub) - PRIORITY OVER entity selection
-        if (this.gameState.ui.shuttleConnectionMode) {
-            console.log('Handling shuttle connection click');
-            this.connectShuttle(worldX, worldY);
-            return;
-        }
-
         // Check for hub clicks FIRST (higher priority than probes)
         const clickedHub = this.findHubAt(worldX, worldY);
         if (clickedHub) {
@@ -1005,11 +930,11 @@ class GameController {
             return;
         }
         
-        // Check for mining station clicks
-        const clickedStation = this.findMiningStationAt(worldX, worldY);
-        if (clickedStation) {
-            console.log('Found mining station at click location');
-            this.eventBus.emit('entity:selected', { entity: clickedStation, type: 'miningStation' });
+        // Check for Foundry clicks
+        const clickedFoundry = this.findFoundryAt(worldX, worldY);
+        if (clickedFoundry) {
+            console.log('Found foundry at click location');
+            this.eventBus.emit('entity:selected', { entity: clickedFoundry, type: 'foundry' });
             return;
         }
 
@@ -1150,17 +1075,17 @@ class GameController {
     }
     
     /**
-     * Find mining station at coordinates
+     * Find Foundry at coordinates
      */
-    findMiningStationAt(x, y) {
-        if (!this.gameState.mining || !this.gameState.mining.stations) return null;
-        
-        return this.gameState.mining.stations.find(station => {
+    findFoundryAt(x, y) {
+        if (!this.gameState.foundry || !this.gameState.foundry.foundries) return null;
+
+        return this.gameState.foundry.foundries.find(foundry => {
             const distance = Math.sqrt(
-                Math.pow(x - station.position.x, 2) + 
-                Math.pow(y - station.position.y, 2)
+                Math.pow(x - foundry.position.x, 2) +
+                Math.pow(y - foundry.position.y, 2)
             );
-            // Mining stations have a large click radius for easy clicking
+            // Generous click radius for easy selection
             return distance <= 60;
         });
     }
@@ -1367,7 +1292,7 @@ class GameController {
                     <button class="mk-filter market-filter-btn active" data-filter="all">All</button>
                     <button class="mk-filter market-filter-btn" data-filter="probes">Probes</button>
                     <button class="mk-filter market-filter-btn" data-filter="hubs">Hubs</button>
-                    <button class="mk-filter market-filter-btn" data-filter="miningStations">Stations</button>
+                    <button class="mk-filter market-filter-btn" data-filter="miningStations">Foundries</button>
                     <button class="mk-filter market-filter-btn" data-filter="special">Special</button>
                 </div>
             `;
@@ -1436,7 +1361,7 @@ class GameController {
         const categoryLabels = {
             probes: 'Probe Shell',
             hubs: 'Hub Shell',
-            miningStations: 'Station Shell',
+            miningStations: 'Foundry Shell',
             special: 'Special'
         };
 
@@ -1491,7 +1416,8 @@ class GameController {
     }
 
     /**
-     * Render mining station skin preview
+     * Render Foundry shell preview (cosmetics keep the legacy
+     * 'miningStations' category key for save compatibility)
      */
     renderStationSkinPreview(color) {
         return `
@@ -1998,122 +1924,10 @@ class GameController {
 
 
     /**
-     * Place a shuttle by clicking on a mining station
-     */
-    placeShuttle(worldX, worldY) {
-        const selectedHub = this.gameState.ui.selectedHub;
-        console.log('placeShuttle called - selectedHub:', selectedHub?.id, 'at position:', worldX, worldY);
-        
-        if (!selectedHub) {
-            console.log('No selected hub for shuttle placement');
-            return;
-        }
-        
-        // Find clicked mining station (within large radius for easy clicking)
-        let clickedStation = null;
-        if (this.gameState.mining && this.gameState.mining.stations) {
-            clickedStation = this.gameState.mining.stations.find(station => {
-                const distance = Math.sqrt(
-                    Math.pow(station.position.x - worldX, 2) + 
-                    Math.pow(station.position.y - worldY, 2)
-                );
-                return distance <= 60; // Large click radius for better UX
-            });
-        }
-        
-        if (!clickedStation) {
-            this.eventBus.emit('ui:message', { 
-                text: 'Click directly on a mining station to connect shuttle!', 
-                type: 'error' 
-            });
-            return;
-        }
-        
-        // Check if there's already a shuttle for this hub-station pair
-        const existingShuttle = this.gameState.mining.shuttles.find(shuttle => 
-            shuttle.hubId === selectedHub.id && shuttle.stationId === clickedStation.id
-        );
-        
-        if (existingShuttle) {
-            this.eventBus.emit('ui:message', { 
-                text: 'Shuttle already exists between this hub and station!', 
-                type: 'error' 
-            });
-            return;
-        }
-        
-        // Build the shuttle
-        this.eventBus.emit('mining:buildShuttle', {
-            hubId: selectedHub.id,
-            stationId: clickedStation.id
-        });
-        
-        // Exit placement mode
-        this.gameState.ui.shuttlePlacementMode = false;
-        this.canvas.style.cursor = 'grab';
-        document.getElementById('probeStatus').textContent = '';
-    }
-
-    /**
-     * Connect a shuttle from station to hub (reverse of placeShuttle)
-     */
-    connectShuttle(worldX, worldY) {
-        const selectedStation = this.gameState.ui.selectedStation;
-        console.log('connectShuttle called - selectedStation:', selectedStation?.id, 'at position:', worldX, worldY);
-        
-        if (!selectedStation) {
-            console.log('No selected station for shuttle connection');
-            return;
-        }
-        
-        // Find clicked hub (within 50 pixel radius)
-        const clickedHub = this.findHubAt(worldX, worldY);
-        
-        if (!clickedHub) {
-            this.eventBus.emit('ui:message', { 
-                text: 'Click directly on a hub to connect shuttle!', 
-                type: 'error' 
-            });
-            return;
-        }
-        
-        // Check if there's already a shuttle for this hub-station pair
-        const existingShuttle = this.gameState.mining.shuttles.find(shuttle => 
-            shuttle.hubId === clickedHub.id && shuttle.stationId === selectedStation.id
-        );
-        
-        if (existingShuttle) {
-            this.eventBus.emit('ui:message', { 
-                text: 'Shuttle already exists between this hub and station!', 
-                type: 'error' 
-            });
-            // Exit connection mode
-            this.gameState.ui.shuttleConnectionMode = false;
-            this.canvas.style.cursor = 'grab';
-            document.getElementById('probeStatus').textContent = '';
-            return;
-        }
-        
-        // Create the shuttle using MiningManager
-        this.eventBus.emit('mining:buildShuttle', {
-            hubId: clickedHub.id,
-            stationId: selectedStation.id
-        });
-        
-        // Exit connection mode
-        this.gameState.ui.shuttleConnectionMode = false;
-        this.gameState.ui.selectedStation = null;
-        this.canvas.style.cursor = 'grab';
-        document.getElementById('probeStatus').textContent = '';
-    }
-
-    /**
      * Update cursor based on what's under mouse
      */
     updateCursor(worldX, worldY) {
-        if (this.gameState.ui.deployMode || this.gameState.ui.hubPlacementMode || 
-            this.gameState.ui.miningPlacementMode || this.gameState.ui.shuttlePlacementMode ||
-            this.gameState.ui.shuttleConnectionMode) {
+        if (this.gameState.ui.deployMode || this.gameState.ui.hubPlacementMode) {
             this.canvas.style.cursor = 'crosshair';
             return;
         }
@@ -2310,8 +2124,7 @@ class GameController {
         this.renderResourceIndicators();
         this.renderSectorBoundaries();
         this.renderBuildings();
-        this.renderMiningStations();
-        this.renderShuttles();
+        this.foundrySystem.render(this.ctx, this.gameState.world.viewOffset);
 
         // Flow beads ride above the network they illuminate
         this.flowBeadSystem.render(this.ctx, this.gameState.world.viewOffset);
@@ -3160,299 +2973,6 @@ class GameController {
     }
 
     /**
-     * Render mining stations
-     */
-    renderMiningStations() {
-        if (!this.gameState.mining || !this.gameState.mining.stations) return;
-        
-        this.gameState.mining.stations.forEach(station => {
-            const screenX = station.position.x - this.gameState.world.viewOffset.x;
-            const screenY = station.position.y - this.gameState.world.viewOffset.y;
-            
-            // Skip if off-screen (account for zoom level)
-            const cullPadding = 50;
-            const zoomLevel = this.gameState.world.zoomLevel || 1;
-            const viewportWidth = this.canvas.width / zoomLevel;
-            const viewportHeight = this.canvas.height / zoomLevel;
-            
-            if (screenX < -cullPadding || screenX > viewportWidth + cullPadding || 
-                screenY < -cullPadding || screenY > viewportHeight + cullPadding) return;
-            
-            const stationType = this.miningManager.getStationTypes()[station.type];
-            const baseSize = station.type === 'basic' ? 18 : station.type === 'advanced' ? 22 : 26;
-            const size = baseSize + station.level * 2;
-            
-            // Animation values
-            const time = Date.now() * 0.001; // Convert to seconds
-            const rotationSpeed = station.active ? 0.5 : 0; // Rotate only when active
-            const rotation = time * rotationSpeed;
-            const pulsePhase = Math.sin(time * 2) * 0.5 + 0.5; // 0 to 1, every 0.5 seconds
-            
-            // Built structures wear the gold (Void Premium)
-            const baseColor = station.active ? 'rgba(26, 16, 48, 0.55)' : 'rgba(10, 8, 18, 0.7)';
-            const strokeColor = station.active ? window.PALETTE.FIRE : 'rgba(212, 175, 55, 0.4)';
-            
-            this.ctx.save();
-            this.ctx.translate(screenX, screenY);
-            
-            // Outer glow effect when active (color changes based on resource status)
-            if (station.active) {
-                const glowIntensity = 0.3 + pulsePhase * 0.4; // Pulse between 0.3 and 0.7
-                const glowSize = size + 8 + pulsePhase * 6;
-                
-                // Determine glow color based on resource status
-                const progress = this.miningManager.getStationResourceProgress(station, stationType);
-                let glowColor = window.PALETTE.FIRE;
-
-                if (progress < 0.3) {
-                    glowColor = window.PALETTE.DANGER; // Starved — soft red, steady
-                } else if (progress < 0.7) {
-                    glowColor = '#C97B4A'; // Running thin — copper
-                } else {
-                    glowColor = window.PALETTE.FIRE; // Fed — gold
-                }
-                
-                this.ctx.shadowColor = glowColor;
-                this.ctx.shadowBlur = 15 * glowIntensity;
-                this.ctx.globalAlpha = glowIntensity * 0.6;
-                
-                // Outer glow ring
-                this.ctx.strokeStyle = glowColor;
-                this.ctx.lineWidth = 3;
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, glowSize, 0, Math.PI * 2);
-                this.ctx.stroke();
-                
-                this.ctx.shadowBlur = 0;
-                this.ctx.globalAlpha = 1;
-            }
-            
-            // Rotate the entire station if active
-            if (station.active) {
-                this.ctx.rotate(rotation);
-            }
-            
-            // Main hexagonal structure (matching hub style but distinct)
-            this.ctx.fillStyle = baseColor;
-            this.ctx.strokeStyle = strokeColor;
-            this.ctx.lineWidth = 2;
-            
-            this.ctx.beginPath();
-            for (let i = 0; i < 6; i++) {
-                const angle = (i * Math.PI) / 3;
-                const x = Math.cos(angle) * size;
-                const y = Math.sin(angle) * size;
-                if (i === 0) {
-                    this.ctx.moveTo(x, y);
-                } else {
-                    this.ctx.lineTo(x, y);
-                }
-            }
-            this.ctx.closePath();
-            this.ctx.fill();
-            this.ctx.stroke();
-            
-            // Inner hexagon (smaller)
-            this.ctx.strokeStyle = strokeColor;
-            this.ctx.lineWidth = 1.5;
-            const innerSize = size * 0.6;
-            
-            this.ctx.beginPath();
-            for (let i = 0; i < 6; i++) {
-                const angle = (i * Math.PI) / 3;
-                const x = Math.cos(angle) * innerSize;
-                const y = Math.sin(angle) * innerSize;
-                if (i === 0) {
-                    this.ctx.moveTo(x, y);
-                } else {
-                    this.ctx.lineTo(x, y);
-                }
-            }
-            this.ctx.closePath();
-            this.ctx.stroke();
-            
-            // Connecting lines from center to vertices (like mining drill lines)
-            this.ctx.lineWidth = 1;
-            for (let i = 0; i < 6; i++) {
-                const angle = (i * Math.PI) / 3;
-                const x = Math.cos(angle) * innerSize;
-                const y = Math.sin(angle) * innerSize;
-                this.ctx.beginPath();
-                this.ctx.moveTo(0, 0);
-                this.ctx.lineTo(x, y);
-                this.ctx.stroke();
-            }
-            
-            // Central energy core
-            if (station.active) {
-                const coreSize = 4 + pulsePhase * 3;
-                const coreGlow = 0.8 + pulsePhase * 0.2;
-                
-                this.ctx.fillStyle = window.PALETTE.FIRE_BRIGHT;
-                this.ctx.globalAlpha = coreGlow;
-                this.ctx.shadowColor = window.PALETTE.FIRE_BRIGHT;
-                this.ctx.shadowBlur = 10;
-                
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, coreSize, 0, Math.PI * 2);
-                this.ctx.fill();
-                
-                this.ctx.shadowBlur = 0;
-                this.ctx.globalAlpha = 1;
-            } else {
-                // Inactive core
-                this.ctx.fillStyle = '#3A3450';
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, 3, 0, Math.PI * 2);
-                this.ctx.fill();
-            }
-            
-            this.ctx.restore();
-            
-            // Note: Low resources indication is now handled by the main glow color above
-            
-            // Draw level indicator
-            if (station.level > 1) {
-                this.ctx.font = "10px 'IBM Plex Mono', monospace";
-                this.ctx.fillStyle = window.PALETTE.FIRE;
-                this.ctx.fillText(`Lv${station.level}`, screenX, screenY + size + 10);
-            }
-            
-            // Draw resource requirement progress bar (gradual filling)
-            if (station.stationInventory && stationType.requirements) {
-                const barWidth = 40;
-                const barHeight = 4;
-                
-                // Get progress percentage (0-1) and check if fully ready
-                const progress = this.miningManager.getStationResourceProgress(station, stationType);
-                const hasAllRequirements = this.miningManager.checkStationHasRequirements(station, stationType);
-                const time = Date.now() * 0.005;
-                
-                // Background bar
-                this.ctx.fillStyle = 'rgba(139, 132, 163, 0.2)';
-                this.ctx.fillRect(screenX - 20, screenY + size + 15, barWidth, barHeight);
-
-                // Calculate fill width based on progress
-                const fillWidth = barWidth * progress;
-                let barColor;
-
-                if (progress >= 0.95) { // Full enough (accounts for continuous consumption)
-                    barColor = window.PALETTE.FIRE_BRIGHT;
-                } else if (progress > 0) {
-                    // Gold brightens as the buffer fills
-                    barColor = `rgba(212, 175, 55, ${0.4 + 0.6 * progress})`;
-                } else {
-                    // Empty — steady soft red, no flashing (VISUAL_STYLE don'ts)
-                    barColor = 'rgba(224, 82, 77, 0.8)';
-                }
-                
-                if (fillWidth > 0) {
-                    this.ctx.fillStyle = barColor;
-                    this.ctx.fillRect(screenX - 20, screenY + size + 15, fillWidth, barHeight);
-                }
-            }
-        });
-    }
-
-    /**
-     * Render shuttles
-     */
-    renderShuttles() {
-        if (!this.gameState.mining || !this.gameState.mining.shuttles) return;
-        
-        this.gameState.mining.shuttles.forEach(shuttle => {
-            const screenX = shuttle.position.x - this.gameState.world.viewOffset.x;
-            const screenY = shuttle.position.y - this.gameState.world.viewOffset.y;
-            
-            // Skip if off-screen (account for zoom level)
-            const cullPadding = 20;
-            const zoomLevel = this.gameState.world.zoomLevel || 1;
-            const viewportWidth = this.canvas.width / zoomLevel;
-            const viewportHeight = this.canvas.height / zoomLevel;
-            
-            if (screenX < -cullPadding || screenX > viewportWidth + cullPadding || 
-                screenY < -cullPadding || screenY > viewportHeight + cullPadding) return;
-            
-            // Draw shuttle body with status-based colors
-            const size = 8 + shuttle.level;
-            let shuttleColor = window.PALETTE.SIGNAL; // Returning empty
-            if (shuttle.status === 'delivering') shuttleColor = window.PALETTE.FIRE; // Carrying value
-            else if (shuttle.status === 'waiting') shuttleColor = window.PALETTE.MIST; // Idle
-
-            this.ctx.fillStyle = shuttleColor;
-            this.ctx.strokeStyle = 'rgba(232, 228, 240, 0.6)';
-            this.ctx.lineWidth = 1;
-            
-            // Triangle shape pointing in direction of movement
-            const hub = this.gameState.entities.reconHubs.find(h => h.id === shuttle.hubId);
-            const station = this.gameState.mining.stations.find(s => s.id === shuttle.stationId);
-            
-            if (hub && station) {
-                const targetPos = shuttle.target === 'station' ? station.position : { x: hub.x, y: hub.y };
-                const angle = Math.atan2(targetPos.y - shuttle.position.y, targetPos.x - shuttle.position.x);
-                
-                this.ctx.save();
-                this.ctx.translate(screenX, screenY);
-                this.ctx.rotate(angle);
-                
-                this.ctx.beginPath();
-                this.ctx.moveTo(size, 0);
-                this.ctx.lineTo(-size, -size/2);
-                this.ctx.lineTo(-size, size/2);
-                this.ctx.closePath();
-                this.ctx.fill();
-                this.ctx.stroke();
-                
-                // Draw cargo indicator
-                const cargoAmount = Object.values(shuttle.cargo || {}).reduce((sum, val) => sum + val, 0);
-                if (cargoAmount > 0) {
-                    const cargoPercent = cargoAmount / shuttle.capacity;
-                    this.ctx.fillStyle = `rgba(255, 215, 0, ${0.5 + cargoPercent * 0.5})`;
-                    this.ctx.beginPath();
-                    this.ctx.arc(0, 0, 3, 0, Math.PI * 2);
-                    this.ctx.fill();
-                }
-                
-                this.ctx.restore();
-            }
-            
-            // Shuttle run line — hairline gold route
-            this.ctx.strokeStyle = window.PALETTE.LINE;
-            this.ctx.lineWidth = 1;
-            this.ctx.setLineDash([2, 4]);
-            this.ctx.beginPath();
-            this.ctx.moveTo(screenX, screenY);
-            
-            if (hub && station) {
-                const targetPos = shuttle.target === 'station' ? station.position : { x: hub.x, y: hub.y };
-                const targetX = targetPos.x - this.gameState.world.viewOffset.x;
-                const targetY = targetPos.y - this.gameState.world.viewOffset.y;
-                this.ctx.lineTo(targetX, targetY);
-            }
-            
-            this.ctx.stroke();
-            this.ctx.setLineDash([]);
-        });
-    }
-
-    /**
-     * Calculate resource buffer percentage for a station
-     */
-    calculateBufferPercent(station, stationType) {
-        if (!station.resourceBuffer || !stationType.consumption) return 0;
-        
-        let totalBuffer = 0;
-        let totalNeeded = 0;
-        
-        Object.entries(stationType.consumption).forEach(([resource, amount]) => {
-            totalBuffer += station.resourceBuffer[resource] || 0;
-            totalNeeded += amount * 5; // 5 minutes worth
-        });
-        
-        return totalNeeded > 0 ? Math.min(totalBuffer / totalNeeded, 1) : 0;
-    }
-
-    /**
      * Render building preview
      */
     renderBuildingPreview(preview) {
@@ -3465,7 +2985,7 @@ class GameController {
 
         if (preview.type === 'outpost') {
             this.ctx.strokeRect(screenX - 8, screenY - 8, 16, 16);
-        } else if (preview.type === 'miningFacility') {
+        } else if (preview.type === 'foundry') {
             this.ctx.strokeRect(screenX - 12, screenY - 12, 24, 24);
         } else if (preview.type === 'reconHub') {
             this.ctx.beginPath();

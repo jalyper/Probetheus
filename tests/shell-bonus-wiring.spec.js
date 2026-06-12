@@ -1,12 +1,19 @@
 /**
  * Shell Bonus Wiring Tests
- * Tests for mining station bonuses (miningEfficiency, shuttleSpeed, probethiumRate)
- * and hub bonus (researchSpeed) integration into gameplay systems.
+ * Tests for foundry bonuses (miningEfficiency → 'Forge Rate', shuttleSpeed →
+ * 'Freighter Speed') and hub bonus (researchSpeed) integration into gameplay
+ * systems.
+ *
+ * Foundry era (REBUILD.md §2): mining stations and shuttles are gone. The
+ * cosmetics category key stays 'miningStations' for save compatibility, but
+ * the live reads moved to FoundrySystem.consumeRatePerMin() and
+ * FoundrySystem.freighterSpeed(). probethiumRate has no live consumer
+ * anymore (dormant) but must stay defined so owned shells aren't broken.
  */
 
 const { test, expect } = require('@playwright/test');
 
-test.describe('Shell Bonus Wiring - Station & Hub', () => {
+test.describe('Shell Bonus Wiring - Foundry & Hub', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto('/');
         await page.evaluate(() => localStorage.clear());
@@ -30,83 +37,72 @@ test.describe('Shell Bonus Wiring - Station & Hub', () => {
         });
     }
 
-    test('MBON-01: miningEfficiency shell bonus multiplies station output', async ({ page }) => {
+    test('MBON-01: miningEfficiency (Forge Rate) shell bonus multiplies foundry conversion', async ({ page }) => {
         await startGame(page);
 
         const result = await page.evaluate(() => {
-            const gs = window.game.gameState;
-            const mm = window.game.miningManager;
-            const ss = window.game.shellSystem;
-
-            // Setup: give resources and create station
-            gs.resources.minerals = 500;
-            gs.resources.data = 300;
+            const game = window.game;
+            const gs = game.gameState;
+            const ss = game.shellSystem;
+            const fs = game.foundrySystem;
 
             const hub = gs.entities.reconHubs[0];
             if (!hub) return { error: 'No hub found' };
 
-            const station = {
-                id: 'test-eff-station',
-                type: 'basic',
-                position: { x: hub.x + 200, y: hub.y },
-                hubId: hub.id,
-                level: 1,
-                active: true,
-                stationInventory: { minerals: 100, data: 50 },
-                operationCycleProgress: 0.5,
-                cycleStartTime: Date.now() - 15000,
-                efficiency: 1.0,
-                totalProduced: 0,
-                lowResourcesPulses: [],
-                lastLowResourcesPulse: 0
-            };
-            gs.mining.stations.push(station);
+            // Fund and build a foundry
+            const r = gs.getResources();
+            gs.updateResources({ ...r, minerals: 1000, data: 1000 }, game.eventBus);
+            const foundry = fs.build({ position: { x: hub.x + 200, y: hub.y + 120 }, hubId: hub.id });
+            if (!foundry) return { error: 'foundry build failed' };
 
-            // Run one update with no shell bonus
-            const producedBefore = station.totalProduced;
-            mm.updateStation(station, 1000, Date.now());
-            const producedWithNoBonus = station.totalProduced - producedBefore;
+            const baseRate = fs.consumeRatePerMin(foundry);
 
-            // Reset and test with a shell bonus
-            station.totalProduced = 0;
-            station.stationInventory = { minerals: 100, data: 50 };
-            station.operationCycleProgress = 0.5;
-            station.cycleStartTime = Date.now() - 15000;
+            // One sim-minute of forging with no bonus
+            foundry.input = 100;
+            fs.updateFoundry(foundry, 60000);
+            const forgedNoBonus = foundry.converted;
 
             // Equip a shell with miningEfficiency bonus
-            const catalog = window.SHELL_CATALOG;
-            const shellWithBonus = Object.values(catalog.miningStations).find(
+            const shellWithBonus = Object.values(window.SHELL_CATALOG.miningStations).find(
                 s => s.bonuses && s.bonuses.miningEfficiency > 0
             );
-
             if (shellWithBonus) {
-                gs.cosmetics.equippedShells.miningStations = shellWithBonus.id;
                 gs.cosmetics.ownedShells.miningStations.push(shellWithBonus.id);
+                gs.cosmetics.equippedShells.miningStations = shellWithBonus.id;
             }
 
             const bonusValue = ss.getEntityBonus('miningStations', null, 'miningEfficiency');
+            const boostedRate = fs.consumeRatePerMin(foundry);
 
-            mm.updateStation(station, 1000, Date.now());
-            const producedWithBonus = station.totalProduced;
+            // The same sim-minute with the bonus equipped
+            foundry.input = 100;
+            foundry.output = 0;
+            foundry.converted = 0;
+            fs.updateFoundry(foundry, 60000);
+            const forgedWithBonus = foundry.converted;
 
             // Cleanup
             gs.cosmetics.equippedShells.miningStations = 'default';
-            gs.mining.stations = gs.mining.stations.filter(s => s.id !== 'test-eff-station');
+            fs.deleteFoundry({ foundryId: foundry.id });
 
             return {
-                producedWithNoBonus,
-                producedWithBonus,
+                baseRate,
+                boostedRate,
                 bonusValue,
-                shellFound: !!shellWithBonus,
-                bonusApplied: shellWithBonus ? producedWithBonus > producedWithNoBonus : null
+                forgedNoBonus,
+                forgedWithBonus,
+                shellFound: !!shellWithBonus
             };
         });
 
         expect(result.error).toBeUndefined();
         expect(result.shellFound).toBe(true);
         expect(result.bonusValue).toBeGreaterThan(0);
-        // With a bonus shell, output should be higher
-        expect(result.bonusApplied).toBe(true);
+        // Consumption rate (and therefore alloy output rate) scales by (1 + bonus/100)
+        expect(result.boostedRate).toBeCloseTo(result.baseRate * (1 + result.bonusValue / 100), 5);
+        // And a real forge tick actually produces more alloy
+        expect(result.forgedWithBonus).toBeGreaterThan(result.forgedNoBonus);
+        expect(result.forgedWithBonus).toBeCloseTo(result.forgedNoBonus * (1 + result.bonusValue / 100), 5);
     });
 
     test('MBON-01: miningEfficiency defaults to 0 with no shell equipped', async ({ page }) => {
@@ -119,157 +115,122 @@ test.describe('Shell Bonus Wiring - Station & Hub', () => {
         expect(bonus).toBe(0);
     });
 
-    test('MBON-02: probethiumRate shell bonus multiplies probethium generation', async ({ page }) => {
+    test('MBON-02: probethiumRate bonus type remains defined but dormant (no live consumer)', async ({ page }) => {
         await startGame(page);
 
-        // Test that the bonus formula is correctly applied by checking the code path
-        // rather than relying on Date.now() timing in calculateProbethium
+        // Mining stations were probethiumRate's only consumer; in the foundry
+        // era nothing reads it. The bonus type and catalog entries must still
+        // exist so already-owned shells keep resolving and rendering.
         const result = await page.evaluate(() => {
             const gs = window.game.gameState;
             const ss = window.game.shellSystem;
 
-            // Verify the bonus lookup works
-            const defaultBonus = ss.getEntityBonus('miningStations', null, 'probethiumRate');
+            const typeInfo = window.BONUS_TYPES?.probethiumRate || null;
 
-            // Equip a shell with probethiumRate bonus
-            const catalog = window.SHELL_CATALOG;
-            const shellWithBonus = Object.values(catalog.miningStations).find(
+            const shellWithBonus = Object.values(window.SHELL_CATALOG.miningStations).find(
                 s => s.bonuses && s.bonuses.probethiumRate > 0
             );
 
+            const defaultBonus = ss.getEntityBonus('miningStations', null, 'probethiumRate');
+
+            let equippedBonus = 0;
             if (shellWithBonus) {
-                gs.cosmetics.equippedShells.miningStations = shellWithBonus.id;
                 gs.cosmetics.ownedShells.miningStations.push(shellWithBonus.id);
+                gs.cosmetics.equippedShells.miningStations = shellWithBonus.id;
+                equippedBonus = ss.getEntityBonus('miningStations', null, 'probethiumRate');
+                gs.cosmetics.equippedShells.miningStations = 'default';
             }
 
-            const equippedBonus = ss.getEntityBonus('miningStations', null, 'probethiumRate');
-
-            // The multiplier in calculateProbethium is: 1 + bonus / 100
-            // With bonus > 0, the multiplier > 1, so rate increases
-            const noShellMultiplier = 1 + defaultBonus / 100;
-            const withShellMultiplier = 1 + equippedBonus / 100;
-
-            // Cleanup
-            gs.cosmetics.equippedShells.miningStations = 'default';
-
             return {
-                defaultBonus,
-                equippedBonus,
-                noShellMultiplier,
-                withShellMultiplier,
+                typeInfo,
                 shellFound: !!shellWithBonus,
-                bonusApplied: shellWithBonus ? withShellMultiplier > noShellMultiplier : null
+                defaultBonus,
+                equippedBonus
             };
         });
 
-        expect(result.error).toBeUndefined();
+        expect(result.typeInfo).not.toBeNull();
+        expect(result.typeInfo.unit).toBe('%');
         expect(result.shellFound).toBe(true);
         expect(result.defaultBonus).toBe(0);
+        // Resolution still works for owned shells, even with no live read
         expect(result.equippedBonus).toBeGreaterThan(0);
-        expect(result.noShellMultiplier).toBe(1);
-        expect(result.withShellMultiplier).toBeGreaterThan(1);
-        expect(result.bonusApplied).toBe(true);
     });
 
-    test('MBON-03: shuttleSpeed shell bonus increases shuttle movement', async ({ page }) => {
+    test('MBON-03: shuttleSpeed (Freighter Speed) shell bonus increases freighter movement', async ({ page }) => {
         await startGame(page);
 
-        // Test with two separate shuttles to avoid state interference
         const result = await page.evaluate(() => {
-            const gs = window.game.gameState;
-            const mm = window.game.miningManager;
-            const ss = window.game.shellSystem;
+            const game = window.game;
+            const gs = game.gameState;
+            const ss = game.shellSystem;
+            const fs = game.foundrySystem;
 
             const hub = gs.entities.reconHubs[0];
             if (!hub) return { error: 'No hub found' };
 
-            // Create station very far from hub so shuttle won't arrive in one tick
-            const station = {
-                id: 'test-speed-station',
-                type: 'basic',
-                position: { x: hub.x + 5000, y: hub.y },
-                hubId: hub.id,
-                level: 1,
-                active: false,
-                stationInventory: {},
-                operationCycleProgress: 0,
-                cycleStartTime: Date.now(),
-                efficiency: 1.0,
-                totalProduced: 0,
-                lowResourcesPulses: [],
-                lastLowResourcesPulse: 0
-            };
-            gs.mining.stations.push(station);
+            // Fund and build a foundry far from the hub so a freighter
+            // cannot arrive within a single tick
+            const r = gs.getResources();
+            gs.updateResources({ ...r, minerals: 2000, data: 2000 }, game.eventBus);
+            const foundry = fs.build({ position: { x: hub.x + 5000, y: hub.y }, hubId: hub.id });
+            if (!foundry) return { error: 'foundry build failed' };
 
-            // Shuttle 1: no bonus
-            const shuttle1 = {
-                id: 'test-speed-shuttle-1',
-                hubId: hub.id,
-                stationId: station.id,
-                position: { x: hub.x, y: hub.y },
-                target: 'station',
-                status: 'delivering',
-                cargo: { minerals: 20 },
-                capacity: 20,
-                speed: 0.5,
-                level: 1
-            };
-            gs.mining.shuttles.push(shuttle1);
+            const freighter = fs.buildFreighter({ foundryId: foundry.id });
+            if (!freighter) return { error: 'freighter build failed' };
 
-            const startX1 = shuttle1.position.x;
-            mm.updateShuttle(shuttle1, 100);
-            const distanceNoBonus = Math.abs(shuttle1.position.x - startX1);
+            const baseSpeed = fs.freighterSpeed();
 
-            // Equip shuttleSpeed shell for shuttle 2
-            const catalog = window.SHELL_CATALOG;
-            const shellWithBonus = Object.values(catalog.miningStations).find(
+            // Leg 1: outbound with no bonus
+            freighter.status = 'outbound';
+            freighter.cargo = { minerals: 20 };
+            freighter.position = { x: hub.x, y: hub.y };
+            fs.updateFreighter(freighter, 100);
+            const distanceNoBonus = Math.abs(freighter.position.x - hub.x);
+
+            // Equip a shell with shuttleSpeed bonus
+            const shellWithBonus = Object.values(window.SHELL_CATALOG.miningStations).find(
                 s => s.bonuses && s.bonuses.shuttleSpeed > 0
             );
-
             if (shellWithBonus) {
-                gs.cosmetics.equippedShells.miningStations = shellWithBonus.id;
                 gs.cosmetics.ownedShells.miningStations.push(shellWithBonus.id);
+                gs.cosmetics.equippedShells.miningStations = shellWithBonus.id;
             }
 
             const bonusValue = ss.getEntityBonus('miningStations', null, 'shuttleSpeed');
+            const boostedSpeed = fs.freighterSpeed();
 
-            // Shuttle 2: with bonus
-            const shuttle2 = {
-                id: 'test-speed-shuttle-2',
-                hubId: hub.id,
-                stationId: station.id,
-                position: { x: hub.x, y: hub.y },
-                target: 'station',
-                status: 'delivering',
-                cargo: { minerals: 20 },
-                capacity: 20,
-                speed: 0.5,
-                level: 1
-            };
-            gs.mining.shuttles.push(shuttle2);
+            // Leg 2: the same trip with the bonus
+            freighter.status = 'outbound';
+            freighter.cargo = { minerals: 20 };
+            freighter.position = { x: hub.x, y: hub.y };
+            fs.updateFreighter(freighter, 100);
+            const distanceWithBonus = Math.abs(freighter.position.x - hub.x);
 
-            const startX2 = shuttle2.position.x;
-            mm.updateShuttle(shuttle2, 100);
-            const distanceWithBonus = Math.abs(shuttle2.position.x - startX2);
-
-            // Cleanup
+            // Cleanup (deleteFoundry dissolves its freighters too)
             gs.cosmetics.equippedShells.miningStations = 'default';
-            gs.mining.stations = gs.mining.stations.filter(s => s.id !== 'test-speed-station');
-            gs.mining.shuttles = gs.mining.shuttles.filter(s => !s.id.startsWith('test-speed-shuttle'));
+            fs.deleteFoundry({ foundryId: foundry.id });
 
             return {
+                baseSpeed,
+                boostedSpeed,
+                bonusValue,
                 distanceNoBonus,
                 distanceWithBonus,
-                bonusValue,
-                shellFound: !!shellWithBonus,
-                fasterWithBonus: shellWithBonus ? distanceWithBonus > distanceNoBonus : null
+                FREIGHTER_SPEED: window.GAME_CONSTANTS.FOUNDRY.FREIGHTER_SPEED,
+                shellFound: !!shellWithBonus
             };
         });
 
         expect(result.error).toBeUndefined();
         expect(result.shellFound).toBe(true);
         expect(result.bonusValue).toBeGreaterThan(0);
-        expect(result.fasterWithBonus).toBe(true);
+        // freighterSpeed() multiplies FREIGHTER_SPEED by (1 + bonus/100)
+        expect(result.baseSpeed).toBeCloseTo(result.FREIGHTER_SPEED, 5);
+        expect(result.boostedSpeed).toBeCloseTo(result.FREIGHTER_SPEED * (1 + result.bonusValue / 100), 5);
+        // And the freighter actually covers more ground per tick
+        expect(result.distanceWithBonus).toBeGreaterThan(result.distanceNoBonus);
+        expect(result.distanceWithBonus).toBeCloseTo(result.distanceNoBonus * (1 + result.bonusValue / 100), 3);
     });
 
     test('HBON-01: researchSpeed shell bonus accelerates Uplink decoding', async ({ page }) => {
@@ -335,7 +296,9 @@ test.describe('Shell Bonus Wiring - Station & Hub', () => {
                 miningEff: ss.getEntityBonus('miningStations', null, 'miningEfficiency'),
                 shuttleSpeed: ss.getEntityBonus('miningStations', null, 'shuttleSpeed'),
                 probethiumRate: ss.getEntityBonus('miningStations', null, 'probethiumRate'),
-                researchSpeed: ss.getEntityBonus('hubs', null, 'researchSpeed')
+                researchSpeed: ss.getEntityBonus('hubs', null, 'researchSpeed'),
+                baseFreighterSpeed: window.game.foundrySystem.freighterSpeed(),
+                FREIGHTER_SPEED: window.GAME_CONSTANTS.FOUNDRY.FREIGHTER_SPEED
             };
         });
 
@@ -344,5 +307,7 @@ test.describe('Shell Bonus Wiring - Station & Hub', () => {
         expect(result.shuttleSpeed).toBe(0);
         expect(result.probethiumRate).toBe(0);
         expect(result.researchSpeed).toBe(0);
+        // And freighterSpeed() returns the unmodified base constant
+        expect(result.baseFreighterSpeed).toBeCloseTo(result.FREIGHTER_SPEED, 5);
     });
 });

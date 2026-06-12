@@ -159,7 +159,7 @@ test.describe('Flow beads', () => {
     expect(result.rateAfter).toBe(0);
   });
 
-  test('shuttle delivery to a station emits a one-shot bead pulse', async ({ page }) => {
+  test('freighter delivery to a foundry emits a typed one-shot bead pulse', async ({ page }) => {
     await startNewGame(page);
     const result = await page.evaluate(() => {
       const game = window.game;
@@ -169,20 +169,34 @@ test.describe('Flow beads', () => {
       sys.arrivals = [];
 
       const hub = game.gameState.entities.reconHubs[0];
-      const station = { id: 'test-station', position: { x: hub.x + 150, y: hub.y + 150 } };
-      const shuttle = { hubId: hub.id, cargo: { minerals: 50 } };
-      game.miningManager.deliverToStation(shuttle, station);
+      const foundry = {
+        id: 'test-foundry', hubId: hub.id, level: 1,
+        position: { x: hub.x + 150, y: hub.y + 150 },
+        input: 0, output: 0, status: 'starved', converted: 0,
+        vaneAngle: 0, portGlow: { in: 0, out: 0 }
+      };
+      game.gameState.foundry.foundries.push(foundry);
+      const freighter = {
+        id: 'test-freighter', hubId: hub.id, foundryId: foundry.id,
+        capacity: 20, cargo: { minerals: 20 },
+        position: { ...foundry.position }, status: 'outbound'
+      };
+      game.foundrySystem.arriveAtFoundry(freighter, foundry, hub);
 
       const pulse = sys.pulses[0];
       return {
         spawned: sys.pulses.length,
-        endsAtStation: pulse && pulse.to.x === station.position.x && pulse.to.y === station.position.y,
-        cargoCleared: Object.keys(shuttle.cargo).length === 0
+        endsAtFoundry: pulse && pulse.to.x === foundry.position.x && pulse.to.y === foundry.position.y,
+        typedCopper: pulse && pulse.color === window.PALETTE.MATERIALS.minerals,
+        inputFed: foundry.input === 20,
+        headingHome: freighter.status === 'inbound'
       };
     });
     expect(result.spawned).toBe(1);
-    expect(result.endsAtStation).toBe(true);
-    expect(result.cargoCleared).toBe(true);
+    expect(result.endsAtFoundry).toBe(true);
+    expect(result.typedCopper).toBe(true);
+    expect(result.inputFed).toBe(true);
+    expect(result.headingHome).toBe(true);
   });
 
   test('pulse travels, lands as a consumption ring, and expires', async ({ page }) => {

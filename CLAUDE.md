@@ -32,7 +32,15 @@ User directive: invent, don't refine — sledgehammer old systems and rebuild pe
   - Dark Market: `.mk-*` grammar in styles.css; rendering in `GameController.populateNPCDarkMarketUI` / `renderMarketItemCard` / `populateDarkMarketUI`.
   - Playfield canvas: rift nebula + breathing parallax stars + breathing hub cores/intake rings (GameController), orbiting Uplink dish (UplinkSystem.render), per-material deposit glyphs (DepositSystem). Flow beads were already in (FlowBeadSystem v1).
   - Tests: `tests/handoff-chrome.spec.js` (12). Full chromium suite green (198 + 12).
-- NEXT: **the Foundry** (replaces Mining Stations), then Solar Drift, Resonance, Carrier Signal (build order in REBUILD.md).
+- **The Foundry** (replaces Mining Stations) — DONE (2026-06-11). `src/FoundrySystem.js`; MiningManager + stations + shuttles are deleted.
+  - State: `gameState.foundry = { foundries, freighters }`. A Foundry consumes minerals (`input` buffer, freighter-fed) and emits **alloy** (`output` buffer, freighter-hauled) at `FOUNDRY.CONVERT_RATIO` (5:1). Status is `starved | running | backed` — rate-matching is the gameplay.
+  - Freighters (shuttle recast) auto-loop hub↔Foundry: minerals out, alloy home into `resources.alloy` (new HUD chip `#alloy`, `--mat-alloy`, `PALETTE.MATERIALS.alloy`). Commissioned from the Foundry details panel (`#commissionFreighterBtn`) — placement-click modes are gone.
+  - Alloy gates tier-2+ logistics: `RECIPES.intakeBay[3]` now costs alloy. Recipes: `RECIPES.foundry/freighter/foundryLevel`; constants in `GAME_CONSTANTS.FOUNDRY`.
+  - Probethium now comes ONLY from exotic synthesis (`exotic_synthesis` protocol); station probethium production is gone. OfflineManager forges alloy from leftover input buffers (honest math).
+  - Visuals: processor ports per VISUAL_STYLE step 3 (copper input port faces hub, alloy output opposite, rotating vane ∝ uptime, typed `freighter:cargoDelivered` bead pulses in FlowBeadSystem).
+  - Shell bonuses recast (keys stable, cosmetics category still `miningStations`): `miningEfficiency` = Forge Rate (consumeRatePerMin), `shuttleSpeed` = Freighter Speed; `probethiumRate` dormant. Remnant spawn gate counts foundries.
+  - Saves: foundry block serialized; legacy `mining` saves dissolve into a full materials refund on load. Tests: `tests/foundry.spec.js` (12); mining-stall.spec.js deleted; shell-bonus/sector-profile/handoff suites updated.
+- NEXT: **Solar Drift**, then Resonance, Carrier Signal (build order in REBUILD.md).
 
 ## Current Priority Tasks
 1. **M1 "Feels Alive"** (see `docs/design/EA_ROADMAP.md`): Probethium rebalance, tempo + time controls, SFX/combo juice, cargo system, new onboarding, Dark Market fix

@@ -42,7 +42,7 @@ class RemnantManager {
                 title: 'The Prophet',
                 eyeColor: '#ffffff',  // White
                 shipStyle: 'flickering',
-                unlockCondition: () => this.getMiningStationCount() >= 3
+                unlockCondition: () => this.getFoundryCount() >= 3
             },
             'mira_sol': {
                 id: 'mira_sol',
@@ -125,11 +125,11 @@ class RemnantManager {
 
         // Check minimum requirements:
         // - At least 2 explored sectors
-        // - At least one mining station built (gates probetheum accumulation)
+        // - At least one Foundry built (the Remnants notice a forge lighting up)
         const exploredSectors = this.getExploredSectorCount();
-        const hasMiningStation = this.getMiningStationCount() > 0;
+        const hasFoundry = this.getFoundryCount() > 0;
 
-        if (exploredSectors < 2 || !hasMiningStation) {
+        if (exploredSectors < 2 || !hasFoundry) {
             return;
         }
 
@@ -556,11 +556,10 @@ class RemnantManager {
     }
 
     /**
-     * Get number of mining stations
+     * Get number of Foundries (REBUILD.md §2 — replaces the mining station gate)
      */
-    getMiningStationCount() {
-        const entities = this.gameState.getEntities();
-        return (entities.miningOutposts?.length || 0) + (entities.miningFacilities?.length || 0);
+    getFoundryCount() {
+        return this.gameState.foundry?.foundries?.length || 0;
     }
 
     /**

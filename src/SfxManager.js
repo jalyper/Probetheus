@@ -135,10 +135,10 @@ class SfxManager {
         });
 
         // Construction thuds
-        bus.on('mining:stationBuilt', () => {
+        bus.on('foundry:built', () => {
             this.tone({ freq: 80, freqEnd: 50, type: 'triangle', dur: 0.2, vol: 0.45 });
         });
-        bus.on('mining:shuttleBuilt', () => {
+        bus.on('foundry:freighterBuilt', () => {
             this.tone({ freq: 140, freqEnd: 90, type: 'triangle', dur: 0.15, vol: 0.35 });
         });
 

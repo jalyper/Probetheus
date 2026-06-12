@@ -122,10 +122,10 @@ class TutorialManager {
             (d) => (d?.capacityRatio || 0) >= 0.9);
         on('sector:discovered', 'tip_sector',
             'New sector. Different sectors favor different resources — check the Sector Survey.');
-        on('mining:stationBuilt', 'tip_station',
-            'Stations eat resources to produce more. Shuttles feed them — watch the supply line.');
-        on('mining:shuttleBuilt', 'tip_shuttle',
-            'Shuttle deployed. It ferries supplies from Hub to station automatically.');
+        on('foundry:built', 'tip_foundry',
+            'The Foundry converts minerals into alloy at a fixed rate. Commission freighters to feed it — a starved forge idles, a full one backs up.');
+        on('foundry:freighterBuilt', 'tip_freighter',
+            'Freighter commissioned. It hauls minerals out and alloy home automatically — rate-match the legs and the forge never stops.');
         on('remnant:spawned', 'tip_remnant',
             'Something is out there, watching. Click it… if you like.');
         on('probe:destroyed', 'tip_probe_lost',
@@ -434,15 +434,6 @@ class TutorialManager {
         if (panel) {
             panel.classList.remove('tutorial-highlight');
         }
-
-        const shuttleBtn = document.getElementById('buildShuttleBtn');
-        if (shuttleBtn) {
-            shuttleBtn.classList.remove('tutorial-highlight');
-        }
-
-        document.querySelectorAll('.mining-station-highlight').forEach(el => {
-            el.classList.remove('mining-station-highlight');
-        });
     }
 
     /**
@@ -490,20 +481,6 @@ class TutorialManager {
         this.eventBus.emit('entity:selected', { entity: hub, type: 'hub' });
 
         console.log('Auto-selected hub for tutorial');
-    }
-
-    /**
-     * Highlight the shuttle button in hub operations
-     */
-    highlightShuttleButton() {
-        const shuttleBtn = document.getElementById('buildShuttleBtn');
-        if (!shuttleBtn) {
-            console.warn('Shuttle button not found');
-            return;
-        }
-
-        shuttleBtn.classList.add('tutorial-highlight');
-        console.log('Highlighted shuttle button');
     }
 
     /**

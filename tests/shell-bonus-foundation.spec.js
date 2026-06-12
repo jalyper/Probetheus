@@ -95,10 +95,13 @@ test.describe('Shell Bonus Foundation', () => {
         expect(result).toEqual([]);
     });
 
-    test('mining station shells should only have valid station bonuses', async ({ page }) => {
+    test('foundry shells (legacy miningStations key) should only have valid bonuses', async ({ page }) => {
         await startGame(page);
 
         const result = await page.evaluate(() => {
+            // Foundry era: miningEfficiency ('Forge Rate') and shuttleSpeed
+            // ('Freighter Speed') are read live by FoundrySystem;
+            // probethiumRate is dormant but stays valid so owned shells work.
             const stationShells = window.SHELL_CATALOG.miningStations;
             const validBonuses = ['miningEfficiency', 'shuttleSpeed', 'probethiumRate'];
             const violations = [];
@@ -220,7 +223,7 @@ test.describe('Shell Bonus Foundation', () => {
         expect(bonus).toBe(15);
     });
 
-    test('getEntityBonus should resolve mining station bonus from category-level shell', async ({ page }) => {
+    test('getEntityBonus should resolve foundry bonus from category-level shell (legacy miningStations key)', async ({ page }) => {
         await startGame(page);
 
         const bonus = await page.evaluate(() => {
@@ -259,5 +262,29 @@ test.describe('Shell Bonus Foundation', () => {
         expect(result.noBonus).toBeCloseTo(100);
         expect(result.tenPercent).toBeCloseTo(110);
         expect(result.twentyPercent).toBeCloseTo(96);
+    });
+
+    // === Foundry-era live read points (REBUILD.md §2) ===
+
+    test('FoundrySystem exposes the shell bonus read points with foundry-era labels', async ({ page }) => {
+        await startGame(page);
+
+        const result = await page.evaluate(() => {
+            const fs = window.game.foundrySystem;
+            return {
+                hasConsumeRate: typeof fs.consumeRatePerMin === 'function',
+                hasFreighterSpeed: typeof fs.freighterSpeed === 'function',
+                miningEfficiencyLabel: window.BONUS_TYPES.miningEfficiency.label,
+                shuttleSpeedLabel: window.BONUS_TYPES.shuttleSpeed.label,
+                probethiumRateDefined: !!window.BONUS_TYPES.probethiumRate
+            };
+        });
+
+        expect(result.hasConsumeRate).toBe(true);
+        expect(result.hasFreighterSpeed).toBe(true);
+        expect(result.miningEfficiencyLabel).toBe('Forge Rate');
+        expect(result.shuttleSpeedLabel).toBe('Freighter Speed');
+        // Dormant but must remain defined so owned shells keep rendering
+        expect(result.probethiumRateDefined).toBe(true);
     });
 });

@@ -17,8 +17,11 @@ const BONUS_TYPES = {
     explorationRewards: { label: 'Exploration Rewards', unit: '%', icon: 'slot' },
     exoticYield: { label: 'Exotic Mineral Yield', unit: '%', icon: 'deposit-exotic' },
     probethiumRate: { label: 'Probethium Rate', unit: '%', icon: 'foundry' },
-    miningEfficiency: { label: 'Mining Efficiency', unit: '%', icon: 'mining' },
-    shuttleSpeed: { label: 'Shuttle Speed', unit: '%', icon: 'shuttle' }
+    // Foundry-era reads of the legacy keys (REBUILD.md §2): miningEfficiency
+    // speeds the forge, shuttleSpeed speeds freighters. Keys are stable so
+    // owned shells survive the recast.
+    miningEfficiency: { label: 'Forge Rate', unit: '%', icon: 'mining' },
+    shuttleSpeed: { label: 'Freighter Speed', unit: '%', icon: 'shuttle' }
 };
 
 // Rarity definitions

@@ -10,10 +10,12 @@
  * this grammar) — beads are persistent state, not fire-and-forget pulses.
  *
  * Listens:
- *   probe:cargoDelivered   { probe, cargo, total } - accrues per-route
+ *   probe:cargoDelivered     { probe, cargo, total } - accrues per-route
  *       throughput + spawns a consumption pulse at the hub
- *   shuttle:cargoDelivered { from, to }            - one-shot bead run on the
- *       shuttle leg (shuttles have no persistent patrol loop yet)
+ *   freighter:cargoDelivered { from, to, type }      - one-shot typed bead on
+ *       the hub↔Foundry leg: copper minerals out, alloy home (REBUILD.md §2,
+ *       the processor-port read — the flow visibly changes color through the
+ *       building)
  *
  * Runs on sim-time (deltaTime already scaled by GameController), so the flow
  * freezes on pause and speeds up with the game clock.
@@ -44,8 +46,8 @@ class FlowBeadSystem {
         eventBus.on('probe:cargoDelivered', (data) => {
             if (data && data.probe) this.recordDelivery(data.probe, data.cargo || {}, data.total || 0);
         });
-        eventBus.on('shuttle:cargoDelivered', (data) => {
-            if (data && data.from && data.to) this.spawnPulse(data.from, data.to);
+        eventBus.on('freighter:cargoDelivered', (data) => {
+            if (data && data.from && data.to) this.spawnPulse(data.from, data.to, data.type);
         });
     }
 
@@ -138,7 +140,7 @@ class FlowBeadSystem {
         return window.PALETTE.FIRE; // no typed cargo in window (raw total only)
     }
 
-    spawnPulse(from, to) {
+    spawnPulse(from, to, materialType) {
         const dx = from.x - to.x;
         const dy = from.y - to.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -154,7 +156,10 @@ class FlowBeadSystem {
             return;
         }
 
-        this.pulses.push({ from, to, t: 0, duration: this.PULSE_DURATION });
+        // Typed pulses ride in their material color (processor-port grammar);
+        // untyped ones stay gold
+        const color = (materialType && window.PALETTE.MATERIALS[materialType]) || null;
+        this.pulses.push({ from, to, t: 0, duration: this.PULSE_DURATION, color });
     }
 
     /**
@@ -264,29 +269,34 @@ class FlowBeadSystem {
             }
         }
 
-        // One-shot shuttle beads - bright gold point with a short fading tail
+        // One-shot freighter beads - a bright typed point with a short fading
+        // tail (copper minerals outbound, alloy inbound; gold when untyped)
         for (const p of this.pulses) {
             const t = 1 - (1 - p.t) * (1 - p.t); // ease-out into the destination
             const x = p.from.x + (p.to.x - p.from.x) * t - viewOffset.x;
             const y = p.from.y + (p.to.y - p.from.y) * t - viewOffset.y;
 
+            ctx.save();
             for (let g = 1; g <= 2; g++) {
                 const gt = Math.max(0, t - g * 0.08);
                 const gx = p.from.x + (p.to.x - p.from.x) * gt - viewOffset.x;
                 const gy = p.from.y + (p.to.y - p.from.y) * gt - viewOffset.y;
                 ctx.beginPath();
                 ctx.arc(gx, gy, 1.2, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(212, 175, 55, ${0.35 / g})`;
+                ctx.fillStyle = p.color || window.PALETTE.FIRE;
+                ctx.globalAlpha = 0.35 / g;
                 ctx.fill();
             }
+            ctx.globalAlpha = 1;
 
             ctx.beginPath();
             ctx.arc(x, y, 2, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(255, 215, 0, 0.95)';
-            ctx.shadowColor = 'rgba(212, 175, 55, 0.8)';
+            ctx.fillStyle = p.color || window.PALETTE.FIRE_BRIGHT;
+            ctx.shadowColor = p.color || 'rgba(212, 175, 55, 0.8)';
             ctx.shadowBlur = 6;
             ctx.fill();
             ctx.shadowBlur = 0;
+            ctx.restore();
         }
 
         // Consumption rings - a soft gold breath where cargo was swallowed

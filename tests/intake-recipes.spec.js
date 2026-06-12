@@ -40,13 +40,13 @@ async function clickUpgrade(page) {
 
 test.describe('Intake Bay + recipes', () => {
 
-  test('recipe table exists and exotics gate the top intake tier', async ({ page }) => {
+  test('recipe table exists and alloy gates the top intake tier', async ({ page }) => {
     await startNewGame(page);
     const recipes = await page.evaluate(() => window.RECIPES);
     expect(recipes.probe.minerals).toBeGreaterThan(0);
     expect(recipes.intakeBay['2']).toBeTruthy();
-    expect(recipes.intakeBay['2'].exoticMinerals).toBeUndefined();   // tier 2: home materials
-    expect(recipes.intakeBay['3'].exoticMinerals).toBeGreaterThan(0); // tier 3: ring 2+ exotics
+    expect(recipes.intakeBay['2'].alloy).toBeUndefined();      // tier 2: home materials
+    expect(recipes.intakeBay['3'].alloy).toBeGreaterThan(0);   // tier 3: forged at the Foundry (REBUILD.md §2)
   });
 
   test('upgrade spends the recipe and doubles intake throughput', async ({ page }) => {

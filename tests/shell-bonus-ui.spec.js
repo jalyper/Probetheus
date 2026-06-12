@@ -362,57 +362,42 @@ test.describe('Shell Bonus UI - Tooltips', () => {
     });
 
     // =========================================================
-    // TEST-06 / BUI-04: Mining Station Detail Panel Shell Indicator Tooltip
+    // TEST-06 / BUI-04: Foundry Detail Panel Shell Indicator Tooltip
+    // (the indicator keeps its legacy 'stationShellIndicator' element id)
     // =========================================================
 
-    test('BUI-04 / TEST-06: mining station detail panel shell indicator shows tooltip', async ({ page }) => {
+    test('BUI-04 / TEST-06: foundry detail panel shell indicator shows tooltip', async ({ page }) => {
         await startGame(page);
 
         const result = await page.evaluate(async () => {
-            const gs = window.game.gameState;
+            const game = window.game;
+            const gs = game.gameState;
 
-            // Ensure mining.stations array exists and create a station if none exists
-            if (!gs.mining) gs.mining = { stations: [], shuttles: [] };
-            if (!gs.mining.stations) gs.mining.stations = [];
-
-            if (gs.mining.stations.length === 0) {
-                // Create a properly structured mining station
-                const newStation = {
-                    id: 'test-station-' + Date.now(),
-                    type: 'basic',
-                    position: { x: 100, y: 100 },
-                    hubId: gs.entities.reconHubs[0]?.id || 'test-hub',
-                    level: 1,
-                    active: true,
-                    efficiency: 1.0,
-                    resourceBuffer: {},
-                    stationInventory: { minerals: 0, data: 0 },
-                    lastConsumption: Date.now(),
-                    totalProduced: 0,
-                    createdAt: Date.now()
-                };
-                gs.mining.stations.push(newStation);
-            }
-
-            // Find a station shell with bonuses
+            // Find a foundry shell with bonuses (catalog key stays 'miningStations')
             const catalog = window.SHELL_CATALOG.miningStations;
-            const stationShell = Object.values(catalog).find(s => s.bonuses && Object.keys(s.bonuses).length > 0);
-            if (!stationShell) return { error: 'no station shell with bonuses' };
+            const foundryShell = Object.values(catalog).find(s => s.bonuses && Object.keys(s.bonuses).length > 0);
+            if (!foundryShell) return { error: 'no foundry shell with bonuses' };
 
-            // Equip station shell
-            if (!gs.cosmetics.ownedShells.miningStations.includes(stationShell.id)) {
-                gs.cosmetics.ownedShells.miningStations.push(stationShell.id);
+            // Equip foundry shell (category-level)
+            if (!gs.cosmetics.ownedShells.miningStations.includes(foundryShell.id)) {
+                gs.cosmetics.ownedShells.miningStations.push(foundryShell.id);
             }
-            gs.cosmetics.equippedShells.miningStations = stationShell.id;
+            gs.cosmetics.equippedShells.miningStations = foundryShell.id;
+
+            // Fund and build a real foundry
+            const hub = gs.entities.reconHubs[0];
+            if (!hub) return { error: 'no hub found' };
+            const r = gs.getResources();
+            gs.updateResources({ ...r, minerals: 1000, data: 1000 }, game.eventBus);
+            const foundry = game.foundrySystem.build({ position: { x: hub.x + 200, y: hub.y + 120 }, hubId: hub.id });
+            if (!foundry) return { error: 'foundry build failed' };
 
             // Close any open panels first
             const probePanel = document.getElementById('probeDetailPanel');
             if (probePanel) probePanel.style.display = 'none';
 
-            // Select the station
-            const station = gs.mining.stations[0];
-            station.selected = true;
-            window.game.eventBus.emit('entity:selected', { entity: station, type: 'miningStation' });
+            // Select the foundry
+            window.game.eventBus.emit('entity:selected', { entity: foundry, type: 'foundry' });
 
             // Wait for detail panel render and tooltip handlers to attach
             await new Promise(resolve => setTimeout(resolve, 800));
@@ -423,7 +408,7 @@ test.describe('Shell Bonus UI - Tooltips', () => {
                 return { error: `detailsPanel not visible (display: ${detailsPanel?.style.display || 'null'})` };
             }
 
-            // Find stationShellIndicator
+            // Find the shell indicator (legacy element id, unchanged)
             const indicator = document.getElementById('stationShellIndicator');
             if (!indicator) return { error: 'stationShellIndicator not found' };
 
@@ -437,22 +422,24 @@ test.describe('Shell Bonus UI - Tooltips', () => {
             const isVisible = tooltip.style.display === 'block';
             const content = tooltip.innerHTML;
 
-            // Station shells can have miningEfficiency, shuttleSpeed, or probethiumRate
-            const hasStationBonus = content.includes('Mining Efficiency') ||
-                                   content.includes('Shuttle Speed') ||
-                                   content.includes('Probetheum Rate');
+            // Foundry-era BONUS_TYPES labels: miningEfficiency → 'Forge Rate',
+            // shuttleSpeed → 'Freighter Speed'; probethiumRate keeps
+            // 'Probethium Rate' (dormant but still rendered on owned shells)
+            const hasFoundryBonus = content.includes('Forge Rate') ||
+                                    content.includes('Freighter Speed') ||
+                                    content.includes('Probethium Rate');
 
             return {
                 isVisible,
                 hasBonus: content.includes('+') && content.includes('%'),
-                hasStationBonus,
-                shellId: stationShell.id
+                hasFoundryBonus,
+                shellId: foundryShell.id
             };
         });
 
         expect(result.error).toBeUndefined();
         expect(result.isVisible).toBe(true);
         expect(result.hasBonus).toBe(true);
-        expect(result.hasStationBonus).toBe(true);
+        expect(result.hasFoundryBonus).toBe(true);
     });
 });

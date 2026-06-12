@@ -25,7 +25,7 @@ The Research Lab dies: the screen, the tree, the points, the "first resource to 
 
 **Protocol catalog v1** (all wired to live mechanics): Swift Carriage (probe speed), Deep Resonance (prospecting pulse radius), Cargo Lattice (probe cargo cap), Extraction Harmonics (+yield per deposit pass), Harvest Lattice (unlocks collector modules), Universal Lattice (universal collector), Exotic Synthesis (unlocks Probethium synthesis), Remnant Protocols (deep Remnant trade). The dead collection-rarity ladder (auto_*/rarity_*/type-tier nodes) is deleted, not remapped.
 
-## 2. THE FOUNDRY — transformation you can watch *(replaces Mining Stations; next)*
+## 2. THE FOUNDRY — transformation you can watch *(replaces Mining Stations; implemented 2026-06-11)*
 
 "Mining Station" dies as a concept — mining belongs to deposits now. The building recasts as the **Foundry**: the first true *processor* in the network.
 
@@ -33,6 +33,8 @@ The Research Lab dies: the screen, the tree, the points, the "first resource to 
 - Rate-matching is the game: a Foundry starved of input idles visibly; one whose output isn't hauled away backs up and stalls. Both states are diagnosable at a glance.
 - Alloy is the recipe currency for tier-2+ logistics (hub upgrades, Sentinels later). Shuttles recast as **freighters** working hub↔Foundry legs.
 - Absorbs the PROBE_NETWORKS §5 refinery plan; two-stage cap stands. MiningManager's demand-side rate logic survives as implementation guts only.
+
+**As built (2026-06-11):** `src/FoundrySystem.js` — `gameState.foundry`, `RECIPES.foundry/freighter/foundryLevel`, `GAME_CONSTANTS.FOUNDRY` (5:1 ratio, 20 min/min per level, 100-in/25-out buffers). Freighters auto-loop minerals-out/alloy-home with typed bead pulses (`freighter:cargoDelivered`); processor body renders input/output ports + rotating vane (speed ∝ uptime). Alloy gates `intakeBay[3]`. Probethium's only source is now exotic synthesis. Legacy mining saves dissolve into a full materials refund. Tests: `tests/foundry.spec.js` (12).
 
 ## 3. SOLAR DRIFT — the galaxy has weather *(new invention)*
 
@@ -77,8 +79,8 @@ The tutorial's job is no longer "click here" — it teaches the four numbers tha
 |---|---|---|
 | Research Lab screen, tree, points, RP unlock modal, milestone-unlock logic | **DELETED 2026-06-11** | §1 The Uplink |
 | Collection-rarity research ladder (auto_*/rarity_*/minerals_*/data_*/artifacts_*) | **DELETED 2026-06-11** | Harvest/Universal Lattice protocols |
-| Mining Stations (name + role) | DEMOLISH NEXT | §2 The Foundry |
-| Shuttles | RECAST with Foundry | Freighters (hub↔Foundry legs) |
+| Mining Stations (name + role) | **DELETED 2026-06-11** | §2 The Foundry |
+| Shuttles | **RECAST 2026-06-11** | Freighters (hub↔Foundry legs) |
 | Equipment collectors-by-rarity | DEMOLISH with Foundry pass | Extractor modules crafted from materials |
 | Inline-styled legacy panels (hub ops, equipment modal, Dark Market, intro title card) | RESTYLE | §6 Premium Chrome |
 | Tutorial v2 (six terse steps) | EXPANDED 2026-06-11 | §7 descriptive pass + just-in-time bottleneck steps |
@@ -88,7 +90,7 @@ The tutorial's job is no longer "click here" — it teaches the four numbers tha
 ## Build order
 
 1. **Uplink** *(done 2026-06-11 — UplinkSystem.js, protocol catalog, panel, save migration, tests)*
-2. **Foundry** + freighter recast + processor-port bead rendering (the §2 slice; biggest visible payoff)
+2. **Foundry** *(done 2026-06-11 — FoundrySystem.js, freighter recast, processor ports, alloy currency, save migration, tests)*
 3. **Premium Chrome sweep** of all generated HTML (§6) — mechanical, parallelizable
 4. **Solar Drift** field + streamline render + speed integration (§3)
 5. **Resonance** clusters (§4) — small system, big charm

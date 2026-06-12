@@ -143,15 +143,15 @@ test.describe('M1 redesign — tempo, economy, juice, stats', () => {
     expect(result).toBe(0);
   });
 
-  test('station types have separated probethium and resource outputs', async ({ page }) => {
+  test('foundry conversion constants are tuned (REBUILD.md §2)', async ({ page }) => {
     await startNewGame(page);
 
-    const types = await page.evaluate(() => window.game.miningManager.getStationTypes());
+    const C = await page.evaluate(() => window.GAME_CONSTANTS.FOUNDRY);
 
-    expect(types.basic.probethiumOutput).toBeCloseTo(0.085, 3);
-    expect(types.advanced.probethiumOutput).toBeCloseTo(0.17, 3);
-    expect(types.quantum.probethiumOutput).toBeCloseTo(2.5, 3);
-    expect(types.basic.output).toBeGreaterThan(1); // resources now meaningful
+    expect(C.CONVERT_RATIO).toBe(5);              // PROBE_NETWORKS §5: 5 minerals -> 1 alloy
+    expect(C.MINERALS_PER_MIN_BASE).toBeGreaterThan(0);
+    expect(C.OUTPUT_CAP).toBeGreaterThan(0);      // backed-up state is reachable
+    expect(C.INPUT_CAP).toBeGreaterThan(C.FREIGHTER_CAPACITY); // a full freighter load fits
   });
 
   test('probethium header shows meaningful precision', async ({ page }) => {

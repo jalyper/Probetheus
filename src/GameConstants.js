@@ -42,6 +42,20 @@ window.GAME_CONSTANTS = {
         // (REBUILD.md §1). Research speed IS data-network throughput.
         DECODE_PER_MIN_BASE: 12,
         MAX_LEVEL: 3
+    },
+    FOUNDRY: {
+        // The first true processor (REBUILD.md §2): consumes a mineral flow,
+        // emits an alloy flow. Rate-matching is the game — a starved Foundry
+        // idles visibly; one whose output isn't hauled away backs up.
+        CONVERT_RATIO: 5,           // minerals consumed per alloy produced (PROBE_NETWORKS §5)
+        MINERALS_PER_MIN_BASE: 20,  // consumption rate per level while running
+        INPUT_CAP: 100,             // mineral buffer — freighters keep this fed
+        OUTPUT_CAP: 25,             // alloy buffer — full = backed up, conversion stalls
+        MAX_LEVEL: 3,
+        MAX_PER_HUB: 2,
+        MAX_FREIGHTERS_PER_HUB: 3,
+        FREIGHTER_CAPACITY: 20,
+        FREIGHTER_SPEED: 0.25       // px per sim-ms — heavier than a probe, deliberate
     }
 };
 
@@ -116,14 +130,23 @@ window.PROTOCOLS = {
 window.RECIPES = {
     probe: { minerals: 25 },
     reconHub: { minerals: 100 },
-    miningStation: { minerals: 100, data: 50 },
-    shuttle: { minerals: 50, data: 25 },
+
+    // The Foundry (REBUILD.md §2): the network's first processor. Freighters
+    // work the hub↔Foundry legs. Alloy is the recipe currency for tier-2+
+    // logistics — you cannot buy it, only convert for it.
+    foundry: { minerals: 120, data: 40 },
+    foundryLevel: {
+        2: { minerals: 200, data: 80 },
+        3: { minerals: 350, data: 140, artifacts: 10 }
+    },
+    freighter: { minerals: 50, data: 25 },
 
     // Intake Bay: deliveries/min = INTAKE_PER_MIN_BASE × level.
-    // Keyed by the level being purchased. Tier 3 demands exotics (ring 2+).
+    // Keyed by the level being purchased. Tier 3 is alloy-gated — top-end
+    // logistics are FORGED, not bought (REBUILD.md §2).
     intakeBay: {
         2: { minerals: 150, data: 60 },
-        3: { minerals: 300, data: 120, exoticMinerals: 8 }
+        3: { minerals: 250, data: 120, alloy: 10 }
     },
 
     // The Uplink (REBUILD.md §1): crafted at the home hub, then upgraded.
@@ -161,7 +184,8 @@ window.RecipeUtils = {
     format(recipe) {
         const names = {
             minerals: 'Minerals', data: 'Data',
-            artifacts: 'Artifacts', exoticMinerals: 'Exotic'
+            artifacts: 'Artifacts', exoticMinerals: 'Exotic',
+            alloy: 'Alloy'
         };
         return Object.entries(recipe)
             .map(([key, amount]) => `${amount} ${names[key] || key}`)
@@ -196,7 +220,8 @@ window.PALETTE = {
         minerals: '#C97B4A',        // copper
         data: '#5B8CFF',            // clear blue
         artifacts: '#B06BFF',       // rift violet
-        exoticMinerals: '#E8E4F0'   // signal-white shimmer — the rare stuff
+        exoticMinerals: '#E8E4F0',  // signal-white shimmer — the rare stuff
+        alloy: '#E8A33D'            // molten amber — copper, forged toward gold
     },
 
     // Rarity ramp (VISUAL_STYLE.md "Rarity recalibration")

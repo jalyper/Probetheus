@@ -25,17 +25,16 @@ class BuildingSystem {
     enterBuildingMode(data) {
         const { structureType, probe } = data;
         
-        // Mining facilities don't require a specific probe
-        if (structureType === 'miningFacility') {
-            // Check if there are any active probes with routes for mining facilities
-            const hasActiveRoutes = this.gameState.entities.probes.some(p => 
+        // Foundries don't require a specific probe — any worked route will do
+        if (structureType === 'foundry') {
+            const hasActiveRoutes = this.gameState.entities.probes.some(p =>
                 p.active && p.waypoints && p.waypoints.length >= 2
             );
-            
+
             if (!hasActiveRoutes) {
-                this.eventBus.emit('ui:message', { 
-                    text: 'Deploy probes with routes first to place mining facilities', 
-                    type: 'error' 
+                this.eventBus.emit('ui:message', {
+                    text: 'Deploy probes with routes first to place a Foundry',
+                    type: 'error'
                 });
                 return;
             }
@@ -94,12 +93,12 @@ class BuildingSystem {
 
         const { mouseX, mouseY } = data;
         
-        // For mining facilities, check all routes; for others, use selected probe
+        // For Foundries, check all routes; for others, use selected probe
         let closestPoint;
-        if (this.buildingStructureType === 'miningFacility') {
+        if (this.buildingStructureType === 'foundry') {
             closestPoint = this.findClosestPointOnAnyExplorationRoute(mouseX, mouseY);
             if (!closestPoint) {
-                console.log('No valid point found for mining facility placement');
+                console.log('No valid point found for foundry placement');
             }
         } else {
             if (!this.selectedProbe) return;
@@ -143,48 +142,48 @@ class BuildingSystem {
             return;
         }
         
-        // For mining facilities, we don't need a selected probe
-        if (this.buildingStructureType !== 'miningFacility' && !this.selectedProbe) {
-            console.log('Early return: not mining facility and no probe selected');
+        // For Foundries, we don't need a selected probe
+        if (this.buildingStructureType !== 'foundry' && !this.selectedProbe) {
+            console.log('Early return: not a foundry and no probe selected');
             return;
         }
 
         const structureType = this.buildingStructureType;
         const resources = this.gameState.getResources();
         console.log('Current resources:', resources);
-        
+
+        // Foundries pay through FoundrySystem (RecipeUtils) — it validates
+        // affordability and per-hub limits itself
+        if (structureType === 'foundry') {
+            const placed = this.createFoundry(this.buildingPreview.x, this.buildingPreview.y);
+            if (!placed) return; // stay in building mode so the player can retry
+            this.eventBus.emit('ui:update');
+            this.exitBuildingMode(true);
+            return;
+        }
+
         // Check resource requirements
         const requirements = this.getBuildingRequirements(structureType);
         console.log('Requirements:', requirements);
-        
+
         if (!this.canAffordBuilding(requirements, resources)) {
             console.log('Cannot afford building');
-            this.eventBus.emit('ui:message', { 
-                text: 'Insufficient resources', 
-                type: 'error' 
+            this.eventBus.emit('ui:message', {
+                text: 'Insufficient resources',
+                type: 'error'
             });
             return;
         }
 
-        // Handle mining facilities differently
-        if (structureType === 'miningFacility') {
-            console.log('Creating mining facility...');
-            this.createMiningFacility(
-                this.buildingPreview.x,
-                this.buildingPreview.y,
-                requirements
-            );
-        } else {
-            // Create the building
-            const building = this.createBuilding(
-                structureType,
-                this.buildingPreview.x,
-                this.buildingPreview.y
-            );
+        // Create the building
+        const building = this.createBuilding(
+            structureType,
+            this.buildingPreview.x,
+            this.buildingPreview.y
+        );
 
-            // Add to appropriate collection
-            this.addBuildingToGame(building);
-        }
+        // Add to appropriate collection
+        this.addBuildingToGame(building);
 
         // Deduct resources
         this.gameState.updateResources({
@@ -192,11 +191,11 @@ class BuildingSystem {
             data: resources.data - requirements.data
         }, this.eventBus);
 
-        this.eventBus.emit('ui:message', { 
-            text: `${structureType} built!`, 
-            type: 'success' 
+        this.eventBus.emit('ui:message', {
+            text: `${structureType} built!`,
+            type: 'success'
         });
-        
+
         this.eventBus.emit('ui:update');
         this.exitBuildingMode(true); // Pass true to indicate successful placement
     }
@@ -304,19 +303,14 @@ class BuildingSystem {
     }
 
     /**
-     * Create mining facility using MiningManager
+     * Place a Foundry via FoundrySystem (REBUILD.md §2) — supplied by the
+     * closest hub, whose freighters will work the leg
      */
-    createMiningFacility(x, y, requirements) {
-        console.log(`Creating mining facility at (${x}, ${y})`);
-        
-        // Find closest hub for the mining station
+    createFoundry(x, y) {
         let closestHub = null;
         let closestDistance = Infinity;
-        
-        // Check both reconHubs and hubs arrays (might be stored in either)
-        const hubs = this.gameState.entities.reconHubs || this.gameState.entities.hubs || [];
-        console.log(`Found ${hubs.length} hubs to check`);
-        
+
+        const hubs = this.gameState.entities.reconHubs || [];
         hubs.forEach(hub => {
             const distance = Math.sqrt(Math.pow(hub.x - x, 2) + Math.pow(hub.y - y, 2));
             if (distance < closestDistance) {
@@ -324,46 +318,25 @@ class BuildingSystem {
                 closestHub = hub;
             }
         });
-        
+
         if (!closestHub) {
-            console.error('No hubs found!');
-            this.eventBus.emit('ui:message', { 
-                text: 'No hubs available to supply mining station!', 
-                type: 'error' 
+            this.eventBus.emit('ui:message', {
+                text: 'No hubs available to supply a Foundry!',
+                type: 'error'
             });
-            return;
-        }
-        
-        console.log(`Using hub at (${closestHub.x}, ${closestHub.y}) with id: ${closestHub.id}`);
-
-        // Get MiningManager from game instance (bit of a hack, but works for now)
-        const gameController = window.game;
-        if (!gameController || !gameController.miningManager) {
-            console.error('MiningManager not found on window.game:', gameController);
-            this.eventBus.emit('ui:message', { 
-                text: 'Mining system not available!', 
-                type: 'error' 
-            });
-            return;
+            return null;
         }
 
-        // Build the mining station
-        console.log('Calling miningManager.buildMiningStation...');
-        const station = gameController.miningManager.buildMiningStation({
-            type: 'basic',
-            position: { x: x, y: y },
+        const foundrySystem = window.game?.foundrySystem;
+        if (!foundrySystem) {
+            console.error('FoundrySystem not found on window.game');
+            return null;
+        }
+
+        return foundrySystem.build({
+            position: { x, y },
             hubId: closestHub.id
         });
-        
-        if (station) {
-            console.log('Mining station created successfully:', station);
-            this.eventBus.emit('ui:message', { 
-                text: 'Mining station built!', 
-                type: 'success' 
-            });
-        } else {
-            console.error('Failed to create mining station');
-        }
     }
 
     /**
@@ -397,7 +370,6 @@ class BuildingSystem {
     getBuildingRequirements(structureType) {
         const requirements = {
             outpost: { minerals: 50, data: 20 },
-            miningFacility: { minerals: 100, data: 50 },
             reconHub: { minerals: 100, data: 0 }
         };
 
@@ -432,9 +404,6 @@ class BuildingSystem {
         // Add structure-specific properties
         if (structureType === 'outpost') {
             building.generationRate = 0.1; // Exotic minerals per second
-            building.lastGeneration = Date.now();
-        } else if (structureType === 'miningFacility') {
-            building.generationRate = 0.2;
             building.lastGeneration = Date.now();
         } else if (structureType === 'reconHub') {
             building.range = worldCoords.standardSectorWidth / 3;

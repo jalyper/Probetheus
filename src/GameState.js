@@ -9,7 +9,8 @@ class GameState {
             minerals: 0,
             data: 0,
             artifacts: 0,
-            exoticMinerals: 0
+            exoticMinerals: 0,
+            alloy: 0    // forged at Foundries (REBUILD.md §2) — never found, only made
         };
 
         // Probethium scoring system
@@ -57,6 +58,14 @@ class GameState {
             progress: {},        // protocol id -> data units streamed so far
             paid: new Set(),     // protocol ids whose catalysts were consumed
             decoded: new Set()   // completed protocol ids
+        };
+
+        // The Foundry (REBUILD.md §2) — the network's first processor.
+        // Foundries consume a mineral flow and emit an alloy flow; freighters
+        // work the hub↔Foundry legs. Replaces the mining station system.
+        this.foundry = {
+            foundries: [],
+            freighters: []
         };
 
         this.world = {
@@ -252,10 +261,11 @@ class GameState {
     /**
      * Probethium accumulation (docs/design/ECONOMY.md)
      *
-     * The old wall-clock trickle (0.00000000277/s — 1P per 100 hours) is removed.
-     * Probethium now comes from active play and station production:
-     *   - Exotic synthesis (5 exotic -> 1P) — GameController 'synthesis:triggered'
-     *   - Mining stations in probethium-rich sectors — MiningManager.updateStation
+     * The old wall-clock trickle (0.00000000277/s — 1P per 100 hours) is removed,
+     * and mining-station production died with the Foundry recast (REBUILD.md §2).
+     * Probethium now comes from active play only:
+     *   - Exotic synthesis (5 exotic -> 1P) — GameController 'synthesis:triggered',
+     *     gated by the exotic_synthesis protocol
      * This method is kept as a hook for future passive sources; stats multipliers
      * remain available via this.probethium.multipliers.
      */

@@ -69,25 +69,25 @@ class StatsManager {
         return busy / probes.length;
     }
 
-    /** % of mining stations currently running (not starved/inactive) */
-    stationUptime() {
-        const stations = this.gameState.mining?.stations || [];
-        if (!stations.length) return null; // no stations yet — not scored
-        return stations.filter(s => s.active).length / stations.length;
+    /** % of Foundries currently running (not starved/backed up) */
+    foundryUptime() {
+        const foundries = this.gameState.foundry?.foundries || [];
+        if (!foundries.length) return null; // no foundries yet — not scored
+        return foundries.filter(f => f.status === 'running').length / foundries.length;
     }
 
-    /** % of shuttles doing something (loading/delivering/returning vs idle) */
-    shuttleActivity() {
-        const shuttles = this.gameState.mining?.shuttles || [];
-        if (!shuttles.length) return null;
-        const busy = shuttles.filter(s => s.status && s.status !== 'idle' && s.status !== 'waiting').length;
-        return busy / shuttles.length;
+    /** % of freighters hauling (outbound/inbound vs docked) */
+    freighterActivity() {
+        const freighters = this.gameState.foundry?.freighters || [];
+        if (!freighters.length) return null;
+        const busy = freighters.filter(f => f.status === 'outbound' || f.status === 'inbound').length;
+        return busy / freighters.length;
     }
 
     /**
      * Network score 0-100 (PROBE_NETWORKS.md): one number for the
      * session-over-session "am I better?" feeling. Transparent weights:
-     * throughput 40%, probe utilization 30%, station uptime 20%, shuttles 10%.
+     * throughput 40%, probe utilization 30%, foundry uptime 20%, freighters 10%.
      * Missing subsystems redistribute their weight.
      */
     networkScore() {
@@ -96,10 +96,10 @@ class StatsManager {
         const rate = this.ratePerMin('total');
         parts.push({ w: 0.4, v: Math.min(1, Math.log10(1 + rate) / Math.log10(241)) });
         parts.push({ w: 0.3, v: this.probeUtilization() });
-        const uptime = this.stationUptime();
+        const uptime = this.foundryUptime();
         if (uptime !== null) parts.push({ w: 0.2, v: uptime });
-        const shuttle = this.shuttleActivity();
-        if (shuttle !== null) parts.push({ w: 0.1, v: shuttle });
+        const freighter = this.freighterActivity();
+        if (freighter !== null) parts.push({ w: 0.1, v: freighter });
 
         const totalW = parts.reduce((s, p) => s + p.w, 0);
         const score = parts.reduce((s, p) => s + p.w * p.v, 0) / totalW;
@@ -155,8 +155,8 @@ class StatsManager {
             ${rateRow('deposit-exotic', 'var(--mat-exo)', 'Exotic', 'exoticMinerals')}
             <div class="stats-divider"></div>
             <div class="stats-row"><span>Probe utilization</span><span>${fmt(this.probeUtilization())}</span></div>
-            <div class="stats-row"><span>Station uptime</span><span>${fmt(this.stationUptime())}</span></div>
-            <div class="stats-row"><span>Shuttle activity</span><span>${fmt(this.shuttleActivity())}</span></div>
+            <div class="stats-row"><span>Foundry uptime</span><span>${fmt(this.foundryUptime())}</span></div>
+            <div class="stats-row"><span>Freighter activity</span><span>${fmt(this.freighterActivity())}</span></div>
             <div class="stats-divider"></div>
             <div class="stats-row stats-score"><span>NETWORK SCORE</span><span>${this.networkScore()}</span></div>
         `;

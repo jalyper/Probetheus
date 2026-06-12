@@ -57,6 +57,8 @@
                     <span class="rd-txt"><span class="rd-val" id="artifacts">0</span><span class="rd-lbl">Artifacts</span></span></div>
                 <div class="rd"><span class="rd-ic" style="color: var(--mat-exo);" data-icon="deposit-exotic" data-sz="17"></span>
                     <span class="rd-txt"><span class="rd-val" id="exoticMinerals">0</span><span class="rd-lbl">Exotic</span></span></div>
+                <div class="rd"><span class="rd-ic" style="color: var(--mat-alloy);" data-icon="foundry" data-sz="17"></span>
+                    <span class="rd-txt"><span class="rd-val" id="alloy">0</span><span class="rd-lbl">Alloy</span></span></div>
                 <div class="rd built"><span class="rd-ic" style="color: var(--mist);" data-icon="probe" data-sz="16"></span>
                     <span class="rd-txt"><span class="rd-val" id="probeCount">3</span><span class="rd-lbl">Probes</span></span></div>
                 <div class="rd built"><span class="rd-ic" style="color: var(--mist);" data-icon="hub" data-sz="16"></span>
@@ -250,8 +252,8 @@
                     <button id="buildPathHubBtnProbe" class="tbtn">
                         <span class="tog-ic" data-icon="hub" data-sz="15"></span><span>Build Hub · 100 M</span><span class="key">B</span>
                     </button>
-                    <button id="buildPathMiningBtnProbe" class="tbtn">
-                        <span class="tog-ic" data-icon="mining" data-sz="15"></span><span>Mining Station · 100 M 50 D</span><span class="key">M</span>
+                    <button id="buildPathFoundryBtnProbe" class="tbtn">
+                        <span class="tog-ic" data-icon="foundry" data-sz="15"></span><span>Foundry · 120 M 40 D</span><span class="key">F</span>
                     </button>
                 </div>
                 <div id="probeBuildingStatus" style="color: var(--mist); font-size: 10px; margin-top: 6px; text-align: center;"></div>
@@ -441,7 +443,7 @@
     <script src="src/EquipmentSystem.js"></script>
     <script src="src/ProbeManager.js"></script>
     <script src="src/BuildingSystem.js"></script>
-    <script src="src/MiningManager.js"></script>
+    <script src="src/FoundrySystem.js"></script>
     <script src="src/UplinkSystem.js"></script>
     <script src="src/SectorManager.js"></script>
     <script src="src/SaveManager.js"></script>
@@ -475,7 +477,7 @@
             { name: 'GameState', type: 'class' },
             { name: 'ProbeManager', type: 'class' },
             { name: 'BuildingSystem', type: 'class' },
-            { name: 'MiningManager', type: 'class' },
+            { name: 'FoundrySystem', type: 'class' },
             { name: 'UplinkSystem', type: 'class' },
             { name: 'SectorManager', type: 'class' },
             { name: 'SaveManager', type: 'class' },

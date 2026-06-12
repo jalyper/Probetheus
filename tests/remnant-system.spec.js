@@ -283,7 +283,7 @@ test.describe('Remnant NPC System', () => {
             const kethVarnUnlocked = rm.remnantTypes.keth_varn.unlockCondition();
 
             // Others should have specific conditions
-            const whispererCondition = rm.getMiningStationCount() >= 3;
+            const whispererCondition = rm.getFoundryCount() >= 3;
             const miraSolCondition = rm.hasAlienTechResearch();
             const archivistCondition = rm.getLifetimeProbetheum() >= 100;
             const nullCondition = rm.getPurchasedFragmentCount() >= 10;

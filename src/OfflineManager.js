@@ -176,52 +176,38 @@ class OfflineManager {
     }
 
     /**
-     * Calculate offline Probethium accumulation
+     * Offline Foundry conversion — honest math (REBUILD.md): each Foundry
+     * converts only the mineral buffer it was left with, at its real rate,
+     * capped by the output buffer. No freighter resupply happens offline.
+     * (Probethium has no passive offline source anymore — synthesis is active.)
      */
     async calculateOfflineProbethium(offlineTimeMs, results) {
-        // ECONOMY.md: offline Probethium comes from mining stations in
-        // probethium-rich sectors, limited by the supplies they were left with.
-        const miningManager = this.gameState.miningManager || window.game?.miningManager;
-        const stations = this.gameState.mining?.stations || [];
         results.probethium = 0;
-        if (!stations.length || !miningManager) return;
 
-        const stationTypes = miningManager.getStationTypes();
-        let total = 0;
+        const C = window.GAME_CONSTANTS.FOUNDRY;
+        const foundries = this.gameState.foundry?.foundries || [];
+        if (!foundries.length) return;
 
-        stations.forEach(station => {
-            if (!station.active) return;
-            if (miningManager.getStationOutputResource(station) !== 'probethium') return;
-            const type = stationTypes[station.type];
-            if (!type || !type.probethiumOutput) return;
+        let totalAlloy = 0;
+        foundries.forEach(foundry => {
+            const ratePerMs = (C.MINERALS_PER_MIN_BASE * (foundry.level || 1)) / 60000;
+            const outputRoom = Math.max(0, C.OUTPUT_CAP - foundry.output);
+            const consumed = Math.min(
+                ratePerMs * offlineTimeMs,
+                foundry.input,
+                outputRoom * C.CONVERT_RATIO
+            );
+            if (consumed <= 0) return;
 
-            const timeCycles = offlineTimeMs / type.operationDuration;
-            // Each cycle consumes the station's full requirements — production
-            // stops when the inventory it was left with runs out
-            let supplyCycles = Infinity;
-            Object.entries(type.requirements).forEach(([resource, amt]) => {
-                if (amt > 0) {
-                    const inv = station.stationInventory?.[resource] || 0;
-                    supplyCycles = Math.min(supplyCycles, inv / amt);
-                }
-            });
-
-            const cycles = Math.min(timeCycles, supplyCycles);
-            if (!isFinite(cycles) || cycles <= 0) return;
-
-            total += type.probethiumOutput * (station.level || 1) * cycles;
-
-            // Consume the simulated supplies
-            Object.entries(type.requirements).forEach(([resource, amt]) => {
-                if (station.stationInventory && station.stationInventory[resource] !== undefined) {
-                    station.stationInventory[resource] = Math.max(0, station.stationInventory[resource] - amt * cycles);
-                }
-            });
+            const forged = consumed / C.CONVERT_RATIO;
+            foundry.input -= consumed;
+            foundry.output += forged;
+            foundry.converted += forged;
+            totalAlloy += forged;
         });
 
-        results.probethium = total;
-        if (total > 0.05) {
-            results.details.push(`Mining stations produced +${total.toFixed(1)} Probethium`);
+        if (totalAlloy > 0.05) {
+            results.details.push(`Foundries forged +${totalAlloy.toFixed(1)} alloy from buffered minerals (awaiting freighter pickup)`);
         }
     }
 

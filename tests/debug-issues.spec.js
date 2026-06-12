@@ -46,14 +46,13 @@ test.describe('Debug: Shell Save/Load and Probethium', () => {
 
         // Check both memory and display
         const after = await page.evaluate(() => ({
-            miningTotal: window.game.gameState.mining.totalProbetheum,
             probethiumCurrent: window.game.gameState.probethium.current,
             displayValue: document.getElementById('probethium')?.textContent,
         }));
         console.log('After click:', JSON.stringify(after));
 
-        // The mining total (displayed value) should have increased by 100
-        expect(after.miningTotal).toBeGreaterThanOrEqual(100);
+        // The wallet should have increased by 100
+        expect(after.probethiumCurrent).toBeGreaterThanOrEqual(100);
         // The display should reflect the new value
         expect(parseFloat(after.displayValue)).toBeGreaterThanOrEqual(100);
     });

@@ -34,9 +34,17 @@ class DetailsPanel {
             if (this.currentEntity) {
                 if (this.currentEntityType === 'hub') {
                     this.updateButtonStates(this.currentEntity);
-                } else if (this.currentEntityType === 'station') {
-                    this.updateMiningStationButtonStates(this.currentEntity);
+                } else if (this.currentEntityType === 'foundry') {
+                    this.updateFoundryButtonStates(this.currentEntity);
                 }
+            }
+        });
+
+        // Live foundry telemetry — keep buffers/status honest while watched
+        this.eventBus.on('foundry:tick', () => {
+            if (this.currentEntityType === 'foundry' && this.currentEntity &&
+                this.panel.style.display !== 'none') {
+                this.refreshFoundryStats(this.currentEntity);
             }
         });
     }
@@ -80,10 +88,6 @@ class DetailsPanel {
                     case 'p':
                         e.preventDefault();
                         this.triggerButtonClick('buildProbeForHub');
-                        break;
-                    case 's':
-                        e.preventDefault();
-                        this.triggerButtonClick('buildShuttleBtn');
                         break;
                 }
             }
@@ -139,11 +143,8 @@ class DetailsPanel {
             case 'hub':
                 this.showHubDetails(entity);
                 break;
-            case 'miningStation':
-                this.showMiningStationDetails(entity);
-                break;
-            case 'shuttle':
-                this.showShuttleDetails(entity);
+            case 'foundry':
+                this.showFoundryDetails(entity);
                 break;
             case 'signal':
                 this.showSignalDetails(entity);
@@ -174,8 +175,8 @@ class DetailsPanel {
 
         // Hub-owned logistics (handoff §2 stat grid)
         const isHomeHub = this.gameState.entities.reconHubs[0] === hub;
-        const hubStations = this.gameState.mining?.stations?.filter(s => s.hubId === hub.id) || [];
-        const hubShuttles = this.gameState.mining?.shuttles?.filter(s => s.hubId === hub.id) || [];
+        const hubFoundries = this.gameState.foundry?.foundries?.filter(f => f.hubId === hub.id) || [];
+        const hubFreighters = this.gameState.foundry?.freighters?.filter(f => f.hubId === hub.id) || [];
 
         // Intake Bay
         const intakeLevel = hub.intakeLevel || 1;
@@ -198,8 +199,8 @@ class DetailsPanel {
             <div class="ho-grid">
                 <div class="ho-cell"><span class="k">Ready Probes</span><span class="v">${availableProbes} / ${maxProbes}</span></div>
                 <div class="ho-cell"><span class="k">Active Probes</span><span class="v">${activeProbes}</span></div>
-                <div class="ho-cell"><span class="k">Mining Stations</span><span class="v">${hubStations.length}</span></div>
-                <div class="ho-cell"><span class="k">Shuttles</span><span class="v">${hubShuttles.length}</span></div>
+                <div class="ho-cell"><span class="k">Foundries</span><span class="v">${hubFoundries.length}</span></div>
+                <div class="ho-cell"><span class="k">Freighters</span><span class="v">${hubFreighters.length}</span></div>
             </div>
 
             <div class="ho-block">
@@ -225,9 +226,6 @@ class DetailsPanel {
                 </button>
                 <button id="buildProbeForHub" class="tbtn">
                     ${window.icon('plus', { size: 16 })}<span>Build Probe · 25 M</span><span class="key">P</span>
-                </button>
-                <button id="buildShuttleBtn" class="tbtn">
-                    ${window.icon('shuttle', { size: 16 })}<span>Build Shuttle · 50 M 25 D</span><span class="key">S</span>
                 </button>
                 ${this.gameState.hasProtocol('exotic_synthesis') ? `
                 <button id="synthesizeBtn" class="tbtn">
@@ -260,170 +258,133 @@ class DetailsPanel {
     }
     
     /**
-     * Show mining station details
+     * Show Foundry details (REBUILD.md §2) — the rate-matching readout:
+     * input buffer (copper), output buffer (alloy), and a status the player
+     * can act on. Freighters are commissioned from here.
      */
-    showMiningStationDetails(station) {
-        this.icon.innerHTML = `
-            <svg width="24" height="24" viewBox="0 0 24 24">
-                <!-- Octagonal mining station -->
-                <polygon points="12,3 16.95,5.55 19.5,10.5 16.95,15.45 12,18 7.05,15.45 4.5,10.5 7.05,5.55" fill="rgba(212,175,55,0.08)" stroke="#D4AF37" stroke-width="1"/>
-                <!-- Inner cross pattern -->
-                <line x1="7.5" y1="12" x2="16.5" y2="12" stroke="rgba(212,175,55,0.28)" stroke-width="1.2"/>
-                <line x1="12" y1="6" x2="12" y2="18" stroke="rgba(212,175,55,0.28)" stroke-width="1.2"/>
-                <!-- Diagonal lines -->
-                <line x1="9" y1="8.5" x2="15" y2="14.5" stroke="rgba(212,175,55,0.28)" stroke-width="1.2"/>
-                <line x1="15" y1="8.5" x2="9" y2="14.5" stroke="rgba(212,175,55,0.28)" stroke-width="1.2"/>
-            </svg>
-        `;
-        this.title.textContent = 'Mining Station';
+    showFoundryDetails(foundry) {
+        this.icon.innerHTML = `<span style="color: var(--fire); display: flex;">${window.icon('foundry', { size: 18 })}</span>`;
+        this.title.textContent = 'Foundry';
         this.title.style.color = 'var(--fire)';
 
-        const stationTypes = {
-            basic: { name: 'Basic Mining Station' },
-            advanced: { name: 'Advanced Mining Station' },
-            quantum: { name: 'Quantum Mining Station' }
-        };
+        const C = window.GAME_CONSTANTS.FOUNDRY;
+        const foundrySystem = window.game?.foundrySystem;
+        const ratePerMin = foundrySystem ? foundrySystem.consumeRatePerMin(foundry) : C.MINERALS_PER_MIN_BASE * foundry.level;
 
-        const stationType = stationTypes[station.type] || { name: 'Unknown' };
-        const efficiency = Math.round(station.efficiency * 100);
-        const activeStatus = station.active
-            ? '<span style="color: var(--fire);">Active</span>'
-            : '<span style="color: var(--mist);">Inactive</span>';
+        const freighters = this.gameState.foundry?.freighters?.filter(f => f.foundryId === foundry.id) || [];
+        const freighterRows = freighters.map((f, i) => {
+            const load = f.cargo.minerals ? `${Math.round(f.cargo.minerals)} minerals out`
+                : f.cargo.alloy ? `${f.cargo.alloy.toFixed(1)} alloy home`
+                : f.status === 'idle' ? 'docked' : 'running empty';
+            return `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 2px 0;">
+                    <span style="color: var(--mist); font-size: 10px;">Freighter ${i + 1} · ${load}</span>
+                    <button class="linkbtn fd-del-freighter" data-freighter-id="${f.id}" style="font-size: 9px;">Decommission</button>
+                </div>`;
+        }).join('');
 
-        // Get mining station type data
-        const miningManager = this.gameState.miningManager;
-        const fullStationType = miningManager ? miningManager.getStationTypes()[station.type] : null;
+        // Shell (cosmetics keep the legacy 'miningStations' key)
+        const equippedShellId = this.gameState.cosmetics?.equippedShells?.miningStations || 'default';
+        const shell = window.SHELL_CATALOG?.miningStations?.[equippedShellId] || null;
+        const shellColor = shell?.visual?.color || '#D4AF37';
 
-        // PROF-06: Get station output resource based on sector profile
-        const outputResource = miningManager ? miningManager.getStationOutputResource(station) : 'probethium';
-
-        // Per-cycle output for display (ECONOMY.md: probethium and resources tuned separately)
-        const baseOutput = fullStationType
-            ? (outputResource === 'probethium' ? fullStationType.probethiumOutput : fullStationType.output)
-            : 0;
-        const productionRate = station.active ? (baseOutput * (station.level || 1)).toFixed(2) : '0';
-
-        // Map output resource to display labels with type colors (PALETTE.MATERIALS)
-        const outputResourceLabels = {
-            'probethium': { name: 'Probetheum', color: 'var(--fire-bright)' },
-            'minerals': { name: 'Minerals', color: '#C97B4A' },
-            'data': { name: 'Data', color: '#5B8CFF' },
-            'artifacts': { name: 'Artifacts', color: '#B06BFF' },
-            'mixed': { name: 'Mixed Resources (reduced)', color: 'var(--mist)' }
-        };
-
-        const outputLabel = outputResourceLabels[outputResource] || { name: 'Unknown', color: 'var(--mist)' };
-
-        // Type colors for resource rows (PALETTE.MATERIALS)
-        const materialColors = {
-            minerals: '#C97B4A',
-            data: '#5B8CFF',
-            artifacts: '#B06BFF',
-            exoticMinerals: '#E8E4F0'
-        };
-
-        // Resource requirements display
-        let requirementsHtml = '';
-        if (fullStationType && fullStationType.requirements) {
-            requirementsHtml = '<div style="margin-top: 8px;"><div style="color: var(--mist); font-size: 11px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase;">Resource Requirements</div>';
-            for (const [resource, required] of Object.entries(fullStationType.requirements)) {
-                const currentInventory = station.stationInventory ? (station.stationInventory[resource] || 0) : 0;
-                const hasEnough = currentInventory >= required;
-
-                const resourceColor = materialColors[resource] || 'var(--mist)';
-                const statusColor = hasEnough ? 'var(--fire)' : 'var(--danger)';
-                const statusText = hasEnough ? '✓' : '✗';
-
-                requirementsHtml += `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 2px 10px;">
-                        <div style="color: ${resourceColor}; font-size: 10px;">${resource}:</div>
-                        <div style="color: ${statusColor}; font-size: 10px; font-weight: 400;">${statusText} ${Math.round(currentInventory)}/${required}</div>
-                    </div>`;
-            }
-            requirementsHtml += '</div>';
-        }
-
-        // Calculate station inventory status
-        let inventoryHtml = '';
-        if (station.stationInventory && Object.keys(station.stationInventory).length > 0) {
-            inventoryHtml = '<div style="margin-top: 8px;"><div style="color: var(--mist); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;">Station Inventory</div>';
-            for (const [resource, amount] of Object.entries(station.stationInventory)) {
-                const invColor = materialColors[resource] || 'var(--mist)';
-                inventoryHtml += `<div style="color: ${invColor}; font-size: 10px; padding-left: 10px;">▸ ${resource}: ${Math.round(amount)}</div>`;
-            }
-            inventoryHtml += '</div>';
-        }
-        
-        // Find connected shuttles
-        const connectedShuttles = this.gameState.mining?.shuttles?.filter(s => s.stationId === station.id) || [];
-
-        // Get shell information for equipped shell
-        const equippedStationShellId = this.gameState.cosmetics?.equippedShells?.miningStations || 'default';
-        const stationShell = window.SHELL_CATALOG?.miningStations?.[equippedStationShellId] || null;
-        const stationShellColor = stationShell?.visual?.color || '#D4AF37';
+        const nextLevel = foundry.level + 1;
+        const upgradeRecipe = nextLevel <= C.MAX_LEVEL ? window.RECIPES.foundryLevel[nextLevel] : null;
 
         this.content.innerHTML = `
             <div style="background: var(--panel); border: 1px solid var(--line-soft); border-radius: 4px; padding: 10px; margin-bottom: 12px;">
-                <div style="margin-bottom: 8px;">
-                    <div style="color: var(--signal); font-size: 14px; font-weight: 400; letter-spacing: 0.08em;">${stationType.name}</div>
-                    <div style="color: var(--mist); font-size: 10px;">Level ${station.level || 1}</div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
+                    <div style="color: var(--signal); font-size: 14px; letter-spacing: 0.08em;">Foundry · Level ${foundry.level}</div>
+                    <span id="foundryStatusTag"></span>
                 </div>
-
-                <div style="color: var(--mist); font-size: 12px; line-height: 1.6;">
-                    <div>Status: ${activeStatus}</div>
-                    <div>Efficiency: ${efficiency}%</div>
-                    <div>Position: (${Math.round(station.position.x)}, ${Math.round(station.position.y)})</div>
-                    <div>Hub: ${station.hubId}</div>
+                <div style="color: var(--mist); font-size: 11px; line-height: 1.6;">
+                    <div>Converts <span style="color: var(--mat-min, #C97B4A);">${ratePerMin.toFixed(0)} minerals/min</span>
+                        into <span style="color: #E8A33D;">${(ratePerMin / C.CONVERT_RATIO).toFixed(1)} alloy/min</span></div>
+                    <div>Lifetime forged: <span id="foundryForged" style="color: var(--signal); font-family: var(--font-data);">${foundry.converted.toFixed(1)}</span> alloy</div>
                 </div>
             </div>
 
             <div style="background: var(--panel); border: 1px solid var(--line-soft); border-radius: 4px; padding: 10px; margin-bottom: 12px;">
-                <div style="color: var(--mist); font-size: 12px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px;">Production</div>
-                <div style="color: var(--mist); font-size: 12px; line-height: 1.6;">
-                    <div>Mining Output: <span style="color: ${outputLabel.color}; font-weight: 400;">${outputLabel.name}</span></div>
-                    <div>Production Rate: ${productionRate}/cycle</div>
-                    <div>Total Produced: ${station.totalProduced?.toFixed(6) || '0.000000'}</div>
-                    <div>Connected Shuttles: ${connectedShuttles.length}</div>
+                <div style="color: var(--mist); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px;">Buffers</div>
+                <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--mist); margin-bottom: 3px;">
+                    <span>Minerals in</span><span id="foundryInputVal" style="font-family: var(--font-data);">${Math.round(foundry.input)} / ${C.INPUT_CAP}</span>
                 </div>
-                ${requirementsHtml}
-                ${inventoryHtml}
+                <div class="cap-bar"><div id="foundryInputBar" class="cap-fill" style="width: ${Math.round(foundry.input / C.INPUT_CAP * 100)}%; background: #C97B4A;"></div></div>
+                <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--mist); margin: 8px 0 3px;">
+                    <span>Alloy out</span><span id="foundryOutputVal" style="font-family: var(--font-data);">${foundry.output.toFixed(1)} / ${C.OUTPUT_CAP}</span>
+                </div>
+                <div class="cap-bar"><div id="foundryOutputBar" class="cap-fill" style="width: ${Math.round(foundry.output / C.OUTPUT_CAP * 100)}%; background: #E8A33D;"></div></div>
             </div>
 
-            <div style="display: flex; flex-direction: column; gap: 6px;">
-                <button id="upgradeStation" class="control-btn resource-button" style="font-size: 12px; padding: 8px 12px; width: 100%;" ${station.level >= 3 ? 'disabled' : ''}>
-                    Upgrade Station (${50 * (station.level + 1)}M, ${20 * (station.level + 1)}D)
+            <div style="background: var(--panel); border: 1px solid var(--line-soft); border-radius: 4px; padding: 10px; margin-bottom: 12px;">
+                <div style="color: var(--mist); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px;">Freighters · ${freighters.length}/${C.MAX_FREIGHTERS_PER_HUB}</div>
+                ${freighterRows || '<div style="color: var(--mist); font-size: 10px;">None — this Foundry is unsupplied.</div>'}
+                <button id="commissionFreighterBtn" class="cta" style="margin-top: 8px;">
+                    ${window.icon('shuttle', { size: 14 })}Commission Freighter · ${window.RecipeUtils.format(window.RECIPES.freighter)}
                 </button>
             </div>
 
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                ${upgradeRecipe ? `
+                <button id="upgradeFoundryBtn" class="cta">
+                    ${window.icon('upgrade', { size: 14 })}Upgrade to Level ${nextLevel} · ${window.RecipeUtils.format(upgradeRecipe)}
+                </button>` : `
+                <button class="cta disabled" disabled>${window.icon('check', { size: 14 })}Foundry at maximum</button>`}
+                <button id="deleteFoundryBtn" class="linkbtn" style="color: var(--danger);">Decommission Foundry</button>
+            </div>
+
             <div style="background: var(--panel); border: 1px solid var(--line-soft); border-radius: 4px; padding: 10px; margin-top: 12px;">
-                <div style="color: var(--mist); font-size: 12px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px;">Equipped Shell</div>
+                <div style="color: var(--mist); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px;">Equipped Shell</div>
                 <div id="stationShellIndicator" style="display: flex; align-items: center; gap: 8px; cursor: default;">
-                    <div style="width: 24px; height: 24px; border-radius: 4px; background: ${stationShellColor}; border: 1px solid var(--line-soft);"></div>
+                    <div style="width: 24px; height: 24px; border-radius: 4px; background: ${shellColor}; border: 1px solid var(--line-soft);"></div>
                     <div>
-                        <div style="color: ${stationShellColor}; font-size: 11px; font-weight: 400;">${stationShell?.name || 'Default'}</div>
-                        <div style="color: var(--mist); font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em;">${stationShell?.rarity || 'standard'}</div>
+                        <div style="color: ${shellColor}; font-size: 11px;">${shell?.name || 'Default'}</div>
+                        <div style="color: var(--mist); font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em;">${shell?.rarity || 'standard'}</div>
                     </div>
                 </div>
             </div>
 
-            <div style="color: var(--mist); font-size: 10px; margin-top: 8px; line-height: 1.3;">
-                ${!station.active ? 'Station needs resources to operate' : `Station is producing ${outputLabel.name}`}
-            </div>
+            <div id="foundryHint" style="color: var(--mist); font-size: 10px; margin-top: 8px; line-height: 1.4;"></div>
         `;
-        
-        // Add button listeners
-        this.setupMiningStationButtons(station);
 
-        // Update button states based on resources
-        this.updateMiningStationButtonStates(station);
+        this.setupFoundryButtons(foundry);
+        this.refreshFoundryStats(foundry);
+        this.updateFoundryButtonStates(foundry);
 
-        // Attach tooltip handlers for shell indicator if shell has bonuses
-        if (stationShell && stationShell.bonuses && Object.keys(stationShell.bonuses).length > 0) {
+        if (shell && shell.bonuses && Object.keys(shell.bonuses).length > 0) {
             const indicator = document.getElementById('stationShellIndicator');
             if (indicator && window.game?.uiManager?.attachTooltipHandlers) {
-                window.game.uiManager.attachTooltipHandlers(indicator, stationShell);
+                window.game.uiManager.attachTooltipHandlers(indicator, shell);
             }
         }
+    }
+
+    /**
+     * Light DOM refresh for the live foundry numbers (no innerHTML rebuild,
+     * so buttons keep their hover/focus state)
+     */
+    refreshFoundryStats(foundry) {
+        const C = window.GAME_CONSTANTS.FOUNDRY;
+
+        const tags = {
+            running: '<span style="color: var(--fire); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;">Running</span>',
+            starved: '<span style="color: #C97B4A; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;">Starved</span>',
+            backed: '<span style="color: #E8A33D; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;">Backed Up</span>'
+        };
+        const hints = {
+            running: 'The forge is rate-matched: minerals in, alloy out.',
+            starved: 'Input ran dry — commission freighters or route more minerals to its hub.',
+            backed: 'Alloy has nowhere to go — freighters must haul the output away.'
+        };
+
+        const set = (id, fn) => { const el = document.getElementById(id); if (el) fn(el); };
+        set('foundryStatusTag', el => { el.innerHTML = tags[foundry.status] || ''; });
+        set('foundryHint', el => { el.textContent = hints[foundry.status] || ''; });
+        set('foundryForged', el => { el.textContent = foundry.converted.toFixed(1); });
+        set('foundryInputVal', el => { el.textContent = `${Math.round(foundry.input)} / ${C.INPUT_CAP}`; });
+        set('foundryOutputVal', el => { el.textContent = `${foundry.output.toFixed(1)} / ${C.OUTPUT_CAP}`; });
+        set('foundryInputBar', el => { el.style.width = `${Math.round(foundry.input / C.INPUT_CAP * 100)}%`; });
+        set('foundryOutputBar', el => { el.style.width = `${Math.round(foundry.output / C.OUTPUT_CAP * 100)}%`; });
     }
     
     /**
@@ -489,57 +450,6 @@ class DetailsPanel {
     }
     
     /**
-     * Show shuttle details
-     */
-    showShuttleDetails(shuttle) {
-        this.icon.innerHTML = `
-            <svg width="24" height="24" viewBox="0 0 24 24">
-                <!-- Triangle shuttle pointing right -->
-                <polygon points="18,12 6,6 6,18" fill="#D4AF37" stroke="#E8E4F0" stroke-width="1.2"/>
-                <!-- Cargo indicator (small circle) -->
-                <circle cx="9" cy="12" r="2.25" fill="rgba(232,228,240,0.7)"/>
-            </svg>
-        `;
-        this.title.textContent = 'Resource Shuttle';
-        this.title.style.color = 'var(--fire)';
-
-        const statusColors = {
-            'loading': 'var(--signal)',
-            'delivering': 'var(--fire)',
-            'returning': 'var(--mist)'
-        };
-
-        const cargoColors = {
-            minerals: '#C97B4A',
-            data: '#5B8CFF',
-            artifacts: '#B06BFF',
-            exoticMinerals: '#E8E4F0'
-        };
-
-        this.content.innerHTML = `
-            <div style="background: var(--panel); border: 1px solid var(--line-soft); border-radius: 4px; padding: 10px; margin-bottom: 12px;">
-                <div style="color: var(--mist); font-size: 12px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px;">Shuttle Status</div>
-                <div style="color: var(--mist); font-size: 12px; line-height: 1.6;">
-                    <div>Status: <span style="color: ${statusColors[shuttle.status] || 'var(--signal)'}">${shuttle.status}</span></div>
-                    <div>Position: (${Math.round(shuttle.position.x)}, ${Math.round(shuttle.position.y)})</div>
-                    <div>Level: ${shuttle.level || 1}</div>
-                    <div>Capacity: ${shuttle.capacity || 50}</div>
-                </div>
-            </div>
-
-            ${shuttle.cargo && Object.keys(shuttle.cargo).length > 0 ? `
-            <div style="background: var(--panel); border: 1px solid var(--line-soft); border-radius: 4px; padding: 10px;">
-                <div style="color: var(--mist); font-size: 12px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px;">Cargo</div>
-                <div style="font-size: 11px;">
-                    ${Object.entries(shuttle.cargo).map(([res, amt]) =>
-                        `<div style="color: ${cargoColors[res] || 'var(--mist)'};">▸ ${res}: ${amt}</div>`
-                    ).join('')}
-                </div>
-            </div>` : '<div style="color: var(--mist); font-size: 11px;">No cargo currently loaded</div>'}
-        `;
-    }
-    
-    /**
      * Update button states based on resource availability
      */
     updateButtonStates(hub) {
@@ -574,16 +484,6 @@ class DetailsPanel {
             buildProbeBtn.disabled = !canAfford || atCapacity;
         }
         
-        // Build Shuttle button (50 minerals, 25 data)
-        const buildShuttleBtn = document.getElementById('buildShuttleBtn');
-        if (buildShuttleBtn) {
-            const canAfford = resources.minerals >= 50 && resources.data >= 25;
-
-            buildShuttleBtn.classList.toggle('resource-button', true);
-            buildShuttleBtn.classList.toggle('insufficient', !canAfford);
-            buildShuttleBtn.disabled = !canAfford;
-        }
-
         // Synthesize Probethium button (5 exotic minerals)
         const synthesizeBtn = document.getElementById('synthesizeBtn');
         if (synthesizeBtn) {
@@ -646,23 +546,28 @@ class DetailsPanel {
     }
     
     /**
-     * Update mining station button states based on resource availability
+     * Update Foundry button states based on resource availability
      */
-    updateMiningStationButtonStates(station) {
+    updateFoundryButtonStates(foundry) {
         const resources = this.gameState.getResources();
-        
-        // Upgrade Station button
-        const upgradeBtn = document.getElementById('upgradeStation');
+        const C = window.GAME_CONSTANTS.FOUNDRY;
+
+        const upgradeBtn = document.getElementById('upgradeFoundryBtn');
         if (upgradeBtn) {
-            const upgradeCost = {
-                minerals: 50 * (station.level + 1),
-                data: 20 * (station.level + 1)
-            };
-            const canAfford = resources.minerals >= upgradeCost.minerals && resources.data >= upgradeCost.data;
-            const atMaxLevel = station.level >= 3;
-            
-            upgradeBtn.classList.toggle('insufficient', !canAfford || atMaxLevel);
-            upgradeBtn.disabled = !canAfford || atMaxLevel;
+            const recipe = window.RECIPES.foundryLevel[foundry.level + 1];
+            const canAfford = recipe && window.RecipeUtils.canAfford(recipe, resources);
+            upgradeBtn.classList.toggle('insufficient', !canAfford);
+            upgradeBtn.disabled = !canAfford;
+        }
+
+        const freighterBtn = document.getElementById('commissionFreighterBtn');
+        if (freighterBtn) {
+            const hubFreighters = this.gameState.foundry?.freighters?.filter(f => f.hubId === foundry.hubId) || [];
+            const canAfford = window.RecipeUtils.canAfford(window.RECIPES.freighter, resources);
+            const atCap = hubFreighters.length >= C.MAX_FREIGHTERS_PER_HUB;
+            freighterBtn.classList.toggle('insufficient', !canAfford || atCap);
+            freighterBtn.disabled = !canAfford || atCap;
+            if (atCap) freighterBtn.title = 'Hub freighter dock is full';
         }
     }
     
@@ -749,36 +654,6 @@ class DetailsPanel {
         
         // Update button states based on resources
         this.updateButtonStates(hub);
-        
-        // Shuttle button
-        const buildShuttleBtn = document.getElementById('buildShuttleBtn');
-        if (buildShuttleBtn) {
-            buildShuttleBtn.addEventListener('click', () => {
-                if (!hub) {
-                    this.eventBus.emit('ui:message', {
-                        text: 'Select a hub first!',
-                        type: 'error'
-                    });
-                    return;
-                }
-
-                console.log('Starting shuttle placement mode for hub:', hub.id);
-
-                // Enter shuttle placement mode
-                this.gameState.ui.shuttlePlacementMode = true;
-                this.gameState.ui.selectedHub = hub;
-
-                const canvas = document.getElementById('galaxyCanvas');
-                if (canvas) canvas.style.cursor = 'crosshair';
-
-                const probeStatus = document.getElementById('probeStatus');
-                if (probeStatus) {
-                    probeStatus.textContent = 'Click on a mining station to connect shuttle...';
-                }
-
-                this.hide(); // Close details panel
-            });
-        }
 
         // Synthesis button
         const synthesizeBtn = document.getElementById('synthesizeBtn');
@@ -800,16 +675,39 @@ class DetailsPanel {
     }
     
     /**
-     * Setup mining station buttons
+     * Setup Foundry panel buttons
      */
-    setupMiningStationButtons(station) {
-        const upgradeBtn = document.getElementById('upgradeStation');
+    setupFoundryButtons(foundry) {
+        const upgradeBtn = document.getElementById('upgradeFoundryBtn');
         if (upgradeBtn) {
             upgradeBtn.addEventListener('click', () => {
-                this.eventBus.emit('mining:upgradeStation', { stationId: station.id });
+                this.eventBus.emit('foundry:upgrade', { foundryId: foundry.id });
+                this.showFoundryDetails(foundry); // refresh rate/level readouts
             });
         }
-        
+
+        const freighterBtn = document.getElementById('commissionFreighterBtn');
+        if (freighterBtn) {
+            freighterBtn.addEventListener('click', () => {
+                this.eventBus.emit('foundry:buildFreighter', { foundryId: foundry.id });
+                this.showFoundryDetails(foundry); // refresh the freighter list
+            });
+        }
+
+        const deleteBtn = document.getElementById('deleteFoundryBtn');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', () => {
+                this.eventBus.emit('foundry:delete', { foundryId: foundry.id });
+                this.hide();
+            });
+        }
+
+        this.content.querySelectorAll('.fd-del-freighter').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.eventBus.emit('foundry:deleteFreighter', { freighterId: btn.dataset.freighterId });
+                this.showFoundryDetails(foundry); // refresh the freighter list
+            });
+        });
     }
     
     /**

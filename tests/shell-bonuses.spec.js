@@ -3,13 +3,15 @@
  * Covers TEST-01 through TEST-04 requirements:
  *   TEST-01: All 8 probe bonus types verified
  *   TEST-02: Hub researchSpeed bonus verified
- *   TEST-03: All 3 mining station bonus types verified
+ *   TEST-03: All 3 foundry shell bonus types verified (legacy 'miningStations'
+ *            cosmetics key — kept for save compatibility; live reads moved to
+ *            FoundrySystem per REBUILD.md §2)
  *   TEST-04: Per-entity isolation (different shells, shell vs no-shell)
  *
  * Complements existing test files:
  *   - shell-bonus-foundation.spec.js (normalization, getEntityBonus basics)
  *   - probe-bonus-integration.spec.js (probe bonus integration points)
- *   - shell-bonus-wiring.spec.js (station/hub gameplay wiring)
+ *   - shell-bonus-wiring.spec.js (foundry/hub gameplay wiring)
  */
 
 const { test, expect } = require('@playwright/test');
@@ -208,10 +210,11 @@ test.describe('Shell Bonuses - Comprehensive', () => {
     });
 
     // =========================================================
-    // TEST-03: Mining Station Bonus Types
+    // TEST-03: Foundry Shell Bonus Types
+    // (cosmetics key stays 'miningStations' for save compatibility)
     // =========================================================
 
-    test('TEST-03: miningEfficiency resolves from equipped station shell', async ({ page }) => {
+    test('TEST-03: miningEfficiency (Forge Rate) resolves from equipped foundry shell', async ({ page }) => {
         await startGame(page);
 
         const result = await page.evaluate(() => {
@@ -220,7 +223,7 @@ test.describe('Shell Bonuses - Comprehensive', () => {
 
             const defaultBonus = ss.getEntityBonus('miningStations', null, 'miningEfficiency');
 
-            // Find a station shell with miningEfficiency
+            // Find a foundry shell with miningEfficiency
             const catalog = window.SHELL_CATALOG.miningStations;
             const shell = Object.values(catalog).find(s => s.bonuses && s.bonuses.miningEfficiency > 0);
 
@@ -234,14 +237,21 @@ test.describe('Shell Bonuses - Comprehensive', () => {
             // Cleanup
             gs.cosmetics.equippedShells.miningStations = 'default';
 
-            return { defaultBonus, equippedBonus, shellId: shell.id };
+            return {
+                defaultBonus,
+                equippedBonus,
+                shellId: shell.id,
+                label: window.BONUS_TYPES.miningEfficiency.label
+            };
         });
 
         expect(result.defaultBonus).toBe(0);
         expect(result.equippedBonus).toBeGreaterThan(0);
+        // Foundry-era label (read live in FoundrySystem.consumeRatePerMin)
+        expect(result.label).toBe('Forge Rate');
     });
 
-    test('TEST-03: shuttleSpeed resolves from equipped station shell', async ({ page }) => {
+    test('TEST-03: shuttleSpeed (Freighter Speed) resolves from equipped foundry shell', async ({ page }) => {
         await startGame(page);
 
         const result = await page.evaluate(() => {
@@ -262,16 +272,26 @@ test.describe('Shell Bonuses - Comprehensive', () => {
 
             gs.cosmetics.equippedShells.miningStations = 'default';
 
-            return { defaultBonus, equippedBonus, shellId: shell.id };
+            return {
+                defaultBonus,
+                equippedBonus,
+                shellId: shell.id,
+                label: window.BONUS_TYPES.shuttleSpeed.label
+            };
         });
 
         expect(result.defaultBonus).toBe(0);
         expect(result.equippedBonus).toBeGreaterThan(0);
+        // Foundry-era label (read live in FoundrySystem.freighterSpeed)
+        expect(result.label).toBe('Freighter Speed');
     });
 
-    test('TEST-03: probethiumRate resolves from equipped station shell', async ({ page }) => {
+    test('TEST-03: probethiumRate stays resolvable on owned shells (dormant in foundry era)', async ({ page }) => {
         await startGame(page);
 
+        // probethiumRate has no live consumer anymore (mining stations were
+        // its only reader). The bonus type and the catalog shells that carry
+        // it must remain intact so owned shells keep resolving/rendering.
         const result = await page.evaluate(() => {
             const ss = window.game.shellSystem;
             const gs = window.game.gameState;
@@ -290,9 +310,16 @@ test.describe('Shell Bonuses - Comprehensive', () => {
 
             gs.cosmetics.equippedShells.miningStations = 'default';
 
-            return { defaultBonus, equippedBonus, shellId: shell.id };
+            return {
+                defaultBonus,
+                equippedBonus,
+                shellId: shell.id,
+                typeDefined: !!window.BONUS_TYPES.probethiumRate
+            };
         });
 
+        expect(result.error).toBeUndefined();
+        expect(result.typeDefined).toBe(true);
         expect(result.defaultBonus).toBe(0);
         expect(result.equippedBonus).toBeGreaterThan(0);
     });
@@ -379,7 +406,7 @@ test.describe('Shell Bonuses - Comprehensive', () => {
         expect(result.probeB_shell).toBe('default');
     });
 
-    test('TEST-04: hub and station bonuses do not bleed to probes', async ({ page }) => {
+    test('TEST-04: hub and foundry bonuses do not bleed to probes', async ({ page }) => {
         await startGame(page);
 
         const result = await page.evaluate(() => {
@@ -392,15 +419,15 @@ test.describe('Shell Bonuses - Comprehensive', () => {
             gs.cosmetics.ownedShells.hubs.push('data_nexus');
             gs.cosmetics.equippedShells.hubs = 'data_nexus';
 
-            // Equip station shell with miningEfficiency
+            // Equip foundry shell with miningEfficiency (legacy 'miningStations' key)
             const catalog = window.SHELL_CATALOG.miningStations;
-            const stationShell = Object.values(catalog).find(s => s.bonuses && s.bonuses.miningEfficiency > 0);
-            if (stationShell) {
-                gs.cosmetics.ownedShells.miningStations.push(stationShell.id);
-                gs.cosmetics.equippedShells.miningStations = stationShell.id;
+            const foundryShell = Object.values(catalog).find(s => s.bonuses && s.bonuses.miningEfficiency > 0);
+            if (foundryShell) {
+                gs.cosmetics.ownedShells.miningStations.push(foundryShell.id);
+                gs.cosmetics.equippedShells.miningStations = foundryShell.id;
             }
 
-            // Probe with default shell should NOT get hub or station bonuses
+            // Probe with default shell should NOT get hub or foundry bonuses
             probe.shellId = 'default';
             const probeResearch = ss.getEntityBonus('probes', probe, 'researchSpeed');
             const probeMining = ss.getEntityBonus('probes', probe, 'miningEfficiency');
@@ -409,9 +436,9 @@ test.describe('Shell Bonuses - Comprehensive', () => {
             const hubResearch = ss.getEntityBonus('hubs', null, 'researchSpeed');
             const hubMining = ss.getEntityBonus('hubs', null, 'miningEfficiency');
 
-            // Station should have miningEfficiency but NOT researchSpeed
-            const stationMining = ss.getEntityBonus('miningStations', null, 'miningEfficiency');
-            const stationResearch = ss.getEntityBonus('miningStations', null, 'researchSpeed');
+            // Foundry category should have miningEfficiency but NOT researchSpeed
+            const foundryMining = ss.getEntityBonus('miningStations', null, 'miningEfficiency');
+            const foundryResearch = ss.getEntityBonus('miningStations', null, 'researchSpeed');
 
             // Cleanup
             gs.cosmetics.equippedShells.hubs = 'default';
@@ -420,25 +447,25 @@ test.describe('Shell Bonuses - Comprehensive', () => {
             return {
                 probeResearch, probeMining,
                 hubResearch, hubMining,
-                stationMining, stationResearch,
-                stationShellFound: !!stationShell
+                foundryMining, foundryResearch,
+                foundryShellFound: !!foundryShell
             };
         });
 
         expect(result.error).toBeUndefined();
 
-        // Probe gets nothing from hub/station shells
+        // Probe gets nothing from hub/foundry shells
         expect(result.probeResearch).toBe(0);
         expect(result.probeMining).toBe(0);
 
-        // Hub has its own bonus, not station's
+        // Hub has its own bonus, not the foundry's
         expect(result.hubResearch).toBe(15);
         expect(result.hubMining).toBe(0);
 
-        // Station has its own bonus, not hub's
-        if (result.stationShellFound) {
-            expect(result.stationMining).toBeGreaterThan(0);
+        // Foundry category has its own bonus, not the hub's
+        if (result.foundryShellFound) {
+            expect(result.foundryMining).toBeGreaterThan(0);
         }
-        expect(result.stationResearch).toBe(0);
+        expect(result.foundryResearch).toBe(0);
     });
 });

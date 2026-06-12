@@ -100,12 +100,9 @@ class SaveManager {
                     stats: { ...this.gameState.probethium.stats },
                     multipliers: { ...this.gameState.probethium.multipliers }
                 },
-                mining: this.gameState.mining ? {
-                    stations: [...(this.gameState.mining.stations || [])],
-                    shuttles: [...(this.gameState.mining.shuttles || [])],
-                    totalProbetheum: this.gameState.mining.totalProbetheum || 0,
-                    efficiencyBonus: this.gameState.mining.efficiencyBonus || 1.0,
-                    lastUpdateTime: this.gameState.mining.lastUpdateTime || Date.now()
+                foundry: this.gameState.foundry ? {
+                    foundries: this.gameState.foundry.foundries.map(f => ({ ...f, portGlow: { in: 0, out: 0 } })),
+                    freighters: this.gameState.foundry.freighters.map(f => ({ ...f, cargo: { ...f.cargo }, position: { ...f.position } }))
                 } : null,
                 uplink: this.createUplinkSaveData(),
                 tutorial: {
@@ -277,8 +274,8 @@ class SaveManager {
             
             // Debug: Log important data being saved
             console.log('Probethium being saved:', saveData.gameState.probethium.current);
-            console.log('Mining stations being saved:', saveData.gameState.mining?.stations?.length || 0);
-            console.log('Mining shuttles being saved:', saveData.gameState.mining?.shuttles?.length || 0);
+            console.log('Foundries being saved:', saveData.gameState.foundry?.foundries?.length || 0);
+            console.log('Freighters being saved:', saveData.gameState.foundry?.freighters?.length || 0);
             console.log('Uplink data being saved:', saveData.gameState.uplink);
             
             const saveKey = `${this.savePrefix}slot_${slotNumber}`;
@@ -391,9 +388,9 @@ class SaveManager {
      * Restore game state from save data
      */
     async restoreGameState(savedState) {
-        // Restore resources
-        this.gameState.resources = { ...savedState.resources };
-        
+        // Restore resources (alloy didn't exist before the Foundry era)
+        this.gameState.resources = { alloy: 0, ...savedState.resources };
+
         // Restore Probethium system
         this.gameState.probethium.current = savedState.probethium.current || 0;
         this.gameState.probethium.totalAccumulated = savedState.probethium.totalAccumulated || 0;
@@ -525,16 +522,36 @@ class SaveManager {
         this.gameState.pendingDiscoveredDeposits =
             savedState.entities.depositsDiscovered || [];
         
-        // Restore mining system
-        if (savedState.mining) {
-            this.gameState.mining = {
-                stations: [...(savedState.mining.stations || [])],
-                shuttles: [...(savedState.mining.shuttles || [])],
-                totalProbetheum: savedState.mining.totalProbetheum || 0,
-                efficiencyBonus: savedState.mining.efficiencyBonus || 1.0,
-                lastUpdateTime: Date.now() // Reset to current time
+        // Restore the Foundry network (REBUILD.md §2)
+        if (savedState.foundry) {
+            this.gameState.foundry = {
+                foundries: (savedState.foundry.foundries || []).map(f => ({
+                    ...f,
+                    portGlow: { in: 0, out: 0 }
+                })),
+                freighters: [...(savedState.foundry.freighters || [])]
             };
-            console.log('✓ Mining system restored:', this.gameState.mining.stations.length, 'stations,', this.gameState.mining.shuttles.length, 'shuttles');
+            console.log('✓ Foundry network restored:', this.gameState.foundry.foundries.length, 'foundries,', this.gameState.foundry.freighters.length, 'freighters');
+        } else {
+            this.gameState.foundry = { foundries: [], freighters: [] };
+        }
+
+        // Migrate legacy mining saves: stations and shuttles dissolve into a
+        // full materials refund — the player rebuilds as Foundries
+        if (savedState.mining && !savedState.foundry) {
+            const stations = savedState.mining.stations || [];
+            const shuttles = savedState.mining.shuttles || [];
+            if (stations.length || shuttles.length) {
+                const refundMinerals = stations.length * 100 + shuttles.length * 50;
+                const refundData = stations.length * 50 + shuttles.length * 25;
+                this.gameState.resources.minerals += refundMinerals;
+                this.gameState.resources.data += refundData;
+                console.log(`✓ Legacy mining migrated: ${stations.length} stations + ${shuttles.length} shuttles dissolved for ${refundMinerals} minerals, ${refundData} data`);
+                this.eventBus.emit('ui:message', {
+                    text: 'Mining stations were retired — materials refunded. Build a Foundry to forge alloy.',
+                    type: 'info'
+                });
+            }
         }
 
         // Restore cosmetics/shell system (with migration from old skin format)

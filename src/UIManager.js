@@ -226,11 +226,11 @@ class UIManager {
             });
         }
 
-        // Add mining facility button handler
-        const buildPathMiningBtn = document.getElementById('buildPathMiningBtnProbe');
-        if (buildPathMiningBtn) {
-            buildPathMiningBtn.addEventListener('click', () => {
-                this.startBuildingForProbe('miningFacility');
+        // Foundry button handler (REBUILD.md §2)
+        const buildPathFoundryBtn = document.getElementById('buildPathFoundryBtnProbe');
+        if (buildPathFoundryBtn) {
+            buildPathFoundryBtn.addEventListener('click', () => {
+                this.startBuildingForProbe('foundry');
             });
         }
 
@@ -455,12 +455,12 @@ class UIManager {
             this.elements.buildPathHubBtnProbe.classList.toggle('disabled', !canBuildHub);
         }
 
-        // Mining facility button
-        const buildPathMiningBtn = document.getElementById('buildPathMiningBtnProbe');
-        if (buildPathMiningBtn) {
-            const canBuildMining = resources.minerals >= 100 && resources.data >= 50;
-            buildPathMiningBtn.disabled = !canBuildMining;
-            buildPathMiningBtn.classList.toggle('disabled', !canBuildMining);
+        // Foundry button
+        const buildPathFoundryBtn = document.getElementById('buildPathFoundryBtnProbe');
+        if (buildPathFoundryBtn) {
+            const canBuildFoundry = window.RecipeUtils.canAfford(window.RECIPES.foundry, resources);
+            buildPathFoundryBtn.disabled = !canBuildFoundry;
+            buildPathFoundryBtn.classList.toggle('disabled', !canBuildFoundry);
         }
     }
 
@@ -773,7 +773,13 @@ class UIManager {
         document.getElementById('data').textContent = Math.floor(resources.data);
         document.getElementById('artifacts').textContent = Math.floor(resources.artifacts);
         document.getElementById('exoticMinerals').textContent = Math.floor(resources.exoticMinerals);
-        
+
+        // Alloy — forged at Foundries (REBUILD.md §2)
+        const alloyElement = document.getElementById('alloy');
+        if (alloyElement) {
+            alloyElement.textContent = Math.floor(resources.alloy || 0);
+        }
+
         // Probethium is a meaningful currency now (ECONOMY.md) — show 1 decimal,
         // whole numbers once large
         const probethiumElement = document.getElementById('probethium');
@@ -943,66 +949,8 @@ class UIManager {
      * Update hub panel when hub is selected
      */
     updateHubPanel() {
-        // Note: This method is kept for compatibility but hubPanel no longer exists
-        // Hub details are now handled by the DetailsPanel system
-        const hubPanel = document.getElementById('hubPanel');
-        const hubInfo = document.getElementById('hubInfo');
-        
-        // If old panel doesn't exist, skip this update
-        if (!hubPanel) return;
-        
-        const selectedHub = this.gameState.ui.selectedHub;
-        const resources = this.gameState.getResources();
-        
-        if (!selectedHub) {
-            hubPanel.style.display = 'none';
-            return;
-        }
-        
-        hubPanel.style.display = 'block';
-        
-        // Update hub info with more detailed vertical layout
-        const readyCount = this.probeManager.getReadyProbeCountForHub(selectedHub);
-        const totalCount = this.probeManager.getActiveProbeCountForHub(selectedHub);
-        const hubStations = this.gameState.mining && this.gameState.mining.stations ? 
-            this.gameState.mining.stations.filter(s => s.hubId === selectedHub.id).length : 0;
-        const hubShuttles = this.gameState.mining && this.gameState.mining.shuttles ?
-            this.gameState.mining.shuttles.filter(s => s.hubId === selectedHub.id).length : 0;
-        
-        hubInfo.innerHTML = `
-            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                <span style="color: var(--mist);">Ready Probes:</span>
-                <span style="color: var(--signal); font-family: var(--font-data);">${readyCount}/${selectedHub.maxProbes}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                <span style="color: var(--mist);">Active Probes:</span>
-                <span style="color: var(--signal); font-family: var(--font-data);">${totalCount}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                <span style="color: var(--mist);">Mining Stations:</span>
-                <span style="color: var(--signal); font-family: var(--font-data);">${hubStations}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between;">
-                <span style="color: var(--mist);">Shuttles:</span>
-                <span style="color: var(--signal); font-family: var(--font-data);">${hubShuttles}</span>
-            </div>
-        `;
-        
-        // Update mining station button
-        const buildMiningBtn = document.getElementById('buildMiningBtn');
-        const canBuildMining = resources.minerals >= 100 && resources.data >= 50;
-        buildMiningBtn.disabled = !canBuildMining;
-        buildMiningBtn.classList.toggle('disabled', !canBuildMining);
-        
-        // Update shuttle button
-        const buildShuttleBtn = document.getElementById('buildShuttleBtn');
-        const hasStations = this.gameState.mining && this.gameState.mining.stations && this.gameState.mining.stations.length > 0;
-        const canBuildShuttle = hasStations && resources.minerals >= 50 && resources.data >= 25;
-        buildShuttleBtn.disabled = !canBuildShuttle;
-        buildShuttleBtn.classList.toggle('disabled', !canBuildShuttle);
-        
-        // Position probe panel dynamically below hub panel
-        this.positionProbePanel();
+        // Legacy no-op: hubPanel was removed — hub details (including Foundry
+        // and freighter counts) live in DetailsPanel.showHubDetails
     }
 
     /**
