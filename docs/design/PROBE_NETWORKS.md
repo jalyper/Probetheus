@@ -22,8 +22,8 @@ Optimization is only fun when it's measurable.
 | Probe round-trip time | avg seconds per route, per hub | spot bloated routes |
 | Probe utilization | % of time probes are exploring vs idle-at-hub | "deploy your benched probes" |
 | Cargo efficiency | avg % cargo fullness on return | half-full returns = route too short; crawling returns = too long (see ECONOMY.md cargo) |
-| Shuttle idle % | per hub | over/under-provisioned logistics |
-| Station uptime | % of cycles not starved, per station | the Factorio "machine working" number |
+| Freighter idle % | per hub | over/under-provisioned logistics |
+| Foundry uptime | % of time running (not starved/backed up), per Foundry | the Factorio "machine working" number |
 | Network score | weighted composite, 0–100 | one number for the session-over-session "am I better?" feeling |
 
 Implementation note: all inputs already exist as events on the EventBus (`probe:returned`, cargo deposits, mining cycles). This is an aggregation layer + UI, not a systems rewrite.
@@ -35,10 +35,10 @@ Implementation note: all inputs already exist as events on the EventBus (`probe:
 
 Extend the existing station glow language (cyan/orange/red) into a complete visual grammar:
 
-- **Starved station:** red dashed line drawn from station back to its supply hub. The line *is* the diagnosis.
+- **Starved Foundry:** red dashed line drawn from the Foundry back to its supply hub. The line *is* the diagnosis. (A *backed-up* Foundry pulses its alloy output port instead — haul it away.)
 - **Saturated hub** (probes benched because hub is at capacity): hub ring pulses amber.
 - **Overloaded probe** (≥90% cargo, crawling): cargo icon flashes above probe; trail dims.
-- **Idle shuttle:** parked-shuttle icon dims to 40% opacity.
+- **Idle freighter:** docked-freighter glyph dims to 40% opacity.
 - **Route inefficiency hint** (post-EA, once dashboard data exists): a route whose round-trip time is >2x hub average gets a subtle dotted overlay — "this one's worth a look."
 - All warning states also fire sound #10 (low pulse) at most once per 30s per category — informative, never naggy. A settings toggle silences warning audio.
 
@@ -64,19 +64,19 @@ Mirrors Factorio's burner → electric → bots arc. Each rung is a research mil
 
 Design rule: every rung must still leave a reason to intervene during Signal Storms and events. Automation handles routine; the player handles spikes.
 
-## 5. Logistics depth — two stages, no further
+## 5. Logistics depth — two stages, no further *(shipped 2026-06-11 as the Foundry, REBUILD.md §2)*
 
 One refinement layer creates Factorio-style *chains* without belt-game scope creep:
 
-- **New building: Refinery** (mid-game). Converts raw minerals → **Alloy** (5:1) on a 20s cycle. Requires shuttle supply like stations do.
-- Alloy becomes the cost currency for advanced buildings (Advanced/Quantum stations, hub upgrades), replacing part of their current raw-mineral costs.
-- Net effect: stations have input *chains* (probes → hub → shuttle → refinery → shuttle → station), so layout and shuttle allocation genuinely matter, and the dashboard's uptime stats get interesting.
+- **The Foundry** (the Refinery as built — it also *replaced* mining stations outright). Converts raw minerals → **Alloy** (5:1) at a continuous rate-capped flow. Fed by **freighters** (the shuttle recast) working hub↔Foundry legs: minerals out, alloy home.
+- Alloy is the cost currency for tier-2+ logistics (Intake Bay 3 today; hub upgrades and Sentinels as they ship), replacing part of their raw-material costs.
+- Net effect: the network has input *chains* (deposits → probes → hub → freighter → Foundry → freighter → hub), so layout and freighter allocation genuinely matter, and the dashboard's uptime stats get interesting.
 - **Hard scope line:** two stages max (raw → refined). No third tier, no fluids, no ratios beyond 5:1. If a design needs more depth, it's the wrong design for this game.
 
 ## 6. Hub upgrades (already designed in v1.4 planning — confirmed, with costs recast)
 
-- Shuttle capacity 3 → 6, probe capacity 5 → 8, probe range +50% — as previously specced, but advanced tiers cost **Alloy** once the Refinery ships, slotting them into the chain.
-- Add one new upgrade: **Logistics Bay** — +1 saved-route slot and +10% shuttle speed per level (2 levels). Cheap, network-flavored, makes hubs feel individually grown.
+- Freighter capacity 3 → 6, probe capacity 5 → 8, probe range +50% — as previously specced, but advanced tiers cost **Alloy** now that the Foundry has shipped, slotting them into the chain.
+- Add one new upgrade: **Logistics Bay** — +1 saved-route slot and +10% freighter speed per level (2 levels). Cheap, network-flavored, makes hubs feel individually grown.
 
 ## What got cut from old designs
 

@@ -29,7 +29,7 @@
 |---|---|---|
 | **Exotic synthesis** (rework: was 5 exotic → 0.001P) | **5 exotic → 1P**, batched, with the existing synthesis animation | active — the main engine; ties Probethium income to hazard-biome exploration |
 | Mineral synthesis (fallback, exists as 100M → 1P) | **250M → 1P** (raised cost so exotics stay the smart path) | active/idle |
-| Mining stations in probethium-rich sectors | **10–30P/hour while supplied** (scales with station tier + uptime — dashboard uptime now pays literally) | idle |
+| ~~Mining stations in probethium-rich sectors~~ | **Retired 2026-06-11** with the Foundry recast (REBUILD.md §2) — Foundries forge alloy, not Probethium. Synthesis is the engine. | — |
 | Sector 100% completion | **2P × distance ring** (4P at ring 2, 16P at ring 8) | active |
 | Signal Storm cleared (20+ collections) | **5–15P** | active |
 | Landmark investigations | 5–50P by tier (Wreckage Fragments at the top) | active |

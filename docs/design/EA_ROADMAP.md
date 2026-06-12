@@ -22,7 +22,7 @@ Fix the economy and the feel first (cheap, transforms every minute of play), ins
 *The Factorio half becomes real.*
 
 - Throughput dashboard: header readout + full panel + network score (PROBE_NETWORKS.md §1)
-- Bottleneck visual grammar: red supply lines, amber saturated hubs, cargo flash, idle-shuttle dimming
+- Bottleneck visual grammar: red supply lines, amber saturated hubs, cargo flash, idle-freighter dimming (Foundry starved/backed states shipped with REBUILD.md §2)
 - Copy Route + route library (free blueprints)
 - Probe wear + auto-repair (the upkeep heartbeat)
 - Sector completion meter + rewards (EXPLORATION.md §1)

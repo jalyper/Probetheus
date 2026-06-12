@@ -36,8 +36,8 @@ Each fires once, on first encounter, as a 2-sentence toast (not a blocking banne
 | first sector discovered | "New sector. The scan ring on the minimap fills as you work it." |
 | first signal missed (expired unclicked) | "Signals fade fast. Auto-collectors can be researched." |
 | first time second hub affordable | "100 minerals banked. A second Hub extends your reach — build it on an outbound route." |
-| first mining station built | "Stations eat resources to make more. Shuttles feed them — watch the supply line." |
-| first starved station (red line appears) | "Red line = hungry station. More shuttles, or closer supply." |
+| first Foundry built | "The Foundry converts minerals into alloy at a fixed rate. Commission freighters to feed it — a starved forge idles, a full one backs up." |
+| first freighter commissioned | "Freighter commissioned. It hauls minerals out and alloy home automatically — rate-match the legs and the forge never stops." |
 | first storm | "Signal Storm! Five-fold spawns in that sector for 90 seconds. Go." |
 | first ring-3 structure completed | scripted mini Hollow wave + defense tip (DEFENSE.md) |
 | first Remnant spawn | "Something is out there, watching. Click it… if you like." |

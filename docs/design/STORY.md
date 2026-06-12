@@ -34,7 +34,7 @@ The archived docs had two echo systems (7 milestone-triggered vs. 9 resource-gat
 |---|---|---|---|
 | 1 — "Distress Loop" | guaranteed wreckage landmark, ring 2, surfaced by a one-time scripted ping after the player's 3rd sector | **150P** | +25% probe speed (permanent) |
 | 2 — "Navigation Logs" | wreckage, ring 3–4 | 250P | reveals exact biome hints on minimap (upgrade to EXPLORATION.md adjacency hints) |
-| 3 — "Mining Directive" | wreckage, ring 4–5 | 400P | mining stations +50% Probethium |
+| 3 — "Foundry Directive" | wreckage, ring 4–5 | 400P | Foundries +50% forge rate (was "mining stations +50% Probethium" — recast with REBUILD.md §2) |
 | 4 — "Quartermaster's Ledger" | ring 5–6 | 400P | +100 cargo capacity fleet-wide |
 | 5 — "The Quiet Order" | ring 6–7 | 500P | Sentinels −50% ammo use; Hollow lore reveal |
 | 6 — "Captain's Final Message" | ring 8 | 500P | all hub upgrades −50% cost |

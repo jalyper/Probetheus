@@ -42,7 +42,7 @@ Fiction note: the Hollow are drawn to Probethium synthesis above all — the "fi
 
 | Defense | Type | Behavior | Cost shape |
 |---|---|---|---|
-| **Sentinel** | building (new) | auto-fires at swarmers in radius; placed like other path buildings | minerals early; **Alloy ammo** resupplied by shuttles once the Refinery ships (PROBE_NETWORKS.md §5) — defense joins the logistics chain |
+| **Sentinel** | building (new) | auto-fires at swarmers in radius; placed like other path buildings | minerals early; **Alloy ammo** resupplied by freighters — the Foundry shipped 2026-06-11 (REBUILD.md §2), so defense joins the live logistics chain |
 | **Guardian role** | probe equipment (new) | a probe equipped with a Guardian Module patrols and intercepts; kills grant small exotic drops | one equipment slot — collector vs. guardian is a real loadout choice |
 | **Hub Aegis** | hub upgrade | shield bubble: absorbs the first N hits per wave for the hub and adjacent structures | Alloy + data |
 | **Rally** | player verb (free) | during a wave, click the threatened sector banner → all patrol probes in adjacent sectors converge to defend for the wave's duration | the active-play answer; no cost, pure skill/attention |
