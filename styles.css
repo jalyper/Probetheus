@@ -213,8 +213,10 @@ body {
 .sector .val .coord { font-family: var(--font-data); font-size: 11px; color: var(--mist); margin-left: 8px; }
 
 /* resource readouts */
-.readouts { display: flex; align-items: center; gap: 22px; }
-.rd { display: flex; align-items: center; gap: 8px; }
+/* gap tightened 22→14 when the alloy chip joined the band — seven readouts
+   must fit without pushing the time controls into a vertical wrap */
+.readouts { display: flex; align-items: center; gap: 14px; }
+.rd { display: flex; align-items: center; gap: 8px; flex: none; white-space: nowrap; }
 .rd .rd-txt { display: flex; flex-direction: column; line-height: 1.05; }
 .rd-val { font-family: var(--font-data); font-weight: 300; font-size: 15px; color: var(--signal); }
 .rd-lbl { font-size: 8.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mist); margin-top: 2px; }
@@ -237,6 +239,9 @@ body {
 /* --- Time controls --------------------------------------------------------- */
 
 #timeControls {
+    display: flex;
+    align-items: center;
+    flex: none; /* never let header pressure wrap the speed buttons vertically */
     gap: 2px;
 }
 
@@ -297,6 +302,9 @@ body {
 }
 
 .stats-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     color: var(--mist);
     font-family: var(--font-ui);
     font-size: 10px;
@@ -305,6 +313,20 @@ body {
     padding-bottom: 8px;
     margin-bottom: 10px;
 }
+
+.stats-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    padding: 2px;
+    color: var(--mist);
+    cursor: pointer;
+    transition: color 0.24s var(--ease);
+}
+
+.stats-close:hover { color: var(--signal); }
 
 .stats-row {
     display: flex;

@@ -119,6 +119,12 @@ class StatsManager {
         this.panel.id = 'statsPanel';
         this.panel.style.display = 'none';
         document.body.appendChild(this.panel);
+
+        // Close button — delegated (updateDom rebuilds innerHTML every second)
+        // and on pointerdown so the 1s rebuild can't swallow a click pair
+        this.panel.addEventListener('pointerdown', (e) => {
+            if (e.target.closest('.stats-close')) this.togglePanel();
+        });
     }
 
     togglePanel() {
@@ -148,7 +154,8 @@ class StatsManager {
             `<span>${this.ratePerMin(type).toFixed(1)}/min</span></div>`;
 
         this.panel.innerHTML = `
-            <div class="stats-title">NETWORK THROUGHPUT</div>
+            <div class="stats-title"><span>NETWORK THROUGHPUT</span>
+                <button class="stats-close" title="Close">${window.icon('close', { size: 12 })}</button></div>
             ${rateRow('deposit-mineral', 'var(--mat-min)', 'Minerals', 'minerals')}
             ${rateRow('deposit-data', 'var(--mat-data)', 'Data', 'data')}
             ${rateRow('deposit-artifact', 'var(--mat-art)', 'Artifacts', 'artifacts')}

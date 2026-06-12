@@ -3311,7 +3311,7 @@ class GameController {
      * Add a resource indicator at a specific location
      */
     addResourceIndicator(data) {
-        const { x, y, amount, resourceType, pending, label, color: colorOverride } = data;
+        const { x, y, amount, resourceType, pending, label, text: rawText, color: colorOverride } = data;
 
         const colors = {
             minerals: '#fff',     // White (common signals)
@@ -3320,9 +3320,9 @@ class GameController {
             all: '#ffd700'        // Gold (universal collection)
         };
 
-        // Different styling for pending vs delivered resources;
-        // `label` overrides the default text (combo callouts etc.)
-        const text = label || (pending ? `+${amount} (pending)` : `+${amount}`);
+        // `text` is verbatim (DepositSystem: 'CHARTED', '+5'); `label` overrides
+        // the default amount format (combo callouts etc.)
+        const text = rawText || label || (pending ? `+${amount} (pending)` : `+${amount}`);
         const color = colorOverride || (pending ? '#ff9900' : (colors[resourceType] || '#fff')); // Orange for pending
         
         this.resourceIndicators.push({
