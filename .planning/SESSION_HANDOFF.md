@@ -1,3 +1,21 @@
+# START HERE (2026-10-04)
+
+- Latest game commit: `d820821` — distance-based probe travel + FIFO intake
+  queue (2026-06-11). Only housekeeping commits have landed since.
+- `CLAUDE.md` is authoritative on what is done and what is next. Done since
+  the handoff below was written: the Claude Design handoff port and the
+  Foundry. Next, per CLAUDE.md: **Solar Drift**, then Resonance, Carrier
+  Signal (build order in `docs/design/REBUILD.md`).
+- Version-control cleanup (2026-10-04): `main` is the only branch. The old
+  uncommitted noise (`.planning/phases/` deletions, `yarn.lock`, local
+  settings, `.agents/`, `.gamedev/`, `skills-lock.json`) is preserved in tag
+  `archive/wip/uncommitted-2026-06-11` and was cleared from the working copy;
+  the pre-reinit space-idle-game history is tag `archive/local-main-2025-09-07`;
+  `v1.1` is on origin. `.claude/settings.local.json` and the accidental
+  `Probetheus/` gitlink are no longer tracked.
+- The section below is the 2026-06-11 handoff, kept for detail; its "NEXT
+  SESSION" work is done.
+
 # Session Handoff — 2026-06-11 (evening, consolidated; supersedes the morning handoff)
 
 Read order: `docs/design/REBUILD.md` → `LOOP_REDESIGN.md` → `VISION.md` → `VISUAL_STYLE.md` → **`docs/design/handoff/README.md`** (the Claude Design package — next session's primary work order). Everything in `docs/archive/` is dead. REBUILD.md outranks the LOOP_REDESIGN systems-audit verdicts where they conflict.

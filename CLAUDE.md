@@ -16,6 +16,11 @@
 - `npm run test:save` - Run save system tests only
 - `npx playwright test --project=chromium` - Run tests on Chromium only (faster)
 
+## Setup (fresh clone or cloud session)
+- Resume from `.planning/SESSION_HANDOFF.md` (START HERE at the top); this file is authoritative on what is done and what is next.
+- `npm ci`, then `npx playwright install chromium`. npm also rewrites `yarn.lock` when it installs; restore it with `git restore yarn.lock` rather than committing that churn.
+- Serve the game with `python -m http.server 8000` from the repo root and open `http://localhost:8000`. `playwright.config.js` starts (or reuses) this server itself, so tests need only `npx playwright test --project=chromium`.
+
 ## Design Direction (2026-06-10)
 The game direction was rewritten — see `docs/design/` (start with `VISION.md`, sequencing in `EA_ROADMAP.md`). Three pillars: the network is the factory, arcade tempo, the frontier always pulls. Superseded design docs are in `docs/archive/`. New work should serve a pillar and follow the EA_ROADMAP milestone order (M1 "Feels Alive" first).
 
@@ -271,3 +276,12 @@ await page.evaluate(() => {
 - DetailsPanel listens to `entity:selected` event to show entity info
 - Tutorial system uses TutorialManager with step-based progression
 - Save system uses StorageAdapter for Electron/web compatibility
+
+<!-- cloud-sync:start -->
+## The remote is the source of truth
+
+- GitHub (`origin`) holds the truth. Local work may replace it only when it was made on top of its latest.
+- Fetch before changing anything. If this copy is behind, bring it up to date first (fast-forward, or rebase your own commits onto origin). Never force-push, and never overwrite a remote change you have not seen.
+- If the remote moved and the work cannot be brought on top of it cleanly, stop and ask.
+- Push what you commit as soon as it is ready (in a cloud session: to your working branch).
+<!-- cloud-sync:end -->
