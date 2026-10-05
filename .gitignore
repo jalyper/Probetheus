@@ -83,3 +83,6 @@ temp/
 
 # Local Claude Code settings (per machine)
 .claude/settings.local.json
+
+# Accidental embedded clone of this repo (not a submodule)
+/Probetheus/
