@@ -80,3 +80,6 @@ dist
 # Temporary folders
 tmp/
 temp/
+
+# Local Claude Code settings (per machine)
+.claude/settings.local.json
